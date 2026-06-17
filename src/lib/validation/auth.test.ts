@@ -1,0 +1,2 @@
+import { describe, expect, it } from 'vitest';import { registerSchema } from './auth';
+describe('registerSchema',()=>{it('validates matching secure passwords and terms',()=>{expect(registerSchema.safeParse({fullName:'Alex Demo',email:'alex@demo.com',password:'Password1',confirmPassword:'Password1',terms:true,plan:'free'}).success).toBe(true);});it('rejects weak passwords',()=>{expect(registerSchema.safeParse({fullName:'A',email:'bad',password:'x',confirmPassword:'y',terms:false,plan:'free'}).success).toBe(false);});});

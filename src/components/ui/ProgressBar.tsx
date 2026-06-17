@@ -1,0 +1,1 @@
+export function ProgressBar({value}:{value:number}){return <div className="h-3 rounded-full bg-white/10" aria-label={`Progreso ${value}%`}><div className="h-3 rounded-full bg-gradient-to-r from-indigo-500 to-pink-500" style={{width:`${value}%`}}/></div>}

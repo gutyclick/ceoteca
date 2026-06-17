@@ -1,0 +1,1 @@
+export default function Page(){return <main className="container py-16 prose prose-invert"><h1>Privacidad provisional</h1><p>No expongas claves secretas en cliente. Supabase debe configurarse con RLS antes de producción.</p></main>}
