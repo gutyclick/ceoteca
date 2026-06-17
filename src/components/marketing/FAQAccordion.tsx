@@ -1,0 +1,3 @@
+'use client';
+import { useState } from 'react';import { ChevronDown } from 'lucide-react';
+export function FAQAccordion({items}:{items:readonly (readonly [string,string])[]}){const[open,setOpen]=useState<number|null>(0);return <div className="mx-auto max-w-3xl space-y-3">{items.map(([q,a],i)=><div className="glass rounded-2xl" key={q}><button className="focus-ring flex w-full items-center justify-between p-5 text-left font-bold" aria-expanded={open===i} onClick={()=>setOpen(open===i?null:i)}>{q}<ChevronDown className={open===i?'rotate-180 transition':'transition'}/></button>{open===i&&<p className="px-5 pb-5 text-zinc-300">{a}</p>}</div>)}</div>}

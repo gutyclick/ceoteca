@@ -1,0 +1,5 @@
+import Link from 'next/link';
+import { Headphones } from 'lucide-react';
+import type { Book } from '@/types';
+import { BookCover } from './BookCover';
+export function BookCard({book,locked=false}:{book:Book;locked?:boolean}){return <article className="glass group relative min-w-64 overflow-hidden rounded-3xl p-4 transition hover:-translate-y-1"><BookCover book={book} size="sm"/><div className="mt-4"><div className="flex items-center gap-2 text-xs text-zinc-400">{book.category} · {book.readingTime} min {book.hasAudio&&<Headphones className="h-4 w-4 text-violet-300"/>}</div><h3 className="mt-2 font-bold">{book.title}</h3><p className="text-sm text-zinc-400">{book.author}</p><p className="mt-2 line-clamp-2 text-sm text-zinc-300">{book.description}</p><Link className="focus-ring mt-4 inline-flex rounded-xl bg-white px-4 py-2 text-sm font-bold text-black" href={locked?'/registro':`/libro/${book.slug}`}>{locked?'Desbloquear':'Ver análisis'}</Link></div>{locked&&<div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/80 to-transparent p-4 pt-16 text-sm font-bold">Regístrate para continuar</div>}</article>}

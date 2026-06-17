@@ -1,0 +1,2 @@
+import { BookCard } from '@/components/books/BookCard';import { SectionHeading } from '@/components/ui/SectionHeading';import { demoBooks } from '@/data/books';
+export const metadata={title:'Biblioteca'};export default function Biblioteca(){return <main className="container py-16"><SectionHeading title="Biblioteca Ceoteca" subtitle="Explora análisis demo por categoría, autor o etiqueta."/><div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">{demoBooks.map((b,i)=><BookCard key={b.id} book={b} locked={i>2}/>)}</div></main>}

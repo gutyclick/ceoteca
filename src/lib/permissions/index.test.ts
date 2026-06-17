@@ -1,0 +1,2 @@
+import { describe, expect, it } from 'vitest';import { canAccessFeature, canOpenBook, remainingChatQuestions } from './index';
+describe('permissions',()=>{it('blocks free audio and chat',()=>{expect(canAccessFeature('free','audio')).toBe(false);expect(canAccessFeature('free','chat')).toBe(false);});it('allows pro audio and limited chat',()=>{expect(canAccessFeature('pro','audio')).toBe(true);expect(remainingChatQuestions('pro',10)).toBe(40);});it('limits free books to first three',()=>{expect(canOpenBook('free',2)).toBe(true);expect(canOpenBook('free',3)).toBe(false);});});
