@@ -71,7 +71,7 @@ const navItems = [
   { label: "Biblioteca", href: "/biblioteca", icon: BookOpen, active: false },
   { label: "IA", href: "#chat-libro", icon: Bot, active: false },
   { label: "Perfil", href: "/perfil", icon: User, active: false },
-  { label: "Configuracion", href: "/perfil#ajustes", icon: Settings, active: false },
+  { label: "Configuracion", href: "/configuracion", icon: Settings, active: false },
 ] as const;
 
 const keyPointIcons = ["👁", "⭐", "⚡", "🙂", "🔒", "🎯", "🧠"] as const;

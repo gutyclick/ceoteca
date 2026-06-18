@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
-  ArrowUpRight,
   Bell,
   BookOpen,
   Bot,
@@ -11,34 +10,24 @@ import {
   ChevronRight,
   ChevronsDown,
   ChevronsUp,
-  CreditCard,
   Crown,
-  Download,
   Flame,
   Headphones,
   HelpCircle,
   Home,
-  KeyRound,
   LibraryBig,
-  LineChart,
   Lock,
-  Mail,
   Pencil,
-  ReceiptText,
   Settings,
-  ShieldCheck,
-  SlidersHorizontal,
   Sparkles,
   TrendingUp,
-  Trophy,
   User,
-  UserRound,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { Card } from "@/components/ui/Card";
 import { Logo } from "@/components/ui/Logo";
-import { plans, type PlanKey } from "@/config/plans";
+import { plans } from "@/config/plans";
 import { siteConfig } from "@/config/site";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/database.types";
@@ -70,55 +59,22 @@ type ViewState =
   | { status: "unauthorized" }
   | { status: "ready"; data: ProfileData; notice?: string };
 
-type SettingsSection = "account" | "security" | "subscription" | "billing" | "preferences";
-
 const navItems = [
   { label: "Inicio", href: "/home", icon: Home, active: false },
   { label: "Biblioteca", href: "/biblioteca", icon: BookOpen, active: false },
   { label: "IA", href: "/home#ia", icon: Bot, active: false },
   { label: "Perfil", href: "/perfil", icon: User, active: true },
-  { label: "Configuracion", href: "/perfil#ajustes", icon: Settings, active: false },
+  { label: "Configuracion", href: "/configuracion", icon: Settings, active: false },
 ] as const;
 
-const planOrder: PlanKey[] = ["free", "pro", "unlimited", "founder"];
-
-const settingsSections: Array<{
-  key: SettingsSection;
-  label: string;
-  description: string;
-  icon: LucideIcon;
-}> = [
-  {
-    key: "account",
-    label: "Cuenta",
-    description: "Nombre, correo y datos basicos",
-    icon: UserRound,
-  },
-  {
-    key: "security",
-    label: "Seguridad",
-    description: "Contrasena y acceso",
-    icon: ShieldCheck,
-  },
-  {
-    key: "subscription",
-    label: "Suscripcion",
-    description: "Plan actual y cambios",
-    icon: CreditCard,
-  },
-  {
-    key: "billing",
-    label: "Pagos",
-    description: "Facturas e historial",
-    icon: ReceiptText,
-  },
-  {
-    key: "preferences",
-    label: "Preferencias",
-    description: "Notificaciones y aprendizaje",
-    icon: SlidersHorizontal,
-  },
-];
+const avatarOptions = [
+  "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=320&q=80",
+  "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=320&q=80",
+  "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=320&q=80",
+  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=320&q=80",
+  "https://images.unsplash.com/photo-1527980965255-d3b416303d12?auto=format&fit=crop&w=320&q=80",
+  "https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?auto=format&fit=crop&w=320&q=80",
+] as const;
 
 function formatDate(value: string | null | undefined) {
   if (!value) {
@@ -135,6 +91,7 @@ function formatDate(value: string | null | undefined) {
 function getInitials(name: string, email: string) {
   const source = name.trim().length > 0 ? name : email;
   const parts = source.split(/[ @._-]+/).filter(Boolean);
+
   return parts
     .slice(0, 2)
     .map((part) => part.at(0)?.toUpperCase() ?? "")
@@ -171,7 +128,7 @@ function createDemoProfileData(): ProfileData {
     profile: {
       id: "demo-user",
       full_name: "Andres Ramirez",
-      avatar_url: null,
+      avatar_url: avatarOptions[0],
       plan: "free",
       founder: false,
       created_at: now,
@@ -226,6 +183,61 @@ function createDemoProfileData(): ProfileData {
   };
 }
 
+function BottomNavigation() {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  return (
+    <div className="fixed bottom-5 left-1/2 z-40 w-[min(94vw,1120px)] -translate-x-1/2">
+      {isCollapsed ? (
+        <button
+          aria-label="Mostrar menu"
+          className="mx-auto flex min-h-14 items-center gap-3 rounded-full border border-brand-purple/45 bg-[#080915]/92 px-5 text-sm text-text-primary shadow-[0_0_38px_rgba(124,58,237,0.28)] backdrop-blur-xl transition hover:border-brand-purple/80"
+          onClick={() => setIsCollapsed(false)}
+          type="button"
+        >
+          <User aria-hidden="true" className="text-brand-purple" size={22} />
+          Menu
+          <ChevronsUp aria-hidden="true" size={18} />
+        </button>
+      ) : (
+        <nav className="relative rounded-[24px] border border-white/10 bg-[#080915]/92 px-4 pb-3 pt-4 shadow-ambient backdrop-blur-xl">
+          <button
+            aria-label="Ocultar menu"
+            className="absolute -top-4 right-5 grid h-8 w-8 place-items-center rounded-full border border-white/10 bg-[#101121] text-text-secondary shadow-ambient transition hover:border-brand-purple/60 hover:text-white"
+            onClick={() => setIsCollapsed(true)}
+            type="button"
+          >
+            <ChevronsDown aria-hidden="true" size={16} />
+          </button>
+
+          <div className="grid grid-cols-5 items-center">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isCenter = item.label === "IA";
+
+              return (
+                <Link
+                  className={cn(
+                    "flex min-h-14 flex-col items-center justify-center gap-1 rounded-button px-2 py-2 text-xs text-text-secondary transition hover:text-white md:flex-row md:text-base",
+                    item.active && "text-brand-purple",
+                    isCenter &&
+                      "-mt-11 mx-auto h-[78px] w-[78px] rounded-full border border-brand-purple/70 bg-brand-purple/20 text-brand-purple shadow-[0_0_45px_rgba(124,58,237,0.55)] md:flex-col md:text-sm",
+                  )}
+                  href={item.href}
+                  key={item.label}
+                >
+                  <Icon aria-hidden="true" size={isCenter ? 28 : 24} />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </nav>
+      )}
+    </div>
+  );
+}
+
 function ProfileStatCard({
   icon: Icon,
   value,
@@ -262,6 +274,87 @@ function ProfileStatCard({
         </span>
       </div>
     </Card>
+  );
+}
+
+function AvatarImage({
+  avatarUrl,
+  initials,
+}: {
+  avatarUrl: string | null;
+  initials: string;
+}) {
+  if (avatarUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img alt="" className="h-full w-full object-cover" src={avatarUrl} />
+    );
+  }
+
+  return <span>{initials}</span>;
+}
+
+function AvatarPicker({
+  currentAvatar,
+  initials,
+  isSaving,
+  error,
+  onClose,
+  onSelect,
+}: {
+  currentAvatar: string | null;
+  initials: string;
+  isSaving: boolean;
+  error: string | null;
+  onClose: () => void;
+  onSelect: (avatarUrl: string) => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-5 backdrop-blur-sm">
+      <Card className="w-full max-w-2xl rounded-[20px] bg-[#080915] p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-semibold">Elige tu imagen</h2>
+            <p className="mt-2 text-sm leading-6 text-text-secondary">
+              Usa una imagen prealojada. Se guardara en tu perfil de Supabase.
+            </p>
+          </div>
+          <button
+            className="grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.04] text-text-secondary transition hover:text-white"
+            onClick={onClose}
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+        <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
+          {avatarOptions.map((avatarUrl) => (
+            <button
+              className={cn(
+                "relative aspect-square overflow-hidden rounded-[24px] border bg-white/[0.04] transition hover:-translate-y-1 hover:border-brand-purple/70",
+                currentAvatar === avatarUrl
+                  ? "border-brand-purple shadow-[0_0_35px_rgba(124,58,237,0.35)]"
+                  : "border-white/10",
+              )}
+              disabled={isSaving}
+              key={avatarUrl}
+              onClick={() => onSelect(avatarUrl)}
+              type="button"
+            >
+              <AvatarImage avatarUrl={avatarUrl} initials={initials} />
+            </button>
+          ))}
+        </div>
+        {error ? (
+          <div className="mt-5 rounded-card border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
+            {error}
+          </div>
+        ) : null}
+        <p className="mt-5 text-xs leading-5 text-text-muted">
+          {isSaving ? "Guardando imagen..." : "Puedes cambiarla cuando quieras."}
+        </p>
+      </Card>
+    </div>
   );
 }
 
@@ -319,14 +412,12 @@ function MonthlyProgressCard({
     )
     .slice(-6);
   const values =
-    ordered.length > 0
-      ? ordered.map((item) => item.progress)
-      : [0, 0, 0, 0, 0, 0];
+    ordered.length > 0 ? ordered.map((item) => item.progress) : [0, 0, 0, 0, 0, 0];
   const points = values.map((value, index) => {
     const x = values.length === 1 ? 50 : (index / (values.length - 1)) * 100;
     const y = 100 - value;
 
-    return { x, y, value };
+    return { x, y };
   });
   const path = points
     .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`)
@@ -336,13 +427,9 @@ function MonthlyProgressCard({
     <Card className="rounded-[16px] bg-white/[0.035] p-6">
       <div className="flex items-center justify-between gap-4">
         <h2 className="text-2xl font-semibold">Tu progreso</h2>
-        <button
-          className="inline-flex min-h-11 items-center gap-2 rounded-button border border-white/10 bg-white/[0.035] px-4 text-sm text-text-secondary"
-          type="button"
-        >
+        <span className="inline-flex min-h-11 items-center rounded-button border border-white/10 bg-white/[0.035] px-4 text-sm text-text-secondary">
           Este mes
-          <ChevronRight aria-hidden="true" className="rotate-90" size={16} />
-        </button>
+        </span>
       </div>
       <div className="mt-6 grid h-64 grid-cols-[44px_1fr] gap-3">
         <div className="grid text-xs text-text-secondary">
@@ -400,11 +487,6 @@ function MonthlyProgressCard({
             />
           </svg>
         </div>
-      </div>
-      <div className="mt-5 grid grid-cols-4 gap-2 pl-[56px] text-xs text-text-secondary">
-        {["1 Jun", "8 Jun", "15 Jun", "22 Jun"].map((label) => (
-          <span key={label}>{label}</span>
-        ))}
       </div>
       <div className="mt-7 flex gap-4 rounded-card border border-white/10 bg-white/[0.035] p-4">
         <span className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-brand-purple/20 text-brand-purple">
@@ -488,7 +570,16 @@ function UpgradeBanner() {
   );
 }
 
-function AchievementSummary({ badges }: { badges: Array<{ title: string; description: string; icon: LucideIcon; unlocked: boolean }> }) {
+function AchievementSummary({
+  badges,
+}: {
+  badges: Array<{
+    title: string;
+    description: string;
+    icon: LucideIcon;
+    unlocked: boolean;
+  }>;
+}) {
   return (
     <Card className="rounded-[16px] bg-white/[0.035] p-6">
       <div className="flex items-center justify-between">
@@ -546,367 +637,18 @@ function HelpPanel() {
             </span>
             Centro de ayuda
           </span>
-          <ArrowUpRight aria-hidden="true" size={19} />
+          <HelpCircle aria-hidden="true" size={22} />
         </Link>
-        <div className="mt-7 grid h-28 place-items-center rounded-card bg-[radial-gradient(circle_at_50%_60%,rgba(124,58,237,0.35),transparent_55%)]">
-          <span className="grid h-16 w-16 place-items-center rounded-full border border-brand-purple/50 bg-brand-purple/25 text-brand-purple">
-            <HelpCircle aria-hidden="true" size={38} />
-          </span>
-        </div>
       </div>
     </Card>
-  );
-}
-
-function SettingsPanel({
-  icon: Icon,
-  title,
-  description,
-  action,
-  children,
-}: {
-  icon: LucideIcon;
-  title: string;
-  description: string;
-  action?: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <Card className="rounded-[16px] bg-white/[0.035] p-5">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex gap-4">
-          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-[14px] bg-brand-purple/15 text-brand-purple">
-            <Icon aria-hidden="true" size={22} />
-          </span>
-          <div>
-            <h2 className="text-xl font-semibold">{title}</h2>
-            <p className="mt-2 text-sm leading-6 text-text-secondary">
-              {description}
-            </p>
-          </div>
-        </div>
-        {action}
-      </div>
-      <div className="mt-5">{children}</div>
-    </Card>
-  );
-}
-
-function DisabledAction({ children }: { children: React.ReactNode }) {
-  return (
-    <button
-      className="inline-flex min-h-10 items-center justify-center rounded-button border border-white/10 bg-white/[0.035] px-4 text-sm text-text-muted"
-      disabled
-      type="button"
-    >
-      {children}
-    </button>
-  );
-}
-
-function SettingsContent({
-  activeSection,
-  data,
-  displayName,
-  currentPlan,
-}: {
-  activeSection: SettingsSection;
-  data: ProfileData;
-  displayName: string;
-  currentPlan: PlanKey;
-}) {
-  const plan = plans[currentPlan];
-
-  if (activeSection === "account") {
-    return (
-      <SettingsPanel
-        description="Datos basicos de tu cuenta y futuras opciones para editar perfil."
-        icon={UserRound}
-        title="Cuenta"
-        action={<DisabledAction>Guardar cambios</DisabledAction>}
-      >
-        <div className="grid gap-4 md:grid-cols-2">
-          <label className="grid gap-2 text-sm">
-            <span className="text-text-secondary">Nombre</span>
-            <input
-              className="min-h-12 rounded-button border border-white/10 bg-white/[0.035] px-4 text-text-primary outline-none"
-              disabled
-              readOnly
-              value={displayName}
-            />
-          </label>
-          <label className="grid gap-2 text-sm">
-            <span className="text-text-secondary">Correo</span>
-            <input
-              className="min-h-12 rounded-button border border-white/10 bg-white/[0.035] px-4 text-text-primary outline-none"
-              disabled
-              readOnly
-              value={data.email}
-            />
-          </label>
-        </div>
-        <p className="mt-4 text-xs leading-5 text-text-muted">
-          La edicion real de perfil se conectara a endpoints validados en
-          servidor antes de habilitar escritura.
-        </p>
-      </SettingsPanel>
-    );
-  }
-
-  if (activeSection === "security") {
-    return (
-      <SettingsPanel
-        description="Correo, contrasena y protecciones de acceso."
-        icon={ShieldCheck}
-        title="Seguridad"
-      >
-        <div className="grid gap-3">
-          {[
-            {
-              icon: Mail,
-              title: "Cambiar correo",
-              description: "Requiere confirmacion por email antes de aplicar.",
-            },
-            {
-              icon: KeyRound,
-              title: "Cambiar contrasena",
-              description: "Se enviara un flujo seguro de recuperacion.",
-            },
-            {
-              icon: ShieldCheck,
-              title: "Verificacion adicional",
-              description: "Preparado para activar MFA en una fase posterior.",
-            },
-          ].map((item) => {
-            const Icon = item.icon;
-
-            return (
-              <div
-                className="flex flex-col gap-4 rounded-card border border-white/10 bg-white/[0.025] p-4 sm:flex-row sm:items-center sm:justify-between"
-                key={item.title}
-              >
-                <div className="flex gap-3">
-                  <Icon
-                    aria-hidden="true"
-                    className="mt-1 text-brand-purple"
-                    size={20}
-                  />
-                  <div>
-                    <p className="font-medium">{item.title}</p>
-                    <p className="mt-1 text-sm text-text-secondary">
-                      {item.description}
-                    </p>
-                  </div>
-                </div>
-                <DisabledAction>Configurar</DisabledAction>
-              </div>
-            );
-          })}
-        </div>
-      </SettingsPanel>
-    );
-  }
-
-  if (activeSection === "subscription") {
-    return (
-      <SettingsPanel
-        description="Estado de tu plan, acceso y proximos cambios."
-        icon={CreditCard}
-        title="Suscripcion"
-        action={
-          <Link
-            className="inline-flex min-h-10 items-center justify-center rounded-button bg-brand-gradient px-4 text-sm font-medium text-white transition hover:brightness-110"
-            href="/planes"
-          >
-            Cambiar plan
-          </Link>
-        }
-      >
-        <div className="rounded-card border border-brand-purple/35 bg-brand-purple/10 p-4">
-          <p className="text-sm text-text-secondary">Plan actual</p>
-          <p className="mt-2 text-2xl font-semibold">{plan.name}</p>
-          <p className="mt-2 text-sm leading-6 text-text-secondary">
-            {plan.description}
-          </p>
-          <div className="mt-4 grid gap-2 text-sm text-text-secondary">
-            <p>Estado: {data.subscription?.status ?? "Activo visual"}</p>
-            <p>
-              Renovacion: {formatDate(data.subscription?.current_period_end ?? null)}
-            </p>
-          </div>
-        </div>
-        <div className="mt-4 grid gap-3 md:grid-cols-3">
-          {planOrder
-            .filter((planKey) => planKey !== currentPlan)
-            .slice(0, 3)
-            .map((planKey) => (
-              <Link
-                className="flex items-center justify-between rounded-card border border-white/10 bg-white/[0.025] p-4 text-sm transition hover:border-brand-purple/50 hover:bg-white/[0.045]"
-                href={`/planes?plan=${planKey}`}
-                key={planKey}
-              >
-                <span>
-                  <span className="block font-medium">{plans[planKey].name}</span>
-                  <span className="mt-1 block text-text-secondary">
-                    USD {plans[planKey].monthlyPriceUsd.toFixed(2)}/mes
-                  </span>
-                </span>
-                <ChevronRight aria-hidden="true" size={18} />
-              </Link>
-            ))}
-        </div>
-      </SettingsPanel>
-    );
-  }
-
-  if (activeSection === "billing") {
-    return (
-      <SettingsPanel
-        description="Historial de pagos y documentos fiscales."
-        icon={ReceiptText}
-        title="Pagos y facturas"
-      >
-        <div className="rounded-card border border-dashed border-white/15 bg-white/[0.025] p-6 text-center">
-          <ReceiptText
-            aria-hidden="true"
-            className="mx-auto text-text-muted"
-            size={30}
-          />
-          <h3 className="mt-4 font-semibold">Sin facturas todavia</h3>
-          <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-text-secondary">
-            El proveedor de pagos esta deshabilitado hasta definir la pasarela.
-            No hay cobros reales registrados ni facturas disponibles.
-          </p>
-          <div className="mt-5">
-            <DisabledAction>
-              <Download aria-hidden="true" className="mr-2" size={16} />
-              Descargar factura
-            </DisabledAction>
-          </div>
-        </div>
-      </SettingsPanel>
-    );
-  }
-
-  return (
-    <SettingsPanel
-      description="Ajustes de comunicacion y experiencia de aprendizaje."
-      icon={SlidersHorizontal}
-      title="Preferencias"
-      action={<DisabledAction>Guardar preferencias</DisabledAction>}
-    >
-      <div className="grid gap-3">
-        {[
-          {
-            title: "Recordatorios de aprendizaje",
-            description: "Recibir avisos suaves para continuar libros pendientes.",
-            enabled: true,
-          },
-          {
-            title: "Resumen semanal",
-            description: "Enviar un correo con avance, logros y recomendaciones.",
-            enabled: false,
-          },
-          {
-            title: "Recomendaciones con IA",
-            description: "Usar tu progreso para ordenar sugerencias dentro de Ceoteca.",
-            enabled: true,
-          },
-        ].map((item) => (
-          <div
-            className="flex items-center justify-between gap-4 rounded-card border border-white/10 bg-white/[0.025] p-4"
-            key={item.title}
-          >
-            <div>
-              <p className="font-medium">{item.title}</p>
-              <p className="mt-1 text-sm text-text-secondary">
-                {item.description}
-              </p>
-            </div>
-            <button
-              aria-pressed={item.enabled}
-              className={cn(
-                "h-7 w-12 rounded-full border p-1 transition",
-                item.enabled
-                  ? "border-brand-purple/50 bg-brand-purple/35"
-                  : "border-white/10 bg-white/[0.04]",
-              )}
-              disabled
-              type="button"
-            >
-              <span
-                className={cn(
-                  "block h-5 w-5 rounded-full bg-white transition",
-                  item.enabled && "translate-x-5",
-                )}
-              />
-            </button>
-          </div>
-        ))}
-      </div>
-    </SettingsPanel>
-  );
-}
-
-function BottomNavigation() {
-  const [isCollapsed, setIsCollapsed] = useState(false);
-
-  return (
-    <div className="fixed bottom-5 left-1/2 z-40 w-[min(94vw,1120px)] -translate-x-1/2">
-      {isCollapsed ? (
-        <button
-          aria-label="Mostrar menu"
-          className="mx-auto flex min-h-14 items-center gap-3 rounded-full border border-brand-purple/45 bg-[#080915]/92 px-5 text-sm text-text-primary shadow-[0_0_38px_rgba(124,58,237,0.28)] backdrop-blur-xl transition hover:border-brand-purple/80"
-          onClick={() => setIsCollapsed(false)}
-          type="button"
-        >
-          <User aria-hidden="true" className="text-brand-purple" size={22} />
-          Menu
-          <ChevronsUp aria-hidden="true" size={18} />
-        </button>
-      ) : (
-        <nav className="relative rounded-[24px] border border-white/10 bg-[#080915]/92 px-4 pb-3 pt-4 shadow-ambient backdrop-blur-xl">
-          <button
-            aria-label="Ocultar menu"
-            className="absolute -top-4 right-5 grid h-8 w-8 place-items-center rounded-full border border-white/10 bg-[#101121] text-text-secondary shadow-ambient transition hover:border-brand-purple/60 hover:text-white"
-            onClick={() => setIsCollapsed(true)}
-            type="button"
-          >
-            <ChevronsDown aria-hidden="true" size={16} />
-          </button>
-
-          <div className="grid grid-cols-5 items-center">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isCenter = item.label === "IA";
-
-              return (
-                <Link
-                  className={cn(
-                    "flex min-h-14 flex-col items-center justify-center gap-1 rounded-button px-2 py-2 text-xs text-text-secondary transition hover:text-white md:flex-row md:text-base",
-                    item.active && "text-brand-purple",
-                    isCenter &&
-                      "-mt-11 mx-auto h-[78px] w-[78px] rounded-full border border-brand-purple/70 bg-brand-purple/20 text-brand-purple shadow-[0_0_45px_rgba(124,58,237,0.55)] md:flex-col md:text-sm",
-                  )}
-                  href={item.href}
-                  key={item.label}
-                >
-                  <Icon aria-hidden="true" size={isCenter ? 28 : 24} />
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
-          </div>
-        </nav>
-      )}
-    </div>
   );
 }
 
 export function ProfileSettingsView() {
   const [state, setState] = useState<ViewState>({ status: "loading" });
-  const [activeSection, setActiveSection] =
-    useState<SettingsSection>("account");
+  const [isAvatarPickerOpen, setIsAvatarPickerOpen] = useState(false);
+  const [isSavingAvatar, setIsSavingAvatar] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -1020,7 +762,7 @@ export function ProfileSettingsView() {
             status: "ready",
             data: createDemoProfileData(),
             notice:
-              "No pudimos cargar Supabase en esta vista. Mostramos una estructura demo para mantener el flujo navegable.",
+              "No pudimos cargar Supabase en esta vista. Mostramos datos demo para mantener el flujo navegable.",
           });
         }
       }
@@ -1033,10 +775,56 @@ export function ProfileSettingsView() {
     };
   }, []);
 
+  async function saveAvatar(avatarUrl: string) {
+    if (state.status !== "ready") {
+      return;
+    }
+
+    setAvatarError(null);
+    setIsSavingAvatar(true);
+
+    try {
+      if (!avatarOptions.includes(avatarUrl as (typeof avatarOptions)[number])) {
+        throw new Error("Selecciona una imagen valida.");
+      }
+
+      if (!state.data.isDemo) {
+        const supabase = createBrowserSupabaseClient();
+        const { error } = await supabase
+          .from("profiles")
+          .update({ avatar_url: avatarUrl })
+          .eq("id", state.data.userId);
+
+        if (error) {
+          throw error;
+        }
+      }
+
+      setState({
+        status: "ready",
+        data: {
+          ...state.data,
+          profile: {
+            ...state.data.profile,
+            avatar_url: avatarUrl,
+          },
+        },
+      });
+      setIsAvatarPickerOpen(false);
+    } catch (caughtError) {
+      setAvatarError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "No pudimos guardar la imagen.",
+      );
+    } finally {
+      setIsSavingAvatar(false);
+    }
+  }
+
   if (state.status === "loading") {
     return (
       <main className="min-h-screen bg-[#03040b] text-text-primary">
-        <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_20%_8%,rgba(124,58,237,0.18),transparent_28%),linear-gradient(180deg,#02030a_0%,#050612_52%,#04040a_100%)]" />
         <section className="mx-auto w-full max-w-[1180px] px-5 py-8 md:px-8">
           <Logo className="[&>span]:text-[15px] [&>span]:tracking-[0.34em]" />
           <Card className="mt-10 min-h-[420px] animate-pulse rounded-[18px] bg-white/[0.035] p-8">
@@ -1055,7 +843,6 @@ export function ProfileSettingsView() {
   if (state.status === "unauthorized") {
     return (
       <main className="min-h-screen bg-[#03040b] text-text-primary">
-        <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_20%_8%,rgba(124,58,237,0.18),transparent_28%),linear-gradient(180deg,#02030a_0%,#050612_52%,#04040a_100%)]" />
         <section className="mx-auto w-full max-w-2xl px-5 py-8 md:px-8">
           <Logo className="[&>span]:text-[15px] [&>span]:tracking-[0.34em]" />
           <Card className="mt-12 rounded-[18px] bg-white/[0.035] p-8 text-center">
@@ -1064,7 +851,7 @@ export function ProfileSettingsView() {
             </span>
             <h1 className="mt-6 text-3xl font-semibold">Inicia sesion</h1>
             <p className="mt-3 text-sm leading-7 text-text-secondary">
-              Tu perfil, progreso y ajustes pertenecen a tu cuenta privada.
+              Tu perfil y progreso pertenecen a tu cuenta privada.
             </p>
             <Link
               className="mt-7 inline-flex min-h-12 items-center justify-center rounded-button bg-brand-gradient px-5 text-sm font-medium text-white transition hover:brightness-110"
@@ -1085,46 +872,33 @@ export function ProfileSettingsView() {
   const completedBooks = data.progress.filter((item) => item.completed).length;
   const averageProgress = getAverageProgress(data.progress);
   const relativeLevel = getRelativeLevel(averageProgress, completedBooks);
+  const activeDays = getActiveDays(data.progress);
   const initials = getInitials(displayName, data.email);
   const chatLimit = plan.chatMonthlyLimit;
-  const activeDays = getActiveDays(data.progress);
-
   const badges = [
     {
       title: "Primer paso",
-      description: "Comenzaste tu primera experiencia de aprendizaje.",
+      description: "Comenzaste tu viaje de aprendizaje.",
       icon: Sparkles,
       unlocked: data.progress.length > 0,
     },
     {
-      title: "Finalizador",
-      description: "Completaste al menos un libro interactivo.",
-      icon: Trophy,
-      unlocked: completedBooks > 0,
-    },
-    {
-      title: "Constancia",
-      description: "Mantienes actividad reciente en tu cuenta.",
-      icon: LineChart,
-      unlocked: data.progress.some((item) => item.updated_at),
-    },
-    {
       title: "Explorador",
-      description: "Probaste tres o mas experiencias de la biblioteca.",
+      description: `Exploraste ${data.progress.length} libros.`,
       icon: LibraryBig,
       unlocked: data.progress.length >= 3,
     },
     {
-      title: "Conversador IA",
-      description: "Usaste el chat contextual para aprender mejor.",
+      title: "Curioso",
+      description: "Hiciste tu primera pregunta a la IA.",
       icon: Bot,
       unlocked: data.chatQuestionsThisMonth > 0,
     },
     {
-      title: "Cuenta Pro",
-      description: "Activaste un plan con audio y chat incluidos.",
-      icon: Crown,
-      unlocked: currentPlan !== "free",
+      title: "Constante",
+      description: "Mantienes actividad de aprendizaje.",
+      icon: Flame,
+      unlocked: activeDays > 0,
     },
   ];
 
@@ -1156,20 +930,15 @@ export function ProfileSettingsView() {
             <div className="relative mx-auto h-64 w-64 md:mx-0">
               <div className="absolute inset-0 rounded-full border-4 border-brand-purple shadow-[0_0_48px_rgba(124,58,237,0.55)]" />
               <div className="absolute inset-3 grid place-items-center overflow-hidden rounded-full bg-gradient-to-br from-slate-700 via-slate-500 to-slate-900 text-6xl font-semibold">
-                {data.profile.avatar_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    alt=""
-                    className="h-full w-full object-cover"
-                    src={data.profile.avatar_url}
-                  />
-                ) : (
-                  initials
-                )}
+                <AvatarImage
+                  avatarUrl={data.profile.avatar_url}
+                  initials={initials}
+                />
               </div>
               <button
-                aria-label="Editar foto de perfil"
-                className="absolute bottom-1 right-5 grid h-16 w-16 place-items-center rounded-full border border-white/10 bg-[#101321] text-white shadow-ambient"
+                aria-label="Cambiar imagen de perfil"
+                className="absolute bottom-1 right-5 grid h-16 w-16 place-items-center rounded-full border border-white/10 bg-[#101321] text-white shadow-ambient transition hover:border-brand-purple/70"
+                onClick={() => setIsAvatarPickerOpen(true)}
                 type="button"
               >
                 <Pencil aria-hidden="true" size={22} />
@@ -1254,71 +1023,6 @@ export function ProfileSettingsView() {
           <HelpPanel />
         </section>
 
-        <section className="mt-7" id="ajustes">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-sm font-medium uppercase tracking-[0.22em] text-brand-purple">
-                Ajustes
-              </p>
-              <h2 className="mt-2 text-2xl font-semibold">
-                Centro de cuenta
-              </h2>
-            </div>
-            <p className="max-w-xl text-sm leading-6 text-text-secondary">
-              Selecciona una seccion para revisar configuracion, seguridad,
-              suscripcion, pagos o preferencias.
-            </p>
-          </div>
-          <div className="mt-5 grid gap-5 lg:grid-cols-[320px_1fr]">
-            <Card className="h-fit rounded-[18px] bg-white/[0.035] p-3">
-              <nav aria-label="Menu de ajustes" className="grid gap-2">
-                {settingsSections.map((section) => {
-                  const Icon = section.icon;
-                  const isActive = activeSection === section.key;
-
-                  return (
-                    <button
-                      className={cn(
-                        "flex min-h-16 items-center gap-3 rounded-card border px-4 text-left transition",
-                        isActive
-                          ? "border-brand-purple/55 bg-brand-purple/15 text-white"
-                          : "border-transparent text-text-secondary hover:border-white/10 hover:bg-white/[0.04] hover:text-white",
-                      )}
-                      key={section.key}
-                      onClick={() => setActiveSection(section.key)}
-                      type="button"
-                    >
-                      <span
-                        className={cn(
-                          "grid h-10 w-10 shrink-0 place-items-center rounded-button",
-                          isActive
-                            ? "bg-brand-purple/25 text-brand-purple"
-                            : "bg-white/[0.05]",
-                        )}
-                      >
-                        <Icon aria-hidden="true" size={19} />
-                      </span>
-                      <span className="min-w-0">
-                        <span className="block font-medium">{section.label}</span>
-                        <span className="mt-1 block truncate text-xs text-text-muted">
-                          {section.description}
-                        </span>
-                      </span>
-                    </button>
-                  );
-                })}
-              </nav>
-            </Card>
-
-            <SettingsContent
-              activeSection={activeSection}
-              currentPlan={currentPlan}
-              data={data}
-              displayName={displayName}
-            />
-          </div>
-        </section>
-
         <footer className="mt-10 border-t border-white/10 py-8 text-sm text-text-muted">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <p>© 2026 Ceoteca. Todos los derechos reservados.</p>
@@ -1345,6 +1049,17 @@ export function ProfileSettingsView() {
           </div>
         </footer>
       </section>
+
+      {isAvatarPickerOpen ? (
+        <AvatarPicker
+          currentAvatar={data.profile.avatar_url}
+          error={avatarError}
+          initials={initials}
+          isSaving={isSavingAvatar}
+          onClose={() => setIsAvatarPickerOpen(false)}
+          onSelect={(avatarUrl) => void saveAvatar(avatarUrl)}
+        />
+      ) : null}
 
       <BottomNavigation />
     </main>
