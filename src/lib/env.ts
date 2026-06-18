@@ -44,3 +44,19 @@ export const serverEnv = serverEnvSchema.parse({
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
 });
+
+if (!clientEnv.NEXT_PUBLIC_DEMO_MODE) {
+  const missingSupabaseVars = [
+    ["NEXT_PUBLIC_SUPABASE_URL", clientEnv.NEXT_PUBLIC_SUPABASE_URL],
+    ["NEXT_PUBLIC_SUPABASE_ANON_KEY", clientEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY],
+    ["SUPABASE_SERVICE_ROLE_KEY", serverEnv.SUPABASE_SERVICE_ROLE_KEY],
+  ].filter(([, value]) => !value);
+
+  if (missingSupabaseVars.length > 0) {
+    throw new Error(
+      `Faltan variables de Supabase para modo real: ${missingSupabaseVars
+        .map(([key]) => key)
+        .join(", ")}`,
+    );
+  }
+}

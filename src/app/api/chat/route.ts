@@ -5,12 +5,11 @@ import { plans } from "@/config/plans";
 import { getBookBySlug } from "@/data/books";
 import { jsonData, jsonError } from "@/lib/api/response";
 import { demoUser } from "@/lib/auth/demo";
+import { createChatRepository } from "@/lib/chat/repository";
 import { createAIProvider } from "@/lib/openai/provider";
 import { canAccessFeature } from "@/lib/permissions";
 import { checkRateLimit } from "@/lib/rate-limit/memory";
 import { chatRequestSchema } from "@/lib/validation/chat";
-
-const demoMonthlyUsage = new Map<string, number>();
 
 function getFieldErrors(error: ZodError) {
   const flattened = error.flatten().fieldErrors;
@@ -79,8 +78,8 @@ export async function POST(request: NextRequest) {
   }
 
   const plan = plans[demoUser.plan];
-  const usageKey = `${demoUser.id}:${new Date().toISOString().slice(0, 7)}`;
-  const questionCount = demoMonthlyUsage.get(usageKey) ?? 0;
+  const chatRepository = createChatRepository();
+  const questionCount = await chatRepository.getUsage(demoUser.id, book.id);
 
   if (plan.chatMonthlyLimit !== null && questionCount >= plan.chatMonthlyLimit) {
     return jsonError(
@@ -100,8 +99,13 @@ export async function POST(request: NextRequest) {
       conversation: parsed.data.conversation,
     });
 
-    const nextCount = questionCount + 1;
-    demoMonthlyUsage.set(usageKey, nextCount);
+    const nextCount = await chatRepository.incrementUsage(demoUser.id, book.id);
+    await chatRepository.persistMessages({
+      userId: demoUser.id,
+      bookId: book.id,
+      userMessage: parsed.data.message,
+      assistantMessage: result.message,
+    });
 
     return jsonData({
       message: result.message,
