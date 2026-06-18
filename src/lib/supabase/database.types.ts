@@ -14,6 +14,7 @@ export type Database = {
           id: string;
           full_name: string | null;
           avatar_url: string | null;
+          birth_date: string | null;
           plan: "free" | "pro" | "unlimited" | "founder";
           founder: boolean;
           created_at: string;
@@ -23,12 +24,14 @@ export type Database = {
           id: string;
           full_name?: string | null;
           avatar_url?: string | null;
+          birth_date?: string | null;
           plan?: "free" | "pro" | "unlimited" | "founder";
           founder?: boolean;
         };
         Update: {
           full_name?: string | null;
           avatar_url?: string | null;
+          birth_date?: string | null;
         };
         Relationships: [];
       };

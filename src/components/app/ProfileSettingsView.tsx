@@ -129,6 +129,7 @@ function createDemoProfileData(): ProfileData {
       id: "demo-user",
       full_name: "Andres Ramirez",
       avatar_url: avatarOptions[0],
+      birth_date: null,
       plan: "free",
       founder: false,
       created_at: now,
