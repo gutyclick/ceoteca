@@ -188,9 +188,9 @@ function Toggle({
   disabled?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-card border border-white/10 bg-white/[0.025] p-4">
+    <div className="flex items-center justify-between gap-4 rounded-[12px] border border-white/10 bg-white/[0.025] p-3.5">
       <div>
-        <p className="font-medium">{label}</p>
+        <p className="text-sm font-medium">{label}</p>
         <p className="mt-1 text-sm leading-6 text-text-secondary">{description}</p>
       </div>
       <button
@@ -261,7 +261,7 @@ function SettingsRow({
   return (
     <button
       className={cn(
-        "flex w-full items-center gap-5 rounded-card border px-4 py-4 text-left transition",
+        "flex w-full items-center gap-3 rounded-[12px] border px-3 py-3 text-left transition",
         active
           ? "border-brand-purple/55 bg-brand-purple/15 text-white"
           : "border-transparent hover:border-white/10 hover:bg-white/[0.035] hover:text-brand-purple",
@@ -271,19 +271,19 @@ function SettingsRow({
     >
       <span
         className={cn(
-          "grid h-14 w-14 shrink-0 place-items-center rounded-[16px] border",
+          "grid h-10 w-10 shrink-0 place-items-center rounded-[10px] border",
           iconClass,
         )}
       >
-        <Icon aria-hidden="true" size={25} />
+        <Icon aria-hidden="true" size={19} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block font-semibold">{item.title}</span>
-        <span className="mt-1 block text-sm leading-5 text-text-secondary">
+        <span className="block text-sm font-semibold">{item.title}</span>
+        <span className="mt-0.5 block text-xs leading-5 text-text-secondary">
           {item.description}
         </span>
       </span>
-      <ChevronRight aria-hidden="true" className="text-text-secondary" size={22} />
+      <ChevronRight aria-hidden="true" className="text-text-secondary" size={17} />
     </button>
   );
 }
@@ -619,7 +619,7 @@ export function SettingsView() {
     <main className="min-h-screen overflow-hidden bg-[#03040b] pb-36 text-text-primary">
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_18%_8%,rgba(124,58,237,0.18),transparent_28%),radial-gradient(circle_at_76%_18%,rgba(79,99,255,0.12),transparent_30%),linear-gradient(180deg,#02030a_0%,#050612_52%,#04040a_100%)]" />
 
-      <section className="mx-auto w-full max-w-[1220px] px-5 pt-7 md:px-8">
+      <section className="mx-auto w-full max-w-[1280px] px-5 pt-7 md:px-8">
         <header className="flex items-center justify-between">
           <Logo className="[&>span]:text-[15px] [&>span]:tracking-[0.34em]" />
           <button
@@ -632,41 +632,41 @@ export function SettingsView() {
           </button>
         </header>
 
-        <section className="mt-14 grid gap-8 lg:grid-cols-[1fr_360px] lg:items-center">
-          <div className="flex items-start gap-6">
+        <section className="mt-10 grid gap-8 lg:grid-cols-[1fr_320px] lg:items-center">
+          <div className="flex items-start gap-5">
             <button
               aria-label="Volver"
-              className="mt-4 text-brand-purple transition hover:text-white"
+              className="mt-2 grid h-11 w-11 place-items-center rounded-button border border-white/10 bg-white/[0.035] text-brand-purple transition hover:text-white"
               onClick={() => router.back()}
               type="button"
             >
-              <ChevronLeft aria-hidden="true" size={42} />
+              <ChevronLeft aria-hidden="true" size={24} />
             </button>
             <div>
-              <h1 className="text-5xl font-semibold md:text-6xl">Ajustes</h1>
-              <p className="mt-6 text-xl text-text-secondary md:text-2xl">
+              <h1 className="text-4xl font-semibold md:text-5xl">Ajustes</h1>
+              <p className="mt-3 text-base text-text-secondary md:text-lg">
                 Administra tu cuenta y preferencias
               </p>
             </div>
           </div>
 
-          <div className="relative hidden min-h-48 lg:block">
-            <div className="absolute right-8 top-8 h-28 w-28 rotate-12 rounded-[28px] bg-brand-gradient shadow-[0_0_55px_rgba(124,58,237,0.55)]" />
-            <div className="absolute right-0 top-16 h-24 w-56 rounded-[26px] border border-white/10 bg-white/[0.055]" />
-            <div className="absolute right-16 top-20 h-7 w-24 rounded-full bg-black/50">
-              <span className="ml-auto block h-7 w-7 rounded-full bg-brand-purple" />
+          <div className="relative hidden min-h-36 lg:block">
+            <div className="absolute right-12 top-6 h-20 w-20 rotate-12 rounded-[22px] bg-brand-gradient shadow-[0_0_45px_rgba(124,58,237,0.48)]" />
+            <div className="absolute right-0 top-12 h-20 w-48 rounded-[22px] border border-white/10 bg-white/[0.055]" />
+            <div className="absolute right-12 top-16 h-5 w-20 rounded-full bg-black/50">
+              <span className="ml-auto block h-5 w-5 rounded-full bg-brand-purple" />
             </div>
             <Settings
               aria-hidden="true"
-              className="absolute right-24 top-14 text-white drop-shadow-[0_0_20px_rgba(124,58,237,0.65)]"
-              size={92}
+              className="absolute right-[86px] top-9 text-white drop-shadow-[0_0_20px_rgba(124,58,237,0.65)]"
+              size={66}
             />
           </div>
         </section>
 
-        <section className="mt-12 grid gap-6 lg:grid-cols-[390px_1fr]">
-          <Card className="h-fit rounded-[24px] bg-white/[0.035] p-4">
-            <nav aria-label="Secciones de configuracion" className="grid gap-2">
+        <section className="mt-8 grid gap-6 lg:grid-cols-[300px_1fr]">
+          <Card className="h-fit rounded-[18px] bg-white/[0.035] p-3 lg:sticky lg:top-6">
+            <nav aria-label="Secciones de configuracion" className="grid gap-1.5">
               {settingsItems.map((item) => (
                 <SettingsRow
                   active={activeSection === item.key}
@@ -678,20 +678,20 @@ export function SettingsView() {
             </nav>
           </Card>
 
-          <Card className="rounded-[24px] bg-white/[0.035] p-6 md:p-8">
-            <div className="flex items-start gap-4">
-              <span className="grid h-14 w-14 shrink-0 place-items-center rounded-[16px] border border-brand-purple/25 bg-brand-purple/15 text-brand-purple">
-                <SelectedIcon aria-hidden="true" size={26} />
+          <Card className="rounded-[18px] bg-white/[0.035] p-5 md:p-6">
+            <div className="flex items-start gap-3 border-b border-white/10 pb-5">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[12px] border border-brand-purple/25 bg-brand-purple/15 text-brand-purple">
+                <SelectedIcon aria-hidden="true" size={21} />
               </span>
               <div>
-                <h2 className="text-3xl font-semibold">{selectedItem.title}</h2>
-                <p className="mt-2 text-sm leading-6 text-text-secondary">
+                <h2 className="text-2xl font-semibold">{selectedItem.title}</h2>
+                <p className="mt-1 text-sm leading-6 text-text-secondary">
                   {selectedItem.description}
                 </p>
               </div>
             </div>
 
-            <div className="mt-8">
+            <div className="mt-6">
               {activeSection === "profile" ? (
                 <section className="grid gap-5">
                   <div className="grid gap-4 md:grid-cols-2">
@@ -808,10 +808,10 @@ export function SettingsView() {
                     Actualizar contrasena
                   </button>
 
-                  <div className="rounded-card border border-white/10 bg-white/[0.025] p-5">
+                  <div className="rounded-[14px] border border-white/10 bg-white/[0.025] p-4">
                     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                       <div>
-                        <h3 className="text-xl font-semibold">
+                        <h3 className="text-lg font-semibold">
                           Autenticacion en dos pasos
                         </h3>
                         <p className="mt-2 text-sm leading-6 text-text-secondary">
@@ -1080,26 +1080,28 @@ export function SettingsView() {
           </Card>
         </section>
 
-        <Card className="mt-5 rounded-[24px] bg-white/[0.035] p-8">
-          <p className="text-lg text-text-secondary">Cuenta</p>
+        <Card className="mt-5 rounded-[18px] bg-white/[0.035] p-5 md:p-6">
+          <p className="text-sm font-medium uppercase tracking-[0.18em] text-text-muted">
+            Cuenta
+          </p>
           <button
-            className="mt-5 flex w-full items-center gap-7 rounded-card text-left text-danger transition hover:bg-danger/5"
+            className="mt-4 flex w-full items-center gap-4 rounded-card p-3 text-left text-danger transition hover:bg-danger/5"
             disabled={isSigningOut}
             onClick={() => void signOut()}
             type="button"
           >
-            <span className="grid h-20 w-20 shrink-0 place-items-center rounded-[18px] border border-danger/25 bg-danger/12 text-danger">
-              <LogOut aria-hidden="true" size={34} />
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-[12px] border border-danger/25 bg-danger/12 text-danger">
+              <LogOut aria-hidden="true" size={22} />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-2xl font-semibold">
+              <span className="block text-base font-semibold">
                 {isSigningOut ? "Cerrando sesion..." : "Cerrar sesion"}
               </span>
-              <span className="mt-2 block text-lg text-text-secondary">
+              <span className="mt-1 block text-sm text-text-secondary">
                 Sal de tu cuenta de Ceoteca
               </span>
             </span>
-            <ChevronRight aria-hidden="true" size={30} />
+            <ChevronRight aria-hidden="true" size={20} />
           </button>
           {signOutError ? (
             <div className="mt-5 rounded-card border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
