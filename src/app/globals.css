@@ -78,3 +78,74 @@ a {
 .ceoteca-section {
   padding-block: clamp(72px, 10vw, 144px);
 }
+
+.text-gradient-brand {
+  background: linear-gradient(135deg, #4f63ff 0%, #8b5cf6 45%, #ec4899 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.ambient-drift {
+  animation: ambient-drift 12s ease-in-out infinite alternate;
+}
+
+.float-soft {
+  animation: float-soft 7s ease-in-out infinite;
+}
+
+.pulse-glow {
+  animation: pulse-glow 4.5s ease-in-out infinite;
+}
+
+.reveal-up {
+  animation: reveal-up 700ms ease both;
+}
+
+@keyframes ambient-drift {
+  from {
+    transform: translate3d(-2%, -1%, 0) scale(1);
+  }
+
+  to {
+    transform: translate3d(2%, 2%, 0) scale(1.06);
+  }
+}
+
+@keyframes float-soft {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 24px 80px rgba(0, 0, 0, 0.45),
+      0 0 48px rgba(124, 58, 237, 0.16);
+  }
+
+  50% {
+    box-shadow:
+      0 30px 90px rgba(0, 0, 0, 0.5),
+      0 0 86px rgba(236, 72, 153, 0.22);
+  }
+}
+
+@keyframes reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
