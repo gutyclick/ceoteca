@@ -6,6 +6,7 @@ import {
   Bell,
   BookOpen,
   Bot,
+  CalendarDays,
   CheckCircle2,
   ChevronRight,
   ChevronsDown,
@@ -20,7 +21,9 @@ import {
   Lock,
   Mail,
   ReceiptText,
+  Settings,
   ShieldCheck,
+  SlidersHorizontal,
   Sparkles,
   Star,
   Trophy,
@@ -63,6 +66,8 @@ type ViewState =
   | { status: "unauthorized" }
   | { status: "ready"; data: ProfileData; notice?: string };
 
+type SettingsSection = "account" | "security" | "subscription" | "billing" | "preferences";
+
 const navItems = [
   { label: "Inicio", href: "/home", icon: Home, active: false },
   { label: "Biblioteca", href: "/biblioteca", icon: BookOpen, active: false },
@@ -72,6 +77,44 @@ const navItems = [
 ] as const;
 
 const planOrder: PlanKey[] = ["free", "pro", "unlimited", "founder"];
+
+const settingsSections: Array<{
+  key: SettingsSection;
+  label: string;
+  description: string;
+  icon: LucideIcon;
+}> = [
+  {
+    key: "account",
+    label: "Cuenta",
+    description: "Nombre, correo y datos basicos",
+    icon: UserRound,
+  },
+  {
+    key: "security",
+    label: "Seguridad",
+    description: "Contrasena y acceso",
+    icon: ShieldCheck,
+  },
+  {
+    key: "subscription",
+    label: "Suscripcion",
+    description: "Plan actual y cambios",
+    icon: CreditCard,
+  },
+  {
+    key: "billing",
+    label: "Pagos",
+    description: "Facturas e historial",
+    icon: ReceiptText,
+  },
+  {
+    key: "preferences",
+    label: "Preferencias",
+    description: "Notificaciones y aprendizaje",
+    icon: SlidersHorizontal,
+  },
+];
 
 function formatDate(value: string | null | undefined) {
   if (!value) {
@@ -106,6 +149,57 @@ function getAverageProgress(progress: ProgressItem[]) {
 
 function getRelativeLevel(averageProgress: number, completedBooks: number) {
   return Math.min(96, Math.max(18, completedBooks * 11 + averageProgress));
+}
+
+function getCategoryStats(progress: ProgressItem[]) {
+  const stats = new Map<string, { count: number; totalProgress: number }>();
+
+  progress.forEach((item) => {
+    const current = stats.get(item.bookCategory) ?? {
+      count: 0,
+      totalProgress: 0,
+    };
+
+    stats.set(item.bookCategory, {
+      count: current.count + 1,
+      totalProgress: current.totalProgress + item.progress,
+    });
+  });
+
+  return [...stats.entries()]
+    .map(([category, value]) => ({
+      category,
+      count: value.count,
+      average: Math.round(value.totalProgress / value.count),
+    }))
+    .sort((a, b) => b.count - a.count || b.average - a.average)
+    .slice(0, 5);
+}
+
+function getWeeklyActivity(progress: ProgressItem[]) {
+  const today = new Date();
+  const days = Array.from({ length: 7 }).map((_, index) => {
+    const date = new Date(today);
+    date.setDate(today.getDate() - (6 - index));
+    date.setHours(0, 0, 0, 0);
+
+    return {
+      key: date.toISOString().slice(0, 10),
+      label: new Intl.DateTimeFormat("es", { weekday: "short" }).format(date),
+      value: 0,
+    };
+  });
+
+  progress.forEach((item) => {
+    const key = new Date(item.updated_at).toISOString().slice(0, 10);
+    const day = days.find((entry) => entry.key === key);
+
+    if (day) {
+      day.value += Math.max(1, Math.round(item.progress / 25));
+    }
+  });
+
+  return days;
 }
 
 function createDemoProfileData(): ProfileData {
@@ -208,6 +302,200 @@ function MetricCard({
   );
 }
 
+function ProgressLineChart({ progress }: { progress: ProgressItem[] }) {
+  const ordered = [...progress]
+    .sort(
+      (a, b) =>
+        new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime(),
+    )
+    .slice(-8);
+  const points =
+    ordered.length > 0
+      ? ordered.map((item, index) => {
+          const x = ordered.length === 1 ? 50 : (index / (ordered.length - 1)) * 100;
+          const y = 100 - item.progress;
+
+          return { x, y, item };
+        })
+      : [{ x: 0, y: 100, item: null }];
+  const path = points
+    .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`)
+    .join(" ");
+
+  return (
+    <Card className="rounded-[18px] bg-white/[0.035] p-6">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-semibold">Evolucion de progreso</h2>
+          <p className="mt-2 text-sm text-text-secondary">
+            Basado en los libros con progreso guardado en tu cuenta.
+          </p>
+        </div>
+        <LineChart aria-hidden="true" className="text-brand-purple" size={24} />
+      </div>
+      <div className="mt-6 h-56 overflow-hidden rounded-card border border-white/10 bg-[#070813]/70 p-4">
+        {ordered.length > 0 ? (
+          <svg
+            aria-label="Grafico de progreso por libro"
+            className="h-full w-full overflow-visible"
+            preserveAspectRatio="none"
+            viewBox="0 0 100 100"
+          >
+            <defs>
+              <linearGradient id="profile-progress-line" x1="0" x2="1" y1="0" y2="0">
+                <stop stopColor="#a855f7" />
+                <stop offset="1" stopColor="#4f63ff" />
+              </linearGradient>
+            </defs>
+            {[25, 50, 75].map((line) => (
+              <line
+                key={line}
+                stroke="rgba(255,255,255,0.08)"
+                strokeWidth="0.5"
+                x1="0"
+                x2="100"
+                y1={line}
+                y2={line}
+              />
+            ))}
+            <path
+              d={`${path} L 100 100 L 0 100 Z`}
+              fill="rgba(124,58,237,0.12)"
+              vectorEffect="non-scaling-stroke"
+            />
+            <path
+              d={path}
+              fill="none"
+              stroke="url(#profile-progress-line)"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2.4"
+              vectorEffect="non-scaling-stroke"
+            />
+            {points.map((point) => (
+              <circle
+                cx={point.x}
+                cy={point.y}
+                fill="#f7f7fa"
+                key={`${point.x}-${point.y}`}
+                r="1.9"
+                stroke="#a855f7"
+                strokeWidth="1.2"
+                vectorEffect="non-scaling-stroke"
+              />
+            ))}
+          </svg>
+        ) : (
+          <div className="grid h-full place-items-center text-center text-sm leading-6 text-text-secondary">
+            Empieza un libro para generar tu grafico de progreso.
+          </div>
+        )}
+      </div>
+      <div className="mt-4 grid gap-2 text-xs text-text-secondary sm:grid-cols-2">
+        {ordered.slice(-4).map((item) => (
+          <div className="flex items-center justify-between gap-3" key={item.id}>
+            <span className="truncate">{item.bookTitle}</span>
+            <span className="text-brand-purple">{item.progress}%</span>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+function CategoryBarChart({ progress }: { progress: ProgressItem[] }) {
+  const stats = getCategoryStats(progress);
+  const maxCount = Math.max(...stats.map((item) => item.count), 1);
+
+  return (
+    <Card className="rounded-[18px] bg-white/[0.035] p-6">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-semibold">Categorias exploradas</h2>
+          <p className="mt-2 text-sm text-text-secondary">
+            Distribucion real segun tus libros iniciados.
+          </p>
+        </div>
+        <LibraryBig aria-hidden="true" className="text-brand-purple" size={24} />
+      </div>
+      <div className="mt-6 grid gap-4">
+        {stats.length > 0 ? (
+          stats.map((item) => (
+            <div key={item.category}>
+              <div className="mb-2 flex items-center justify-between text-sm">
+                <span>{item.category}</span>
+                <span className="text-text-secondary">
+                  {item.count} libro{item.count === 1 ? "" : "s"} - {item.average}%
+                </span>
+              </div>
+              <div className="h-3 overflow-hidden rounded-full bg-white/10">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-brand-purple to-brand-blue"
+                  style={{ width: `${Math.max(12, (item.count / maxCount) * 100)}%` }}
+                />
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="rounded-card border border-dashed border-white/15 bg-white/[0.025] p-5 text-sm leading-6 text-text-secondary">
+            Todavia no hay categorias con actividad.
+          </div>
+        )}
+      </div>
+    </Card>
+  );
+}
+
+function WeeklyActivityChart({
+  progress,
+  chatQuestionsThisMonth,
+}: {
+  progress: ProgressItem[];
+  chatQuestionsThisMonth: number;
+}) {
+  const days = getWeeklyActivity(progress);
+  const maxValue = Math.max(...days.map((day) => day.value), 1);
+
+  return (
+    <Card className="rounded-[18px] bg-white/[0.035] p-6">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-semibold">Actividad semanal</h2>
+          <p className="mt-2 text-sm text-text-secondary">
+            Movimientos recientes de lectura y preguntas IA del mes.
+          </p>
+        </div>
+        <CalendarDays aria-hidden="true" className="text-brand-purple" size={24} />
+      </div>
+      <div className="mt-6 flex h-44 items-end gap-3 rounded-card border border-white/10 bg-[#070813]/70 p-4">
+        {days.map((day) => (
+          <div className="flex h-full flex-1 flex-col justify-end gap-2" key={day.key}>
+            <div
+              className="min-h-2 rounded-full bg-gradient-to-t from-brand-blue to-brand-purple shadow-[0_0_18px_rgba(124,58,237,0.35)]"
+              style={{ height: `${Math.max(8, (day.value / maxValue) * 100)}%` }}
+            />
+            <span className="text-center text-[11px] capitalize text-text-muted">
+              {day.label}
+            </span>
+          </div>
+        ))}
+      </div>
+      <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
+        <div className="rounded-card border border-white/10 bg-white/[0.025] p-3">
+          <p className="text-text-secondary">Dias con actividad</p>
+          <p className="mt-1 text-xl font-semibold">
+            {days.filter((day) => day.value > 0).length}
+          </p>
+        </div>
+        <div className="rounded-card border border-white/10 bg-white/[0.025] p-3">
+          <p className="text-text-secondary">Preguntas IA</p>
+          <p className="mt-1 text-xl font-semibold">{chatQuestionsThisMonth}</p>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 function BadgeCard({
   icon: Icon,
   title,
@@ -299,6 +587,250 @@ function DisabledAction({ children }: { children: React.ReactNode }) {
   );
 }
 
+function SettingsContent({
+  activeSection,
+  data,
+  displayName,
+  currentPlan,
+}: {
+  activeSection: SettingsSection;
+  data: ProfileData;
+  displayName: string;
+  currentPlan: PlanKey;
+}) {
+  const plan = plans[currentPlan];
+
+  if (activeSection === "account") {
+    return (
+      <SettingsPanel
+        description="Datos basicos de tu cuenta y futuras opciones para editar perfil."
+        icon={UserRound}
+        title="Cuenta"
+        action={<DisabledAction>Guardar cambios</DisabledAction>}
+      >
+        <div className="grid gap-4 md:grid-cols-2">
+          <label className="grid gap-2 text-sm">
+            <span className="text-text-secondary">Nombre</span>
+            <input
+              className="min-h-12 rounded-button border border-white/10 bg-white/[0.035] px-4 text-text-primary outline-none"
+              disabled
+              readOnly
+              value={displayName}
+            />
+          </label>
+          <label className="grid gap-2 text-sm">
+            <span className="text-text-secondary">Correo</span>
+            <input
+              className="min-h-12 rounded-button border border-white/10 bg-white/[0.035] px-4 text-text-primary outline-none"
+              disabled
+              readOnly
+              value={data.email}
+            />
+          </label>
+        </div>
+        <p className="mt-4 text-xs leading-5 text-text-muted">
+          La edicion real de perfil se conectara a endpoints validados en
+          servidor antes de habilitar escritura.
+        </p>
+      </SettingsPanel>
+    );
+  }
+
+  if (activeSection === "security") {
+    return (
+      <SettingsPanel
+        description="Correo, contrasena y protecciones de acceso."
+        icon={ShieldCheck}
+        title="Seguridad"
+      >
+        <div className="grid gap-3">
+          {[
+            {
+              icon: Mail,
+              title: "Cambiar correo",
+              description: "Requiere confirmacion por email antes de aplicar.",
+            },
+            {
+              icon: KeyRound,
+              title: "Cambiar contrasena",
+              description: "Se enviara un flujo seguro de recuperacion.",
+            },
+            {
+              icon: ShieldCheck,
+              title: "Verificacion adicional",
+              description: "Preparado para activar MFA en una fase posterior.",
+            },
+          ].map((item) => {
+            const Icon = item.icon;
+
+            return (
+              <div
+                className="flex flex-col gap-4 rounded-card border border-white/10 bg-white/[0.025] p-4 sm:flex-row sm:items-center sm:justify-between"
+                key={item.title}
+              >
+                <div className="flex gap-3">
+                  <Icon
+                    aria-hidden="true"
+                    className="mt-1 text-brand-purple"
+                    size={20}
+                  />
+                  <div>
+                    <p className="font-medium">{item.title}</p>
+                    <p className="mt-1 text-sm text-text-secondary">
+                      {item.description}
+                    </p>
+                  </div>
+                </div>
+                <DisabledAction>Configurar</DisabledAction>
+              </div>
+            );
+          })}
+        </div>
+      </SettingsPanel>
+    );
+  }
+
+  if (activeSection === "subscription") {
+    return (
+      <SettingsPanel
+        description="Estado de tu plan, acceso y proximos cambios."
+        icon={CreditCard}
+        title="Suscripcion"
+        action={
+          <Link
+            className="inline-flex min-h-10 items-center justify-center rounded-button bg-brand-gradient px-4 text-sm font-medium text-white transition hover:brightness-110"
+            href="/planes"
+          >
+            Cambiar plan
+          </Link>
+        }
+      >
+        <div className="rounded-card border border-brand-purple/35 bg-brand-purple/10 p-4">
+          <p className="text-sm text-text-secondary">Plan actual</p>
+          <p className="mt-2 text-2xl font-semibold">{plan.name}</p>
+          <p className="mt-2 text-sm leading-6 text-text-secondary">
+            {plan.description}
+          </p>
+          <div className="mt-4 grid gap-2 text-sm text-text-secondary">
+            <p>Estado: {data.subscription?.status ?? "Activo visual"}</p>
+            <p>
+              Renovacion: {formatDate(data.subscription?.current_period_end ?? null)}
+            </p>
+          </div>
+        </div>
+        <div className="mt-4 grid gap-3 md:grid-cols-3">
+          {planOrder
+            .filter((planKey) => planKey !== currentPlan)
+            .slice(0, 3)
+            .map((planKey) => (
+              <Link
+                className="flex items-center justify-between rounded-card border border-white/10 bg-white/[0.025] p-4 text-sm transition hover:border-brand-purple/50 hover:bg-white/[0.045]"
+                href={`/planes?plan=${planKey}`}
+                key={planKey}
+              >
+                <span>
+                  <span className="block font-medium">{plans[planKey].name}</span>
+                  <span className="mt-1 block text-text-secondary">
+                    USD {plans[planKey].monthlyPriceUsd.toFixed(2)}/mes
+                  </span>
+                </span>
+                <ChevronRight aria-hidden="true" size={18} />
+              </Link>
+            ))}
+        </div>
+      </SettingsPanel>
+    );
+  }
+
+  if (activeSection === "billing") {
+    return (
+      <SettingsPanel
+        description="Historial de pagos y documentos fiscales."
+        icon={ReceiptText}
+        title="Pagos y facturas"
+      >
+        <div className="rounded-card border border-dashed border-white/15 bg-white/[0.025] p-6 text-center">
+          <ReceiptText
+            aria-hidden="true"
+            className="mx-auto text-text-muted"
+            size={30}
+          />
+          <h3 className="mt-4 font-semibold">Sin facturas todavia</h3>
+          <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-text-secondary">
+            El proveedor de pagos esta deshabilitado hasta definir la pasarela.
+            No hay cobros reales registrados ni facturas disponibles.
+          </p>
+          <div className="mt-5">
+            <DisabledAction>
+              <Download aria-hidden="true" className="mr-2" size={16} />
+              Descargar factura
+            </DisabledAction>
+          </div>
+        </div>
+      </SettingsPanel>
+    );
+  }
+
+  return (
+    <SettingsPanel
+      description="Ajustes de comunicacion y experiencia de aprendizaje."
+      icon={SlidersHorizontal}
+      title="Preferencias"
+      action={<DisabledAction>Guardar preferencias</DisabledAction>}
+    >
+      <div className="grid gap-3">
+        {[
+          {
+            title: "Recordatorios de aprendizaje",
+            description: "Recibir avisos suaves para continuar libros pendientes.",
+            enabled: true,
+          },
+          {
+            title: "Resumen semanal",
+            description: "Enviar un correo con avance, logros y recomendaciones.",
+            enabled: false,
+          },
+          {
+            title: "Recomendaciones con IA",
+            description: "Usar tu progreso para ordenar sugerencias dentro de Ceoteca.",
+            enabled: true,
+          },
+        ].map((item) => (
+          <div
+            className="flex items-center justify-between gap-4 rounded-card border border-white/10 bg-white/[0.025] p-4"
+            key={item.title}
+          >
+            <div>
+              <p className="font-medium">{item.title}</p>
+              <p className="mt-1 text-sm text-text-secondary">
+                {item.description}
+              </p>
+            </div>
+            <button
+              aria-pressed={item.enabled}
+              className={cn(
+                "h-7 w-12 rounded-full border p-1 transition",
+                item.enabled
+                  ? "border-brand-purple/50 bg-brand-purple/35"
+                  : "border-white/10 bg-white/[0.04]",
+              )}
+              disabled
+              type="button"
+            >
+              <span
+                className={cn(
+                  "block h-5 w-5 rounded-full bg-white transition",
+                  item.enabled && "translate-x-5",
+                )}
+              />
+            </button>
+          </div>
+        ))}
+      </div>
+    </SettingsPanel>
+  );
+}
+
 function BottomNavigation() {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -356,6 +888,8 @@ function BottomNavigation() {
 
 export function ProfileSettingsView() {
   const [state, setState] = useState<ViewState>({ status: "loading" });
+  const [activeSection, setActiveSection] =
+    useState<SettingsSection>("account");
 
   useEffect(() => {
     let isMounted = true;
@@ -690,194 +1224,40 @@ export function ProfileSettingsView() {
           />
         </section>
 
-        <section className="mt-7 grid gap-7 lg:grid-cols-[1fr_390px]">
-          <div className="space-y-7">
+        <section className="mt-7">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-sm font-medium uppercase tracking-[0.22em] text-brand-purple">
+                Analitica
+              </p>
+              <h2 className="mt-2 text-2xl font-semibold">
+                Estadisticas de aprendizaje
+              </h2>
+            </div>
+            <p className="max-w-xl text-sm leading-6 text-text-secondary">
+              Estas graficas se calculan con tu progreso guardado, categorias
+              exploradas y uso mensual de IA.
+            </p>
+          </div>
+          <div className="mt-5 grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
+            <ProgressLineChart progress={data.progress} />
+            <WeeklyActivityChart
+              chatQuestionsThisMonth={data.chatQuestionsThisMonth}
+              progress={data.progress}
+            />
+          </div>
+          <div className="mt-5 grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
+            <CategoryBarChart progress={data.progress} />
             <Card className="rounded-[18px] bg-white/[0.035] p-6">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-2xl font-semibold">Logros</h2>
+                  <h2 className="text-xl font-semibold">Actividad reciente</h2>
                   <p className="mt-2 text-sm text-text-secondary">
-                    Badges pensados para motivar progreso sin convertir el
-                    aprendizaje en ruido.
+                    Ultimos libros actualizados en tu cuenta.
                   </p>
                 </div>
-                <span className="rounded-full bg-white/[0.05] px-3 py-1 text-sm text-text-secondary">
-                  {badges.filter((badge) => badge.unlocked).length}/{badges.length}
-                </span>
+                <Settings aria-hidden="true" className="text-brand-purple" size={24} />
               </div>
-              <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {badges.map((badge) => (
-                  <BadgeCard
-                    description={badge.description}
-                    icon={badge.icon}
-                    key={badge.title}
-                    title={badge.title}
-                    unlocked={badge.unlocked}
-                  />
-                ))}
-              </div>
-            </Card>
-
-            <SettingsPanel
-              description="Datos basicos de tu cuenta y futuras opciones para editar perfil."
-              icon={UserRound}
-              title="Cuenta"
-              action={<DisabledAction>Guardar cambios</DisabledAction>}
-            >
-              <div className="grid gap-4 md:grid-cols-2">
-                <label className="grid gap-2 text-sm">
-                  <span className="text-text-secondary">Nombre</span>
-                  <input
-                    className="min-h-12 rounded-button border border-white/10 bg-white/[0.035] px-4 text-text-primary outline-none"
-                    disabled
-                    value={displayName}
-                    readOnly
-                  />
-                </label>
-                <label className="grid gap-2 text-sm">
-                  <span className="text-text-secondary">Correo</span>
-                  <input
-                    className="min-h-12 rounded-button border border-white/10 bg-white/[0.035] px-4 text-text-primary outline-none"
-                    disabled
-                    value={data.email}
-                    readOnly
-                  />
-                </label>
-              </div>
-              <p className="mt-4 text-xs leading-5 text-text-muted">
-                La edicion real de perfil se conectara a endpoints validados en
-                servidor antes de habilitar escritura.
-              </p>
-            </SettingsPanel>
-
-            <SettingsPanel
-              description="Correo, contrasena y protecciones de acceso."
-              icon={ShieldCheck}
-              title="Seguridad"
-            >
-              <div className="grid gap-3">
-                {[
-                  {
-                    icon: Mail,
-                    title: "Cambiar correo",
-                    description: "Requiere confirmacion por email antes de aplicar.",
-                  },
-                  {
-                    icon: KeyRound,
-                    title: "Cambiar contrasena",
-                    description: "Se enviara un flujo seguro de recuperacion.",
-                  },
-                  {
-                    icon: ShieldCheck,
-                    title: "Verificacion adicional",
-                    description: "Preparado para activar MFA en una fase posterior.",
-                  },
-                ].map((item) => {
-                  const Icon = item.icon;
-
-                  return (
-                    <div
-                      className="flex items-center justify-between gap-4 rounded-card border border-white/10 bg-white/[0.025] p-4"
-                      key={item.title}
-                    >
-                      <div className="flex gap-3">
-                        <Icon
-                          aria-hidden="true"
-                          className="mt-1 text-brand-purple"
-                          size={20}
-                        />
-                        <div>
-                          <p className="font-medium">{item.title}</p>
-                          <p className="mt-1 text-sm text-text-secondary">
-                            {item.description}
-                          </p>
-                        </div>
-                      </div>
-                      <DisabledAction>Configurar</DisabledAction>
-                    </div>
-                  );
-                })}
-              </div>
-            </SettingsPanel>
-          </div>
-
-          <aside className="space-y-7">
-            <SettingsPanel
-              description="Estado de tu plan, acceso y proximos cambios."
-              icon={CreditCard}
-              title="Suscripcion"
-              action={
-                <Link
-                  className="inline-flex min-h-10 items-center justify-center rounded-button bg-brand-gradient px-4 text-sm font-medium text-white transition hover:brightness-110"
-                  href="/planes"
-                >
-                  Cambiar plan
-                </Link>
-              }
-            >
-              <div className="rounded-card border border-brand-purple/35 bg-brand-purple/10 p-4">
-                <p className="text-sm text-text-secondary">Plan actual</p>
-                <p className="mt-2 text-2xl font-semibold">{plan.name}</p>
-                <p className="mt-2 text-sm leading-6 text-text-secondary">
-                  {plan.description}
-                </p>
-                <div className="mt-4 grid gap-2 text-sm text-text-secondary">
-                  <p>Estado: {data.subscription?.status ?? "Activo visual"}</p>
-                  <p>
-                    Renovacion:{" "}
-                    {formatDate(data.subscription?.current_period_end ?? null)}
-                  </p>
-                </div>
-              </div>
-              <div className="mt-4 grid gap-3">
-                {planOrder
-                  .filter((planKey) => planKey !== currentPlan)
-                  .slice(0, 3)
-                  .map((planKey) => (
-                    <Link
-                      className="flex items-center justify-between rounded-card border border-white/10 bg-white/[0.025] p-4 text-sm transition hover:border-brand-purple/50 hover:bg-white/[0.045]"
-                      href={`/planes?plan=${planKey}`}
-                      key={planKey}
-                    >
-                      <span>
-                        <span className="block font-medium">
-                          {plans[planKey].name}
-                        </span>
-                        <span className="mt-1 block text-text-secondary">
-                          USD {plans[planKey].monthlyPriceUsd.toFixed(2)}/mes
-                        </span>
-                      </span>
-                      <ChevronRight aria-hidden="true" size={18} />
-                    </Link>
-                  ))}
-              </div>
-            </SettingsPanel>
-
-            <SettingsPanel
-              description="Historial de pagos y documentos fiscales."
-              icon={ReceiptText}
-              title="Pagos y facturas"
-            >
-              <div className="rounded-card border border-dashed border-white/15 bg-white/[0.025] p-5 text-center">
-                <ReceiptText
-                  aria-hidden="true"
-                  className="mx-auto text-text-muted"
-                  size={28}
-                />
-                <h3 className="mt-4 font-semibold">Sin facturas todavia</h3>
-                <p className="mt-2 text-sm leading-6 text-text-secondary">
-                  El proveedor de pagos esta deshabilitado hasta definir la
-                  pasarela. No hay cobros reales registrados.
-                </p>
-                <DisabledAction>
-                  <Download aria-hidden="true" className="mr-2" size={16} />
-                  Descargar factura
-                </DisabledAction>
-              </div>
-            </SettingsPanel>
-
-            <Card className="rounded-[18px] bg-white/[0.035] p-6">
-              <h2 className="text-xl font-semibold">Actividad reciente</h2>
               <div className="mt-5 grid gap-3">
                 {data.progress.length > 0 ? (
                   data.progress.slice(0, 5).map((item) => (
@@ -914,7 +1294,100 @@ export function ProfileSettingsView() {
                 )}
               </div>
             </Card>
-          </aside>
+          </div>
+        </section>
+
+        <section className="mt-7">
+          <Card className="rounded-[18px] bg-white/[0.035] p-6">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-semibold">Logros</h2>
+                <p className="mt-2 text-sm text-text-secondary">
+                  Badges pensados para motivar progreso sin convertir el
+                  aprendizaje en ruido.
+                </p>
+              </div>
+              <span className="rounded-full bg-white/[0.05] px-3 py-1 text-sm text-text-secondary">
+                {badges.filter((badge) => badge.unlocked).length}/{badges.length}
+              </span>
+            </div>
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {badges.map((badge) => (
+                <BadgeCard
+                  description={badge.description}
+                  icon={badge.icon}
+                  key={badge.title}
+                  title={badge.title}
+                  unlocked={badge.unlocked}
+                />
+              ))}
+            </div>
+          </Card>
+        </section>
+
+        <section className="mt-7">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-sm font-medium uppercase tracking-[0.22em] text-brand-purple">
+                Ajustes
+              </p>
+              <h2 className="mt-2 text-2xl font-semibold">
+                Centro de cuenta
+              </h2>
+            </div>
+            <p className="max-w-xl text-sm leading-6 text-text-secondary">
+              Selecciona una seccion para revisar configuracion, seguridad,
+              suscripcion, pagos o preferencias.
+            </p>
+          </div>
+          <div className="mt-5 grid gap-5 lg:grid-cols-[320px_1fr]">
+            <Card className="h-fit rounded-[18px] bg-white/[0.035] p-3">
+              <nav aria-label="Menu de ajustes" className="grid gap-2">
+                {settingsSections.map((section) => {
+                  const Icon = section.icon;
+                  const isActive = activeSection === section.key;
+
+                  return (
+                    <button
+                      className={cn(
+                        "flex min-h-16 items-center gap-3 rounded-card border px-4 text-left transition",
+                        isActive
+                          ? "border-brand-purple/55 bg-brand-purple/15 text-white"
+                          : "border-transparent text-text-secondary hover:border-white/10 hover:bg-white/[0.04] hover:text-white",
+                      )}
+                      key={section.key}
+                      onClick={() => setActiveSection(section.key)}
+                      type="button"
+                    >
+                      <span
+                        className={cn(
+                          "grid h-10 w-10 shrink-0 place-items-center rounded-button",
+                          isActive
+                            ? "bg-brand-purple/25 text-brand-purple"
+                            : "bg-white/[0.05]",
+                        )}
+                      >
+                        <Icon aria-hidden="true" size={19} />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block font-medium">{section.label}</span>
+                        <span className="mt-1 block truncate text-xs text-text-muted">
+                          {section.description}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </nav>
+            </Card>
+
+            <SettingsContent
+              activeSection={activeSection}
+              currentPlan={currentPlan}
+              data={data}
+              displayName={displayName}
+            />
+          </div>
         </section>
 
         <footer className="mt-10 border-t border-white/10 py-8 text-sm text-text-muted">
