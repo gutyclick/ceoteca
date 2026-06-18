@@ -49,7 +49,6 @@ if (!clientEnv.NEXT_PUBLIC_DEMO_MODE) {
   const missingSupabaseVars = [
     ["NEXT_PUBLIC_SUPABASE_URL", clientEnv.NEXT_PUBLIC_SUPABASE_URL],
     ["NEXT_PUBLIC_SUPABASE_ANON_KEY", clientEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY],
-    ["SUPABASE_SERVICE_ROLE_KEY", serverEnv.SUPABASE_SERVICE_ROLE_KEY],
   ].filter(([, value]) => !value);
 
   if (missingSupabaseVars.length > 0) {
@@ -57,6 +56,17 @@ if (!clientEnv.NEXT_PUBLIC_DEMO_MODE) {
       `Faltan variables de Supabase para modo real: ${missingSupabaseVars
         .map(([key]) => key)
         .join(", ")}`,
+    );
+  }
+}
+
+export function assertSupabaseServiceRole() {
+  if (
+    !clientEnv.NEXT_PUBLIC_DEMO_MODE &&
+    !serverEnv.SUPABASE_SERVICE_ROLE_KEY
+  ) {
+    throw new Error(
+      "Falta SUPABASE_SERVICE_ROLE_KEY para operaciones administrativas de Supabase.",
     );
   }
 }

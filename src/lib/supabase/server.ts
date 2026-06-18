@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 
-import { clientEnv, serverEnv } from "@/lib/env";
+import { assertSupabaseServiceRole, clientEnv, serverEnv } from "@/lib/env";
 import type { Database } from "@/lib/supabase/database.types";
 
 export function createServerSupabaseClient(accessToken?: string) {
@@ -28,6 +28,8 @@ export function createServerSupabaseClient(accessToken?: string) {
 }
 
 export function createServiceSupabaseClient() {
+  assertSupabaseServiceRole();
+
   if (
     clientEnv.NEXT_PUBLIC_DEMO_MODE ||
     !clientEnv.NEXT_PUBLIC_SUPABASE_URL ||
