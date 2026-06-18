@@ -3,156 +3,154 @@
 import Link from "next/link";
 import {
   ArrowRight,
-  BarChart3,
   Bell,
   BookOpen,
   Bot,
-  Brain,
-  BriefcaseBusiness,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Clock3,
-  Crown,
   Flame,
   Home,
   LibraryBig,
-  LineChart,
   MessageCircle,
   Play,
   Star,
-  Target,
-  Trophy,
   User,
-  Zap,
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 
-import { BookCover } from "@/components/books/BookCover";
-import { ButtonLink } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Logo } from "@/components/ui/Logo";
-import type { Book, BookCategory } from "@/types";
 import { cn } from "@/lib/utils/cn";
+import type { Book } from "@/types";
 
 type HomeViewProps = {
   books: Book[];
 };
 
-type CategoryCard = {
-  category: BookCategory;
-  title: string;
-  detail: string;
-  icon: typeof BarChart3;
-  accent: string;
-};
-
-const categoryCards: CategoryCard[] = [
+const categoryCards = [
   {
-    category: "Finanzas",
     title: "Finanzas",
-    detail: "Dinero, inversion y criterio",
-    icon: LineChart,
-    accent: "from-emerald-300/25 via-emerald-500/10 to-cyan-500/10",
+    count: "95 libros",
+    icon: "💰",
+    className: "from-emerald-400/18 via-emerald-900/20 to-black",
+    border: "border-emerald-300/20",
   },
   {
-    category: "Productividad",
     title: "Productividad",
-    detail: "Foco, energia y sistemas",
-    icon: Zap,
-    accent: "from-blue-400/25 via-blue-600/10 to-indigo-500/10",
+    count: "112 libros",
+    icon: "⚡",
+    className: "from-blue-500/20 via-blue-950/35 to-black",
+    border: "border-blue-400/20",
   },
   {
-    category: "Emprendimiento",
     title: "Negocios",
-    detail: "Ventas, oferta y estrategia",
-    icon: BriefcaseBusiness,
-    accent: "from-orange-400/25 via-rose-500/10 to-orange-700/10",
+    count: "97 libros",
+    icon: "🚀",
+    className: "from-orange-500/22 via-red-950/30 to-black",
+    border: "border-orange-400/20",
   },
   {
-    category: "Psicología",
     title: "Mentalidad",
-    detail: "Decisiones, calma y sesgos",
-    icon: Brain,
-    accent: "from-cyan-300/25 via-teal-500/10 to-blue-600/10",
+    count: "124 libros",
+    icon: "🧠",
+    className: "from-cyan-400/20 via-teal-950/30 to-black",
+    border: "border-cyan-300/20",
   },
   {
-    category: "Liderazgo",
     title: "Liderazgo",
-    detail: "Influencia, equipos y voz",
-    icon: Target,
-    accent: "from-purple-400/25 via-fuchsia-500/10 to-violet-700/10",
+    count: "78 libros",
+    icon: "🎯",
+    className: "from-purple-500/22 via-violet-950/32 to-black",
+    border: "border-purple-300/20",
   },
-];
+] as const;
 
-const aiSuggestions = [
-  "Que leo si quiero ordenar mi dinero?",
-  "Como ser mas productivo sin agotarme?",
-  "Que libro me ayuda a crear mejores habitos?",
-  "Que deberia leer para liderar mejor?",
+const suggestions = [
+  "¿Como invertir con poco dinero?",
+  "¿Como ser mas productivo?",
+  "¿Como construir buenos habitos?",
+  "¿Como liderar mejor?",
 ] as const;
 
 const navItems = [
-  { href: "/home", label: "Inicio", icon: Home, active: true },
-  { href: "/biblioteca", label: "Biblioteca", icon: BookOpen, active: false },
-  { href: "/home#ia", label: "IA", icon: Bot, active: false },
-  { href: "/biblioteca", label: "Favoritos", icon: Star, active: false },
-  { href: "/planes", label: "Perfil", icon: User, active: false },
+  { label: "Inicio", href: "/home", icon: Home, active: true },
+  { label: "Biblioteca", href: "/biblioteca", icon: BookOpen, active: false },
+  { label: "IA", href: "/home#ia", icon: Bot, active: false },
+  { label: "Favoritos", href: "/biblioteca", icon: Star, active: false },
+  { label: "Perfil", href: "/planes", icon: User, active: false },
 ] as const;
 
-const popularCollections: Array<{
-  title: string;
-  icon: LucideIcon;
-  category: BookCategory;
-}> = [
-  { title: "Construye riqueza", icon: Trophy, category: "Finanzas" },
-  { title: "Emprende desde cero", icon: BriefcaseBusiness, category: "Emprendimiento" },
-  { title: "Aprende a vender", icon: MessageCircle, category: "Liderazgo" },
-  { title: "Piensa como CEO", icon: Crown, category: "Productividad" },
-  { title: "Productividad extrema", icon: Zap, category: "Productividad" },
-];
-
-const progressStats: Array<{
-  value: string;
-  label: string;
-  icon: LucideIcon;
-}> = [
-  { value: "23", label: "Libros explorados", icon: LibraryBig },
-  { value: "7.4", label: "Horas aprendidas", icon: CheckCircle2 },
-  { value: "12", label: "Dias seguidos", icon: Flame },
-  { value: "324", label: "Preguntas realizadas", icon: MessageCircle },
-];
-
-function getBooksByCategory(books: Book[], category: BookCategory) {
-  return books.filter((book) => book.category === category);
-}
-
 function getBookProgress(index: number) {
-  const values = [73, 35, 20, 58, 44];
-
-  return values[index % values.length];
+  return [73, 35, 20][index] ?? 28;
 }
 
 function getRemainingMinutes(book: Book, progress: number) {
   return Math.max(Math.ceil(book.readingTime * (1 - progress / 100)), 3);
 }
 
-function SectionHeader({ title }: { title: string }) {
+function getGradient(index: number) {
+  return [
+    "from-yellow-300/90 via-amber-500/80 to-orange-700/80",
+    "from-purple-400/85 via-violet-700/80 to-black",
+    "from-cyan-300/80 via-blue-700/70 to-black",
+    "from-emerald-300/80 via-teal-800/75 to-black",
+    "from-orange-300/85 via-red-800/75 to-black",
+  ][index % 5];
+}
+
+function MiniCover({
+  book,
+  index,
+  className,
+}: {
+  book: Book;
+  index: number;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "relative overflow-hidden rounded-md border border-white/15 bg-gradient-to-br p-3 shadow-[0_14px_35px_rgba(0,0,0,0.35)]",
+        getGradient(index),
+        className,
+      )}
+    >
+      <div className="absolute inset-0 bg-black/20" />
+      <div className="absolute -right-5 -top-5 h-16 w-16 rounded-full border border-white/25" />
+      <div className="relative z-10 flex h-full flex-col justify-between">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/70">
+          {book.category}
+        </p>
+        <div>
+          <h3 className="text-balance text-lg font-black uppercase leading-none text-white">
+            {book.title}
+          </h3>
+          <p className="mt-2 text-[11px] text-white/72">{book.author}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function HeaderControls({ title }: { title: string }) {
   return (
     <div className="flex items-center justify-between gap-4">
-      <h2 className="text-xl font-semibold md:text-2xl">{title}</h2>
-      <div className="flex items-center gap-2 text-sm text-brand-purple">
-        <Link href="/biblioteca">Ver todo</Link>
+      <h2 className="text-[22px] font-semibold tracking-normal">{title}</h2>
+      <div className="flex items-center gap-2">
+        <Link className="mr-2 text-sm text-brand-purple" href="/biblioteca">
+          Ver todo
+        </Link>
         <button
           aria-label="Anterior"
-          className="grid h-9 w-9 place-items-center rounded-full border border-white/10 bg-white/[0.04] text-text-secondary transition hover:text-text-primary"
+          className="grid h-8 w-8 place-items-center rounded-full bg-white/[0.06] text-text-secondary transition hover:text-white"
           type="button"
         >
           <ChevronLeft aria-hidden="true" size={17} />
         </button>
         <button
           aria-label="Siguiente"
-          className="grid h-9 w-9 place-items-center rounded-full border border-white/10 bg-white/[0.04] text-text-secondary transition hover:text-text-primary"
+          className="grid h-8 w-8 place-items-center rounded-full bg-white/[0.06] text-text-secondary transition hover:text-white"
           type="button"
         >
           <ChevronRight aria-hidden="true" size={17} />
@@ -163,13 +161,13 @@ function SectionHeader({ title }: { title: string }) {
 }
 
 export function HomeView({ books }: HomeViewProps) {
-  const featuredBook = books[0];
-  const recommendedBook =
-    books.find((book) => book.category === "Productividad") ?? featuredBook;
+  const primaryBook = books[0];
   const continueBooks = books.slice(0, 3);
   const trendingBooks = books.slice(0, 5);
+  const recommendedBook =
+    books.find((book) => book.slug.includes("deep")) ?? books[2] ?? primaryBook;
 
-  if (!featuredBook) {
+  if (!primaryBook) {
     return (
       <main className="min-h-screen bg-background text-text-primary">
         <section className="ceoteca-container ceoteca-section">
@@ -183,135 +181,131 @@ export function HomeView({ books }: HomeViewProps) {
   }
 
   return (
-    <main className="min-h-screen overflow-hidden bg-background pb-28 text-text-primary">
-      <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_18%_10%,rgba(124,58,237,0.16),transparent_32%),radial-gradient(circle_at_82%_18%,rgba(79,99,255,0.12),transparent_30%),linear-gradient(180deg,#05050a_0%,#070711_55%,#05050a_100%)]" />
+    <main className="min-h-screen overflow-hidden bg-[#03040b] pb-28 text-text-primary">
+      <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_22%_12%,rgba(124,58,237,0.18),transparent_30%),radial-gradient(circle_at_70%_0%,rgba(79,99,255,0.1),transparent_24%),linear-gradient(180deg,#02030a_0%,#050612_42%,#04040a_100%)]" />
 
-      <section className="ceoteca-container pt-6">
+      <section className="mx-auto w-full max-w-[1180px] px-5 pt-6 md:px-8">
         <header className="flex items-center justify-between">
-          <Logo className="[&>span]:tracking-[0.28em]" />
+          <Logo className="[&>span]:text-[15px] [&>span]:tracking-[0.34em]" />
           <button
             aria-label="Notificaciones"
-            className="relative grid h-11 w-11 place-items-center rounded-full border border-white/10 bg-white/[0.035] text-text-secondary transition hover:text-text-primary"
+            className="relative grid h-10 w-10 place-items-center rounded-full text-white transition hover:bg-white/[0.06]"
             type="button"
           >
-            <Bell aria-hidden="true" size={19} />
-            <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-brand-purple ring-2 ring-background" />
+            <Bell aria-hidden="true" size={21} />
+            <span className="absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full bg-brand-purple ring-2 ring-[#03040b]" />
           </button>
         </header>
 
-        <section className="mt-12 grid gap-8 lg:grid-cols-[1fr_305px] lg:items-end">
+        <section className="mt-12 grid gap-7 lg:grid-cols-[1fr_305px] lg:items-end">
           <div className="reveal-up">
-            <p className="text-lg text-brand-purple">Hola, bienvenido</p>
-            <h1 className="mt-4 max-w-3xl text-balance text-5xl font-semibold leading-[0.98] tracking-normal md:text-7xl">
-              Que quieres mejorar{" "}
-              <span className="text-gradient-brand">hoy?</span>
+            <p className="text-lg font-medium text-brand-purple">Hola, Andres 👋</p>
+            <h1 className="mt-5 max-w-[650px] text-balance text-[52px] font-black leading-[0.98] tracking-normal text-white md:text-[72px]">
+              ¿Que quieres mejorar{" "}
+              <span className="bg-gradient-to-r from-brand-purple to-brand-blue bg-clip-text text-transparent">
+                hoy?
+              </span>
             </h1>
           </div>
 
-          <Card className="reveal-up overflow-hidden p-6 [animation-delay:120ms]">
-            <div className="flex items-start justify-between">
+          <Card className="reveal-up h-[170px] rounded-[18px] border-white/10 bg-white/[0.035] p-6 [animation-delay:120ms]">
+            <div className="flex h-full items-start justify-between">
               <div>
-                <p className="text-sm font-medium">Racha actual</p>
-                <p className="mt-4 text-5xl font-semibold">12</p>
-                <p className="mt-1 text-sm text-text-secondary">dias seguidos</p>
+                <p className="text-sm font-semibold">Racha actual 🔥</p>
+                <p className="mt-6 text-5xl font-bold">12</p>
+                <p className="mt-2 text-sm text-text-secondary">dias seguidos</p>
               </div>
-              <div className="flex h-24 items-end gap-2">
-                {[22, 36, 48, 64, 76, 96].map((height, index) => (
-                  <span
-                    className="w-2.5 rounded-full bg-brand-gradient"
-                    key={height}
-                    style={{ height: `${height}%`, opacity: 0.5 + index * 0.08 }}
-                  />
-                ))}
+              <div className="grid h-full content-end">
+                <div className="flex h-[88px] items-end gap-3">
+                  {[18, 30, 42, 56, 72, 88].map((height, index) => (
+                    <span
+                      className="w-2.5 rounded-full bg-gradient-to-t from-brand-blue to-brand-purple shadow-[0_0_18px_rgba(124,58,237,0.45)]"
+                      key={height}
+                      style={{ height, opacity: 0.55 + index * 0.08 }}
+                    />
+                  ))}
+                </div>
+                <div className="mt-3 grid grid-cols-7 text-center text-xs text-text-muted">
+                  {["L", "M", "M", "J", "V", "S", "D"].map((day) => (
+                    <span key={day}>{day}</span>
+                  ))}
+                </div>
               </div>
-            </div>
-            <div className="mt-4 grid grid-cols-7 text-center text-xs text-text-muted">
-              {["L", "M", "M", "J", "V", "S", "D"].map((day) => (
-                <span key={day}>{day}</span>
-              ))}
             </div>
           </Card>
         </section>
 
-        <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          {categoryCards.map((item, index) => {
-            const Icon = item.icon;
-            const count = getBooksByCategory(books, item.category).length;
-
-            return (
-              <Link
-                className="group reveal-up"
-                href="/biblioteca"
-                key={item.category}
-                style={{ animationDelay: `${index * 70}ms` }}
+        <section className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
+          {categoryCards.map((card, index) => (
+            <Link className="group reveal-up" href="/biblioteca" key={card.title}>
+              <Card
+                className={cn(
+                  "relative h-[210px] overflow-hidden rounded-[14px] bg-gradient-to-br p-5 transition duration-300 group-hover:-translate-y-1",
+                  card.className,
+                  card.border,
+                )}
+                style={{ animationDelay: `${index * 60}ms` }}
               >
-                <Card
-                  className={cn(
-                    "relative min-h-48 overflow-hidden bg-gradient-to-br p-5 transition duration-300 group-hover:-translate-y-1",
-                    item.accent,
-                  )}
-                >
-                  <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
-                  <Icon
-                    aria-hidden="true"
-                    className="text-white drop-shadow-[0_0_22px_rgba(168,85,247,0.5)]"
-                    size={48}
-                  />
-                  <div className="absolute bottom-5 left-5 right-5">
-                    <div className="flex items-end justify-between gap-3">
-                      <div>
-                        <h2 className="text-xl font-semibold">{item.title}</h2>
-                        <p className="mt-1 text-sm text-text-secondary">
-                          {count || "Nuevos"} libros
-                        </p>
-                        <p className="mt-2 text-xs text-text-muted">
-                          {item.detail}
-                        </p>
-                      </div>
-                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/10 text-text-secondary transition group-hover:bg-brand-purple group-hover:text-white">
-                        <ArrowRight aria-hidden="true" size={17} />
-                      </span>
-                    </div>
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_28%,rgba(255,255,255,0.13),transparent_33%)]" />
+                <div className="relative z-10 flex h-full flex-col justify-between">
+                  <div className="grid place-items-center pt-2">
+                    <span className="text-[58px] drop-shadow-[0_0_30px_rgba(124,58,237,0.55)]">
+                      {card.icon}
+                    </span>
                   </div>
-                </Card>
-              </Link>
-            );
-          })}
+                  <div className="flex items-end justify-between gap-3">
+                    <div>
+                      <h2 className="text-xl font-semibold">{card.title}</h2>
+                      <p className="mt-1 text-sm text-text-secondary">
+                        {card.count}
+                      </p>
+                    </div>
+                    <span className="grid h-9 w-9 place-items-center rounded-full bg-white/[0.07] text-text-secondary transition group-hover:bg-white/[0.14] group-hover:text-white">
+                      <ArrowRight aria-hidden="true" size={18} />
+                    </span>
+                  </div>
+                </div>
+              </Card>
+            </Link>
+          ))}
         </section>
 
         <section className="mt-8">
-          <SectionHeader title="Continuar aprendiendo" />
-          <div className="mt-4 grid gap-4 lg:grid-cols-3">
+          <HeaderControls title="Continuar aprendiendo" />
+          <div className="mt-4 grid gap-5 lg:grid-cols-3">
             {continueBooks.map((book, index) => {
               const progress = getBookProgress(index);
 
               return (
-                <Card className="p-4" key={book.id}>
-                  <div className="grid grid-cols-[84px_1fr_44px] items-center gap-4">
-                    <div className="overflow-hidden rounded-button">
-                      <BookCover book={book} size="sm" />
-                    </div>
+                <Card
+                  className="h-[156px] rounded-[14px] border-white/10 bg-white/[0.035] p-4"
+                  key={book.id}
+                >
+                  <div className="grid h-full grid-cols-[88px_1fr_46px] items-center gap-5">
+                    <MiniCover book={book} className="h-[120px]" index={index} />
                     <div className="min-w-0">
-                      <p className="truncate font-semibold">{book.title}</p>
-                      <p className="mt-1 text-sm text-text-secondary">
-                        {progress}% completado
+                      <p className="text-lg font-bold">
+                        {progress}%{" "}
+                        <span className="text-sm font-normal text-white">
+                          completado
+                        </span>
                       </p>
-                      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
+                      <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/10">
                         <div
-                          className="h-full rounded-full bg-brand-gradient"
+                          className="h-full rounded-full bg-gradient-to-r from-brand-purple to-brand-blue"
                           style={{ width: `${progress}%` }}
                         />
                       </div>
-                      <p className="mt-3 text-xs text-text-muted">
+                      <p className="mt-4 text-sm text-text-secondary">
                         {getRemainingMinutes(book, progress)} min restantes
                       </p>
                     </div>
                     <Link
                       aria-label={`Continuar ${book.title}`}
-                      className="grid h-11 w-11 place-items-center rounded-full bg-white/10 text-white transition hover:bg-brand-purple"
+                      className="grid h-12 w-12 place-items-center rounded-full bg-white/[0.08] text-white transition hover:bg-brand-purple"
                       href={`/libro/${book.slug}`}
                     >
-                      <Play aria-hidden="true" size={17} />
+                      <Play aria-hidden="true" fill="currentColor" size={18} />
                     </Link>
                   </div>
                 </Card>
@@ -320,74 +314,84 @@ export function HomeView({ books }: HomeViewProps) {
           </div>
         </section>
 
-        <section className="mt-8">
-          <h2 className="text-xl font-semibold md:text-2xl">Recomendado para ti</h2>
-          <Card className="mt-4 overflow-hidden p-5">
-            <div className="grid gap-6 lg:grid-cols-[130px_1fr_1fr_280px] lg:items-center">
-              <div className="overflow-hidden rounded-button">
-                <BookCover book={recommendedBook} size="sm" />
-              </div>
+        <section className="mt-6">
+          <h2 className="text-[22px] font-semibold">Recomendado para ti</h2>
+          <Card className="mt-4 rounded-[14px] border-white/10 bg-white/[0.032] p-5">
+            <div className="grid gap-6 lg:grid-cols-[140px_1.2fr_1fr_280px] lg:items-center">
+              <MiniCover
+                book={recommendedBook}
+                className="h-[190px] w-[120px]"
+                index={2}
+              />
               <div>
                 <span className="inline-flex rounded-full bg-brand-purple/20 px-4 py-1 text-sm text-brand-purple">
-                  Recomendacion Ceoteca
+                  Recomendacion CEOTECA
                 </span>
-                <h3 className="mt-4 text-2xl font-semibold">
+                <h3 className="mt-5 text-2xl font-semibold">
                   Basado en tus lecturas
                 </h3>
-                <p className="mt-3 text-sm leading-7 text-text-secondary">
-                  Este libro puede llevar tu aprendizaje al siguiente nivel por
-                  su mezcla de accion, foco y criterio practico.
+                <p className="mt-4 max-w-sm text-sm leading-7 text-text-secondary">
+                  Creemos que este libro puede llevar tu aprendizaje al
+                  siguiente nivel.
                 </p>
               </div>
-              <div className="space-y-3 text-sm text-text-secondary">
-                <p className="text-text-primary">Porque has leido:</p>
+              <div className="space-y-4 text-sm">
+                <p className="text-text-secondary">Porque has leido:</p>
                 {books.slice(0, 2).map((book) => (
-                  <p className="flex items-center gap-2" key={book.id}>
+                  <p className="flex items-center gap-2 text-text-secondary" key={book.id}>
                     <CheckCircle2
                       aria-hidden="true"
-                      className="text-success"
+                      className="text-white"
                       size={16}
                     />
                     {book.title}
                   </p>
                 ))}
               </div>
-              <div className="relative min-h-48">
-                <div className="ceoteca-orbit absolute inset-0" />
-                <ButtonLink
-                  className="absolute bottom-0 right-0 min-w-44"
+              <div className="relative min-h-[190px]">
+                <div className="ceoteca-orbit absolute inset-0 opacity-90" />
+                <Link
+                  className="absolute bottom-0 right-0 inline-flex min-h-14 min-w-52 items-center justify-center gap-3 rounded-button border border-brand-purple/80 bg-brand-purple/20 px-5 text-white shadow-[0_0_32px_rgba(168,85,247,0.42)] transition hover:bg-brand-purple/35"
                   href={`/libro/${recommendedBook.slug}`}
                 >
                   Explorar libro
                   <ArrowRight aria-hidden="true" size={18} />
-                </ButtonLink>
+                </Link>
               </div>
             </div>
           </Card>
         </section>
 
-        <section className="mt-8">
-          <SectionHeader title="Trending en Ceoteca" />
-          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <section className="mt-6">
+          <HeaderControls title="Trending en CEOTECA" />
+          <div className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
             {trendingBooks.map((book, index) => (
               <Link href={`/libro/${book.slug}`} key={book.id}>
-                <Card className="min-h-52 p-5" interactive>
-                  <p className="text-balance text-xl font-semibold uppercase">
+                <Card
+                  className={cn(
+                    "min-h-[205px] rounded-[13px] bg-gradient-to-br p-5",
+                    [
+                      "from-purple-600/20 via-violet-950/35 to-black",
+                      "from-emerald-500/18 via-teal-950/35 to-black",
+                      "from-orange-500/20 via-red-950/35 to-black",
+                      "from-blue-500/20 via-blue-950/35 to-black",
+                      "from-fuchsia-500/18 via-purple-950/35 to-black",
+                    ][index],
+                  )}
+                  interactive
+                >
+                  <h3 className="text-balance text-xl font-bold uppercase leading-tight">
                     {book.title}
-                  </p>
+                  </h3>
                   <p className="mt-2 text-sm text-text-secondary">{book.author}</p>
-                  <div className="mt-8 space-y-2 text-sm text-text-secondary">
+                  <div className="mt-8 grid gap-2 text-sm text-text-secondary">
                     <p className="flex items-center gap-2">
                       <Clock3 aria-hidden="true" size={15} />
                       {book.readingTime} min
                     </p>
                     <p className="flex items-center gap-2">
-                      <Star
-                        aria-hidden="true"
-                        className="text-brand-purple"
-                        size={15}
-                      />
-                      {(5 - index * 0.07).toFixed(1)}
+                      <Star aria-hidden="true" className="text-brand-purple" size={15} />
+                      {(5 - index * 0.04).toFixed(1)}
                     </p>
                     <p className="flex items-center gap-2">
                       <Bot aria-hidden="true" size={15} />
@@ -400,40 +404,38 @@ export function HomeView({ books }: HomeViewProps) {
           </div>
         </section>
 
-        <section className="mt-8" id="ia">
-          <h2 className="flex items-center gap-2 text-xl font-semibold md:text-2xl">
+        <section className="mt-7" id="ia">
+          <h2 className="flex items-center gap-2 text-[22px] font-semibold">
             Habla con el conocimiento
             <span className="rounded-full bg-brand-purple/20 px-2.5 py-1 text-xs text-brand-purple">
               IA
             </span>
           </h2>
-          <Card className="pulse-glow mt-4 overflow-hidden border-brand-purple/40 p-5">
-            <div className="grid gap-5 lg:grid-cols-[96px_1fr_56px] lg:items-center">
-              <span className="grid h-20 w-20 place-items-center rounded-[1.6rem] border border-brand-purple/50 bg-brand-purple/15 text-brand-purple shadow-[0_0_38px_rgba(168,85,247,0.35)]">
-                <Bot aria-hidden="true" size={34} />
+          <Card className="pulse-glow mt-3 rounded-[14px] border-brand-purple/50 bg-white/[0.035] p-5">
+            <div className="grid gap-5 lg:grid-cols-[92px_1fr_54px] lg:items-center">
+              <span className="grid h-20 w-20 place-items-center rounded-[1.4rem] border border-brand-purple/60 bg-brand-purple/15 text-brand-purple shadow-[0_0_40px_rgba(124,58,237,0.55)]">
+                <Bot aria-hidden="true" size={36} />
               </span>
               <div>
                 <h2 className="text-2xl font-semibold">
-                  Que quieres aprender hoy?
+                  ¿Que quieres aprender hoy?
                 </h2>
-                <p className="mt-2 text-sm leading-6 text-text-secondary">
-                  Pregunta por recomendaciones, rutas de lectura, ejercicios o
-                  que libro elegir segun tu objetivo. La IA usa solo el catalogo
-                  y contenido autorizado de Ceoteca.
+                <p className="mt-2 text-sm text-text-secondary">
+                  Pregunta cualquier cosa sobre un libro o idea...
                 </p>
               </div>
               <button
-                aria-label="Abrir chat de recomendaciones"
-                className="grid h-14 w-14 place-items-center rounded-button bg-brand-gradient text-white shadow-ambient transition hover:brightness-110"
+                aria-label="Abrir chat con IA"
+                className="grid h-14 w-14 place-items-center rounded-button bg-brand-gradient text-white shadow-[0_0_28px_rgba(124,58,237,0.5)] transition hover:brightness-110"
                 type="button"
               >
                 <ArrowRight aria-hidden="true" size={22} />
               </button>
             </div>
-            <div className="mt-5 grid gap-3 md:grid-cols-4">
-              {aiSuggestions.map((suggestion) => (
+            <div className="mt-5 grid gap-3 border-t border-white/10 pt-4 md:grid-cols-4">
+              {suggestions.map((suggestion) => (
                 <button
-                  className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-text-secondary transition hover:border-brand-purple/60 hover:text-text-primary"
+                  className="rounded-full border border-white/10 bg-white/[0.045] px-4 py-3 text-sm text-text-secondary transition hover:border-brand-purple/50 hover:text-white"
                   key={suggestion}
                   type="button"
                 >
@@ -444,69 +446,87 @@ export function HomeView({ books }: HomeViewProps) {
           </Card>
         </section>
 
-        <section className="mt-8">
-          <SectionHeader title="Colecciones populares" />
-          <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-            {popularCollections.map(({ title, icon: Icon, category }) => (
+        <section className="mt-7">
+          <HeaderControls title="Colecciones populares" />
+          <div className="mt-4 grid gap-5 md:grid-cols-2 lg:grid-cols-5">
+            {[
+              ["Construye riqueza", "💵", "15 libros"],
+              ["Emprende desde cero", "🚀", "12 libros"],
+              ["Aprende a vender", "📣", "8 libros"],
+              ["Piensa como CEO", "👑", "20 libros"],
+              ["Productividad extrema", "⚡", "11 libros"],
+            ].map(([title, icon, count]) => (
               <Link href="/biblioteca" key={title}>
-                <Card className="flex min-h-28 items-center justify-between p-5" interactive>
+                <Card className="flex min-h-[116px] items-center justify-between rounded-[13px] bg-white/[0.035] p-5" interactive>
                   <div>
-                    <h3 className="max-w-32 text-lg font-semibold">{title}</h3>
-                    <p className="mt-1 text-sm text-text-secondary">
-                      {getBooksByCategory(books, category).length || 1} libros
-                    </p>
+                    <h3 className="max-w-36 text-lg font-semibold leading-tight">
+                      {title}
+                    </h3>
+                    <p className="mt-2 text-sm text-text-secondary">{count}</p>
                   </div>
-                  <Icon
-                    aria-hidden="true"
-                    className="text-brand-purple"
-                    size={42}
-                  />
+                  <span className="text-[42px] drop-shadow-[0_0_24px_rgba(124,58,237,0.45)]">
+                    {icon}
+                  </span>
                 </Card>
               </Link>
             ))}
           </div>
         </section>
 
-        <section className="mt-4 grid gap-4 lg:grid-cols-2">
-          <Card className="p-5">
-            <h2 className="font-semibold">Tu progreso</h2>
-            <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4">
-              {progressStats.map(({ value, label, icon: Icon }) => (
-                <div className="flex gap-3" key={label}>
-                  <span className="grid h-10 w-10 place-items-center rounded-button bg-white/[0.06] text-brand-purple">
+        <section className="mt-5 grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
+          <Card className="rounded-[13px] bg-white/[0.035] p-5">
+            <div className="flex items-center justify-between">
+              <h2 className="font-semibold">Tu progreso</h2>
+              <Link className="text-sm text-brand-purple" href="/biblioteca">
+                Ver estadisticas
+              </Link>
+            </div>
+            <div className="mt-5 grid grid-cols-2 gap-4 md:grid-cols-4">
+              {[
+                ["23", "Libros explorados", LibraryBig, "text-emerald-300"],
+                ["7.4", "Horas aprendidas", CheckCircle2, "text-yellow-300"],
+                ["12", "Dias seguidos", Flame, "text-red-300"],
+                ["324", "Preguntas realizadas", MessageCircle, "text-blue-300"],
+              ].map(([value, label, Icon, color]) => (
+                <div className="flex gap-3" key={label as string}>
+                  <span
+                    className={cn(
+                      "grid h-10 w-10 place-items-center rounded-button bg-white/[0.06]",
+                      color as string,
+                    )}
+                  >
                     <Icon aria-hidden="true" size={18} />
                   </span>
                   <div>
-                    <p className="text-xl font-semibold">{value}</p>
-                    <p className="text-xs leading-4 text-text-secondary">{label}</p>
+                    <p className="text-xl font-semibold">{value as string}</p>
+                    <p className="text-xs leading-4 text-text-secondary">
+                      {label as string}
+                    </p>
                   </div>
                 </div>
               ))}
             </div>
           </Card>
-          <Card className="p-5">
+
+          <Card className="rounded-[13px] bg-white/[0.035] p-5">
             <div className="flex items-center justify-between">
               <h2 className="font-semibold">Actividad reciente</h2>
               <Link className="text-sm text-brand-purple" href="/biblioteca">
                 Ver todo
               </Link>
             </div>
-            <div className="mt-5 space-y-3 text-sm">
+            <div className="mt-5 grid gap-3 text-sm">
               {[
-                ["Hoy", `Terminaste ${featuredBook.title}`],
-                ["Ayer", "Preguntaste sobre inversion"],
-                ["Hace 3 dias", "Empezaste una ruta de habitos"],
-              ].map(([time, action]) => (
-                <div className="grid grid-cols-[120px_1fr] gap-3" key={time}>
+                ["Hoy", "Terminaste Deep Work"],
+                ["Ayer", "Preguntaste 12 veces sobre inversion"],
+                ["Hace 3 dias", "Empezaste Habitos Atomicos"],
+              ].map(([time, activity]) => (
+                <div className="grid grid-cols-[110px_1fr] gap-3" key={time}>
                   <p className="flex items-center gap-2 text-text-secondary">
-                    <CheckCircle2
-                      aria-hidden="true"
-                      className="text-success"
-                      size={16}
-                    />
+                    <CheckCircle2 aria-hidden="true" className="text-success" size={16} />
                     {time}
                   </p>
-                  <p>{action}</p>
+                  <p>{activity}</p>
                 </div>
               ))}
             </div>
@@ -514,26 +534,25 @@ export function HomeView({ books }: HomeViewProps) {
         </section>
       </section>
 
-      <nav className="fixed bottom-4 left-1/2 z-40 w-[min(92vw,1080px)] -translate-x-1/2 rounded-[1.5rem] border border-white/10 bg-background/80 px-4 py-3 shadow-ambient backdrop-blur-xl">
-        <div className="grid grid-cols-5">
+      <nav className="fixed bottom-4 left-1/2 z-40 w-[min(92vw,1060px)] -translate-x-1/2 rounded-[24px] border border-white/10 bg-[#080915]/90 px-4 py-3 shadow-ambient backdrop-blur-xl">
+        <div className="grid grid-cols-5 items-center">
           {navItems.map((item) => {
             const Icon = item.icon;
+            const isCenter = item.label === "IA";
 
             return (
               <Link
                 className={cn(
-                  "flex flex-col items-center gap-1 rounded-button px-2 py-2 text-xs text-text-secondary transition hover:text-text-primary md:flex-row md:justify-center md:text-sm",
+                  "flex flex-col items-center justify-center gap-1 rounded-button px-2 py-2 text-xs text-text-secondary transition hover:text-white md:flex-row md:text-sm",
                   item.active && "text-brand-purple",
-                  item.label === "IA" &&
-                    "-mt-8 mx-auto grid h-16 w-16 place-items-center rounded-full border border-brand-purple/60 bg-brand-purple/20 text-brand-purple shadow-[0_0_44px_rgba(168,85,247,0.42)] md:flex md:h-auto md:w-auto md:rounded-button md:border-0 md:bg-transparent md:shadow-none",
+                  isCenter &&
+                    "-mt-9 mx-auto h-[70px] w-[70px] rounded-full border border-brand-purple/70 bg-brand-purple/20 text-brand-purple shadow-[0_0_45px_rgba(124,58,237,0.55)] md:flex-col",
                 )}
                 href={item.href}
                 key={item.label}
               >
-                <Icon aria-hidden="true" size={22} />
-                <span className={item.label === "IA" ? "sr-only md:not-sr-only" : ""}>
-                  {item.label}
-                </span>
+                <Icon aria-hidden="true" size={isCenter ? 27 : 22} />
+                <span>{item.label}</span>
               </Link>
             );
           })}
