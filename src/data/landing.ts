@@ -5,10 +5,13 @@ import {
   Brain,
   CheckCircle2,
   Clock3,
+  Compass,
   LibraryBig,
   MessageCircle,
   Play,
+  Rocket,
   Sparkles,
+  Target,
   Users,
   Zap,
 } from "lucide-react";
@@ -141,4 +144,136 @@ export const heroActions = {
 export const demoQuestion = {
   icon: MessageCircle,
   text: "¿Cómo puedo aplicar hábitos atómicos si vivo en Panamá y tengo poco tiempo?",
+} as const;
+
+export const howItWorksSteps = [
+  {
+    title: "Elige un libro",
+    description:
+      "Explora una biblioteca editorial en español organizada por temas, duración y nivel.",
+    icon: Compass,
+  },
+  {
+    title: "Aprende en 15 minutos",
+    description:
+      "Lee ideas originales, puntos clave y ejercicios breves diseñados para recordar y aplicar.",
+    icon: Zap,
+  },
+  {
+    title: "Pregunta y aterriza",
+    description:
+      "Usa el chat contextual para convertir el análisis en próximos pasos concretos.",
+    icon: Target,
+  },
+] as const;
+
+export const previewBooks = [
+  {
+    title: "Hábitos Atómicos",
+    author: "James Clear",
+    category: "Hábitos",
+    duration: "12 min",
+    accent: "from-brand-blue via-brand-purple to-brand-pink",
+    pattern: "orb",
+  },
+  {
+    title: "Padre Rico, Padre Pobre",
+    author: "Robert Kiyosaki",
+    category: "Finanzas",
+    duration: "14 min",
+    accent: "from-emerald-300 to-cyan-300",
+    pattern: "steps",
+  },
+  {
+    title: "La Startup de $100",
+    author: "Chris Guillebeau",
+    category: "Emprendimiento",
+    duration: "11 min",
+    accent: "from-orange-300 to-rose-400",
+    pattern: "growth",
+  },
+] as const;
+
+export const comparisonRows = [
+  {
+    feature: "Lectura guiada de 15 minutos",
+    ceoteca: "Experiencia interactiva",
+    traditional: "Lectura completa sin guía",
+  },
+  {
+    feature: "Aplicación práctica",
+    ceoteca: "Ejercicios y próximos pasos",
+    traditional: "Depende del lector",
+  },
+  {
+    feature: "Preguntas al contenido",
+    ceoteca: "Chat contextual por libro",
+    traditional: "Notas manuales",
+  },
+  {
+    feature: "Audio",
+    ceoteca: "Disponible según plan",
+    traditional: "No siempre incluido",
+  },
+] as const;
+
+export const demoTestimonials = [
+  {
+    name: "María Fernanda",
+    role: "Emprendedora",
+    quote:
+      "Me ayuda a convertir ideas grandes en acciones pequeñas sin sentir que tengo que terminar un libro entero primero.",
+  },
+  {
+    name: "Andrés López",
+    role: "Profesional de finanzas",
+    quote:
+      "La mezcla de resumen editorial, ejercicios y preguntas hace que el aprendizaje se sienta mucho más útil.",
+  },
+  {
+    name: "Camila Torres",
+    role: "Estudiante",
+    quote:
+      "Uso Ceoteca como punto de partida para decidir qué libros quiero leer completos después.",
+  },
+] as const;
+
+export const landingFaqs = [
+  {
+    question: "¿Ceoteca reemplaza leer el libro completo?",
+    answer:
+      "No. Ceoteca ofrece análisis educativos y editoriales propios para entender ideas principales y decidir cómo aplicarlas.",
+  },
+  {
+    question: "¿El contenido usa textos copiados de los libros?",
+    answer:
+      "No. El contenido demo y futuro debe ser original, sin capítulos reproducidos, portadas oficiales ni citas inventadas.",
+  },
+  {
+    question: "¿Puedo usarlo sin conectar Supabase u OpenAI?",
+    answer:
+      "Sí. El MVP está preparado para funcionar en modo demo sin credenciales externas.",
+  },
+  {
+    question: "¿Qué pasa con pagos?",
+    answer:
+      "La integración de pagos permanece deshabilitada hasta definir un proveedor real.",
+  },
+] as const;
+
+export const finalCta = {
+  eyebrow: "Tu biblioteca accionable",
+  title: "Convierte curiosidad en aprendizaje constante.",
+  description:
+    "Empieza gratis, explora los primeros análisis y construye el hábito de aprender con claridad.",
+  primary: {
+    href: "/registro",
+    label: "Crear cuenta gratis",
+    icon: Rocket,
+  },
+  secondary: {
+    href: "/biblioteca",
+    label: "Ver libros demo",
+    icon: LibraryBig,
+  },
 } as const;
