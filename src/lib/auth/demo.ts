@@ -34,8 +34,8 @@ export class DemoAuthProvider implements AuthProvider {
         fullName: input.fullName,
         plan: input.plan,
       },
-      redirectTo: "/home",
-      message: `Cuenta demo creada en plan ${input.plan}.`,
+      redirectTo: "/planes",
+      message: "Cuenta demo creada. Elige tu plan para activar el acceso.",
     };
   }
 
@@ -43,13 +43,12 @@ export class DemoAuthProvider implements AuthProvider {
     return Promise.resolve();
   }
 
-  async signInWithGoogle(plan = "free"): Promise<AuthResult> {
+  async signInWithGoogle(redirectTo = "/home"): Promise<AuthResult> {
     return {
       user: {
         ...demoUser,
-        plan: plan === "free" ? "free" : demoUser.plan,
       },
-      redirectTo: "/home",
+      redirectTo,
       message: "Google OAuth está preparado en modo demo.",
     };
   }

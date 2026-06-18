@@ -10,9 +10,8 @@ import type { ZodError } from "zod";
 import { SectionHeading } from "@/components/marketing/SectionHeading";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { planKeys, plans, type PlanKey } from "@/config/plans";
+import type { PlanKey } from "@/config/plans";
 import { createAuthProvider } from "@/lib/auth/provider";
-import { cn } from "@/lib/utils/cn";
 import { signInSchema, signUpSchema } from "@/lib/validation/auth";
 
 type AuthMode = "login" | "register";
@@ -49,16 +48,6 @@ function applyZodErrors(
   }
 }
 
-function formatPlanPrice(planKey: PlanKey) {
-  const plan = plans[planKey];
-
-  if (plan.monthlyPriceUsd === 0) {
-    return "Gratis";
-  }
-
-  return `USD ${plan.monthlyPriceUsd.toFixed(2)}/mes`;
-}
-
 export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
   const router = useRouter();
   const [status, setStatus] = useState<FormStatus>({ type: "idle" });
@@ -70,7 +59,6 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
     handleSubmit,
     register,
     setError,
-    watch,
   } = useForm<AuthFormValues>({
     defaultValues: {
       fullName: "",
@@ -81,7 +69,6 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
       plan: selectedPlan,
     },
   });
-  const selectedFormPlan = watch("plan");
 
   async function onSubmit(values: AuthFormValues) {
     setStatus({ type: "idle" });
@@ -134,7 +121,9 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
     setStatus({ type: "idle" });
 
     try {
-      const result = await authProvider.signInWithGoogle(selectedFormPlan);
+      const result = await authProvider.signInWithGoogle(
+        isRegister ? "/planes" : "/home",
+      );
       setStatus({
         type: "success",
         message: result.message,
@@ -166,7 +155,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
             }
             description={
               isRegister
-                ? "Elige un plan, crea tu cuenta y continua segun el acceso seleccionado."
+                ? "Crea tu cuenta y luego elige tu plan para activar el acceso."
                 : "Ingresa con email y contrasena para volver a tu home."
             }
           />
@@ -206,55 +195,6 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
               </label>
             ) : null}
 
-            {isRegister ? (
-              <fieldset className="grid gap-3">
-                <legend className="text-sm font-medium">Elige tu plan</legend>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {planKeys.map((planKey) => {
-                    const plan = plans[planKey];
-                    const isSelected = selectedFormPlan === planKey;
-
-                    return (
-                      <label
-                        className={cn(
-                          "cursor-pointer rounded-card border border-white/10 bg-white/[0.035] p-4 transition hover:border-white/20",
-                          isSelected &&
-                            "border-brand-purple/70 bg-brand-purple/10 shadow-[0_0_32px_rgba(168,85,247,0.18)]",
-                        )}
-                        key={plan.key}
-                      >
-                        <input
-                          className="sr-only"
-                          type="radio"
-                          value={plan.key}
-                          {...register("plan")}
-                        />
-                        <span className="flex items-start justify-between gap-3">
-                          <span>
-                            <span className="block font-semibold">{plan.name}</span>
-                            <span className="mt-1 block text-xs leading-5 text-text-secondary">
-                              {plan.tagline}
-                            </span>
-                          </span>
-                          <span className="rounded-full border border-white/10 bg-white/[0.06] px-2.5 py-1 text-xs text-text-secondary">
-                            {formatPlanPrice(planKey)}
-                          </span>
-                        </span>
-                        <span className="mt-3 block text-xs leading-5 text-text-muted">
-                          {planKey === "free"
-                            ? "Continua directo a tu home."
-                            : "Continua a pago cuando la pasarela este activa."}
-                        </span>
-                      </label>
-                    );
-                  })}
-                </div>
-                {errors.plan ? (
-                  <span className="text-xs text-danger">{errors.plan.message}</span>
-                ) : null}
-              </fieldset>
-            ) : null}
-
             <label className="grid gap-2 text-sm">
               Email
               <input
@@ -285,6 +225,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
 
             {isRegister ? (
               <>
+                <input type="hidden" value="free" {...register("plan")} />
                 <label className="grid gap-2 text-sm">
                   Confirmar contrasena
                   <input

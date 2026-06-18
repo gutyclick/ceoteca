@@ -3,10 +3,6 @@ import type { SignInInput, SignUpInput } from "@/lib/validation/auth";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import type { AppUser } from "@/types";
 
-function getPlanRedirect(plan: string) {
-  return plan === "free" ? "/home" : `/planes?plan=${plan}&status=pending`;
-}
-
 export class SupabaseAuthProvider implements AuthProvider {
   async getCurrentUser(): Promise<AppUser | null> {
     const supabase = createBrowserSupabaseClient();
@@ -72,8 +68,6 @@ export class SupabaseAuthProvider implements AuthProvider {
       throw new Error(error?.message ?? "No pudimos crear la cuenta.");
     }
 
-    const isPaidPlan = input.plan !== "free";
-
     return {
       user: {
         id: data.user.id,
@@ -82,10 +76,8 @@ export class SupabaseAuthProvider implements AuthProvider {
         plan: "free",
         isDemo: false,
       },
-      redirectTo: getPlanRedirect(input.plan),
-      message: isPaidPlan
-        ? "Cuenta creada. Continuemos con la configuracion del pago."
-        : "Cuenta creada. Revisa tu email si Supabase requiere confirmacion.",
+      redirectTo: "/planes",
+      message: "Cuenta creada. Elige tu plan para activar el acceso.",
     };
   }
 
@@ -94,16 +86,12 @@ export class SupabaseAuthProvider implements AuthProvider {
     await supabase.auth.signOut();
   }
 
-  async signInWithGoogle(plan = "free"): Promise<AuthResult> {
+  async signInWithGoogle(redirectTo = "/home"): Promise<AuthResult> {
     const supabase = createBrowserSupabaseClient();
-    const redirectPath = getPlanRedirect(plan);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        queryParams: {
-          requested_plan: plan,
-        },
-        redirectTo: `${window.location.origin}${redirectPath}`,
+        redirectTo: `${window.location.origin}${redirectTo}`,
       },
     });
 
@@ -119,7 +107,7 @@ export class SupabaseAuthProvider implements AuthProvider {
         plan: "free",
         isDemo: false,
       },
-      redirectTo: redirectPath,
+      redirectTo,
       message: "Redireccion a Google preparada.",
     };
   }

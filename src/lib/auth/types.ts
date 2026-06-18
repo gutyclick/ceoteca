@@ -12,5 +12,5 @@ export interface AuthProvider {
   signIn(input: SignInInput): Promise<AuthResult>;
   signUp(input: SignUpInput): Promise<AuthResult>;
   signOut(): Promise<void>;
-  signInWithGoogle(plan?: string): Promise<AuthResult>;
+  signInWithGoogle(redirectTo?: string): Promise<AuthResult>;
 }
