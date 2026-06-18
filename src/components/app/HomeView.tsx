@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowRight,
   Bell,
@@ -25,6 +25,8 @@ import {
 
 import { Card } from "@/components/ui/Card";
 import { Logo } from "@/components/ui/Logo";
+import type { PlanKey } from "@/config/plans";
+import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
 import type { Book } from "@/types";
 
@@ -166,11 +168,48 @@ function HeaderControls({ title }: { title: string }) {
 
 export function HomeView({ books }: HomeViewProps) {
   const [isNavCollapsed, setIsNavCollapsed] = useState(false);
+  const [currentPlan, setCurrentPlan] = useState<PlanKey>("free");
   const primaryBook = books[0];
   const continueBooks = books.slice(0, 3);
   const trendingBooks = books.slice(0, 5);
   const recommendedBook =
     books.find((book) => book.slug.includes("deep")) ?? books[2] ?? primaryBook;
+  const showNewUserOffer = currentPlan === "free";
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadPlan() {
+      try {
+        const supabase = createBrowserSupabaseClient();
+        const { data: userData } = await supabase.auth.getUser();
+
+        if (!userData.user) {
+          return;
+        }
+
+        const { data } = await supabase
+          .from("profiles")
+          .select("plan")
+          .eq("id", userData.user.id)
+          .maybeSingle();
+
+        if (isMounted && data?.plan) {
+          setCurrentPlan(data.plan);
+        }
+      } catch {
+        if (isMounted) {
+          setCurrentPlan("free");
+        }
+      }
+    }
+
+    void loadPlan();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   if (!primaryBook) {
     return (
@@ -280,31 +319,34 @@ export function HomeView({ books }: HomeViewProps) {
           ))}
         </section>
 
-        <Card className="mt-6 overflow-hidden rounded-[16px] border-brand-purple/35 bg-gradient-to-r from-brand-purple/20 via-white/[0.035] to-brand-blue/10 p-5">
-          <div className="grid gap-5 md:grid-cols-[72px_1fr_auto] md:items-center">
-            <span className="grid h-16 w-16 place-items-center rounded-[1.25rem] border border-brand-purple/40 bg-brand-purple/20 text-brand-purple shadow-[0_0_35px_rgba(124,58,237,0.35)]">
-              <Percent aria-hidden="true" size={30} />
-            </span>
-            <div>
-              <p className="text-sm font-medium uppercase tracking-[0.2em] text-brand-purple">
-                Oferta unica para usuarios nuevos
-              </p>
-              <h2 className="mt-2 text-2xl font-semibold">
-                15% de descuento en tu primer mes
-              </h2>
-              <p className="mt-2 text-sm leading-6 text-text-secondary">
-                Activa audio, chat con IA y todas las experiencias premium desde
-                Pro. Esta oferta solo aparece en tu home inicial.
-              </p>
+        {showNewUserOffer ? (
+          <Card className="mt-6 overflow-hidden rounded-[16px] border-brand-purple/35 bg-gradient-to-r from-brand-purple/20 via-white/[0.035] to-brand-blue/10 p-5">
+            <div className="grid gap-5 md:grid-cols-[72px_1fr_auto] md:items-center">
+              <span className="grid h-16 w-16 place-items-center rounded-[1.25rem] border border-brand-purple/40 bg-brand-purple/20 text-brand-purple shadow-[0_0_35px_rgba(124,58,237,0.35)]">
+                <Percent aria-hidden="true" size={30} />
+              </span>
+              <div>
+                <p className="text-sm font-medium uppercase tracking-[0.2em] text-brand-purple">
+                  Oferta unica para usuarios nuevos
+                </p>
+                <h2 className="mt-2 text-2xl font-semibold">
+                  15% de descuento en tu primer mes
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-text-secondary">
+                  Activa audio, chat con IA y todas las experiencias premium
+                  desde Pro. Esta oferta solo aparece para usuarios nuevos en
+                  plan Gratis.
+                </p>
+              </div>
+              <Link
+                className="inline-flex min-h-12 items-center justify-center rounded-button bg-brand-gradient px-5 text-sm font-medium text-white transition hover:brightness-110"
+                href="/planes?plan=pro&offer=new-user-15"
+              >
+                Mejorar plan
+              </Link>
             </div>
-            <Link
-              className="inline-flex min-h-12 items-center justify-center rounded-button bg-brand-gradient px-5 text-sm font-medium text-white transition hover:brightness-110"
-              href="/planes?plan=pro&offer=new-user-15"
-            >
-              Mejorar plan
-            </Link>
-          </div>
-        </Card>
+          </Card>
+        ) : null}
 
         <section className="mt-8">
           <HeaderControls title="Continuar aprendiendo" />

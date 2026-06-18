@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -478,11 +478,46 @@ function ChatPanel({
 export function BookExperience({ book }: BookExperienceProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabKey>("summary");
+  const [currentPlan, setCurrentPlan] = useState<PlanKey>("free");
   const chatInputRef = useRef<HTMLTextAreaElement | null>(null);
   const progress = getProgress(book);
-  const currentPlan: PlanKey = "free";
   const canUseAudio = canAccessFeature(currentPlan, "audio");
   const canUseChat = canAccessFeature(currentPlan, "chat");
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadPlan() {
+      try {
+        const supabase = createBrowserSupabaseClient();
+        const { data: userData } = await supabase.auth.getUser();
+
+        if (!userData.user) {
+          return;
+        }
+
+        const { data } = await supabase
+          .from("profiles")
+          .select("plan")
+          .eq("id", userData.user.id)
+          .maybeSingle();
+
+        if (isMounted && data?.plan) {
+          setCurrentPlan(data.plan);
+        }
+      } catch {
+        if (isMounted) {
+          setCurrentPlan("free");
+        }
+      }
+    }
+
+    void loadPlan();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   function openBookChat() {
     setActiveTab("chat");
