@@ -568,6 +568,29 @@ export function HomeView({ books }: HomeViewProps) {
             </div>
           </Card>
         </section>
+
+        <footer className="mt-10 border-t border-white/10 py-8 text-sm text-text-muted">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <p>© 2026 Ceoteca. Todos los derechos reservados.</p>
+            <nav
+              aria-label="Legal del dashboard"
+              className="flex flex-wrap gap-x-5 gap-y-2"
+            >
+              <Link className="transition hover:text-text-primary" href="/terminos">
+                Terminos
+              </Link>
+              <Link className="transition hover:text-text-primary" href="/privacidad">
+                Privacidad
+              </Link>
+              <Link
+                className="transition hover:text-text-primary"
+                href="mailto:hola@ceoteca.com"
+              >
+                Soporte
+              </Link>
+            </nav>
+          </div>
+        </footer>
       </section>
 
       <div className="fixed bottom-5 left-1/2 z-40 w-[min(94vw,1120px)] -translate-x-1/2">
