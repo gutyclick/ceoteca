@@ -6,7 +6,7 @@ export const demoUser: AppUser = {
   id: "demo-user",
   email: "demo@ceoteca.com",
   fullName: "Usuario Demo",
-  plan: "free",
+  plan: "pro",
   isDemo: true,
 };
 

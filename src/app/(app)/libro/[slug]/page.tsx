@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { BookOpen, Clock3, MessageCircle, ShoppingBag, Sparkles } from "lucide-react";
+import { BookOpen, Clock3, ShoppingBag, Sparkles } from "lucide-react";
 
 import { AudioPlayer } from "@/components/books/AudioPlayer";
 import { BookCover } from "@/components/books/BookCover";
 import { InteractiveExercise } from "@/components/books/InteractiveExercise";
 import { KeyPointCard } from "@/components/books/KeyPointCard";
+import { ChatDrawer } from "@/components/chat/ChatDrawer";
 import { ButtonLink } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { LockedFeature } from "@/components/ui/LockedFeature";
@@ -124,19 +125,13 @@ export default async function BookPage({ params }: BookPageProps) {
 
               {canUseChat ? (
                 <Card className="p-5">
-                  <div className="flex items-start gap-4">
-                    <MessageCircle
-                      aria-hidden="true"
-                      className="mt-1 text-brand-purple"
-                      size={24}
-                    />
-                    <div>
-                      <h2 className="font-semibold">Habla con este libro</h2>
-                      <p className="mt-2 text-sm leading-6 text-text-secondary">
-                        Chat contextual preparado para responder solo con el
-                        análisis autorizado de Ceoteca.
-                      </p>
-                    </div>
+                  <h2 className="font-semibold">Chat contextual</h2>
+                  <p className="mt-2 text-sm leading-6 text-text-secondary">
+                    Responde en español usando solo el análisis demo autorizado
+                    de Ceoteca para este libro.
+                  </p>
+                  <div className="mt-4">
+                    <ChatDrawer bookSlug={book.slug} bookTitle={book.title} />
                   </div>
                 </Card>
               ) : (
