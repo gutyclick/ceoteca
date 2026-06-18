@@ -14,6 +14,7 @@ import {
   Headphones,
   Heart,
   Home,
+  Lock,
   Loader2,
   MoreHorizontal,
   Play,
@@ -25,6 +26,8 @@ import {
 } from "lucide-react";
 
 import { Card } from "@/components/ui/Card";
+import type { PlanKey } from "@/config/plans";
+import { canAccessFeature } from "@/lib/permissions";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
 import type { ChatConversationMessage } from "@/lib/validation/chat";
@@ -133,10 +136,43 @@ function BookStat({
   );
 }
 
-function AudioPanel({ book }: { book: Book }) {
+function LockedPremiumOverlay({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
   return (
-    <Card className="rounded-[16px] bg-white/[0.035] p-6">
-      <h2 className="text-xl font-semibold">Escucha el resumen</h2>
+    <div className="absolute inset-0 z-20 grid place-items-center rounded-[16px] bg-[#050612]/55 p-6 backdrop-blur-[3px]">
+      <div className="max-w-xs rounded-[1.25rem] border border-brand-purple/40 bg-[#0b0c18]/90 p-5 text-center shadow-[0_0_42px_rgba(124,58,237,0.28)]">
+        <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-brand-purple/20 text-brand-purple">
+          <Lock aria-hidden="true" size={22} />
+        </span>
+        <h3 className="mt-4 font-semibold">{title}</h3>
+        <p className="mt-2 text-sm leading-6 text-text-secondary">{description}</p>
+        <Link
+          className="mt-4 inline-flex min-h-10 items-center justify-center rounded-button bg-brand-gradient px-4 text-sm font-medium text-white transition hover:brightness-110"
+          href="/planes"
+        >
+          Mejorar plan
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function AudioPanel({ book, locked = false }: { book: Book; locked?: boolean }) {
+  return (
+    <Card className="relative overflow-hidden rounded-[16px] bg-white/[0.035] p-6">
+      {locked ? (
+        <LockedPremiumOverlay
+          description="El audio narrado esta incluido desde Pro."
+          title="Audio bloqueado"
+        />
+      ) : null}
+      <div className={cn(locked && "select-none blur-sm")}>
+        <h2 className="text-xl font-semibold">Escucha el resumen</h2>
       <div className="mt-6 flex items-center gap-5">
         <button
           aria-label="Reproducir audio"
@@ -160,13 +196,14 @@ function AudioPanel({ book }: { book: Book }) {
         Resumen narrado por IA. Luego lo conectaremos al texto que subas para
         generar el audio real.
       </p>
-      <button
-        className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-button border border-white/10 bg-white/[0.04] px-4 text-sm text-text-secondary transition hover:text-white"
-        type="button"
-      >
-        Cambiar voz
-        <Headphones aria-hidden="true" size={17} />
-      </button>
+        <button
+          className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-button border border-white/10 bg-white/[0.04] px-4 text-sm text-text-secondary transition hover:text-white"
+          type="button"
+        >
+          Cambiar voz
+          <Headphones aria-hidden="true" size={17} />
+        </button>
+      </div>
     </Card>
   );
 }
@@ -248,9 +285,11 @@ function ActivityCard({ activity }: { activity: BookActivity }) {
 function ChatPanel({
   book,
   inputRef,
+  locked = false,
 }: {
   book: Book;
   inputRef: React.RefObject<HTMLTextAreaElement | null>;
+  locked?: boolean;
 }) {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatConversationMessage[]>([
@@ -271,6 +310,11 @@ function ChatPanel({
   );
 
   async function sendMessage(message: string) {
+    if (locked) {
+      setError("Mejora tu plan para usar el chat con IA.");
+      return;
+    }
+
     const trimmed = message.trim();
 
     if (!trimmed || isLoading) {
@@ -335,9 +379,16 @@ function ChatPanel({
 
   return (
     <Card
-      className="rounded-[16px] bg-white/[0.035] p-5 lg:sticky lg:top-6"
+      className="relative overflow-hidden rounded-[16px] bg-white/[0.035] p-5 lg:sticky lg:top-6"
       id="chat-libro"
     >
+      {locked ? (
+        <LockedPremiumOverlay
+          description="El chat contextual con el libro esta incluido desde Pro."
+          title="Chat IA bloqueado"
+        />
+      ) : null}
+      <div className={cn(locked && "select-none blur-sm")}>
       <h2 className="text-xl font-semibold">Chat con el libro</h2>
       <p className="mt-2 flex items-center gap-2 text-sm text-text-secondary">
         <span className="h-2 w-2 rounded-full bg-success" />
@@ -388,6 +439,7 @@ function ChatPanel({
       >
         <textarea
           className="min-h-10 flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none placeholder:text-text-muted"
+          disabled={locked}
           maxLength={2000}
           onChange={(event) => setInput(event.target.value)}
           placeholder="Escribe tu pregunta..."
@@ -398,7 +450,7 @@ function ChatPanel({
         <button
           aria-label="Enviar pregunta"
           className="grid h-10 w-10 place-items-center rounded-button bg-brand-purple text-white transition hover:brightness-110 disabled:opacity-50"
-          disabled={input.trim().length === 0 || isLoading}
+          disabled={input.trim().length === 0 || isLoading || locked}
           type="submit"
         >
           <Send aria-hidden="true" size={18} />
@@ -409,6 +461,7 @@ function ChatPanel({
         {promptChips.map((prompt) => (
           <button
             className="rounded-full border border-white/10 bg-white/[0.035] px-3 py-2 text-xs text-text-secondary transition hover:text-white"
+            disabled={locked}
             key={prompt}
             onClick={() => void sendMessage(prompt)}
             type="button"
@@ -416,6 +469,7 @@ function ChatPanel({
             {prompt}
           </button>
         ))}
+      </div>
       </div>
     </Card>
   );
@@ -426,6 +480,9 @@ export function BookExperience({ book }: BookExperienceProps) {
   const [activeTab, setActiveTab] = useState<TabKey>("summary");
   const chatInputRef = useRef<HTMLTextAreaElement | null>(null);
   const progress = getProgress(book);
+  const currentPlan: PlanKey = "free";
+  const canUseAudio = canAccessFeature(currentPlan, "audio");
+  const canUseChat = canAccessFeature(currentPlan, "chat");
 
   function openBookChat() {
     setActiveTab("chat");
@@ -494,8 +551,16 @@ export function BookExperience({ book }: BookExperienceProps) {
                   label="Ejercicios"
                   value={`${book.activities.length}`}
                 />
-                <BookStat icon={Headphones} label="Audio incluido" value="Audio" />
-                <BookStat icon={Bot} label="IA incluida" value="IA" />
+                <BookStat
+                  icon={Headphones}
+                  label={canUseAudio ? "Audio incluido" : "Audio bloqueado"}
+                  value="Audio"
+                />
+                <BookStat
+                  icon={Bot}
+                  label={canUseChat ? "IA incluida" : "IA bloqueada"}
+                  value="IA"
+                />
               </div>
 
               <div className="mt-7 max-w-xl">
@@ -516,7 +581,7 @@ export function BookExperience({ book }: BookExperienceProps) {
             </div>
           </div>
 
-          <AudioPanel book={book} />
+          <AudioPanel book={book} locked={!canUseAudio} />
         </section>
 
         <section className="mt-10 grid gap-8 lg:grid-cols-[1fr_420px]">
@@ -598,7 +663,9 @@ export function BookExperience({ book }: BookExperienceProps) {
                 </section>
               ) : null}
 
-              {activeTab === "audio" ? <AudioPanel book={book} /> : null}
+              {activeTab === "audio" ? (
+                <AudioPanel book={book} locked={!canUseAudio} />
+              ) : null}
 
               {activeTab === "chat" ? (
                 <section>
@@ -656,7 +723,7 @@ export function BookExperience({ book }: BookExperienceProps) {
           </div>
 
           <aside className="space-y-5">
-            <ChatPanel book={book} inputRef={chatInputRef} />
+            <ChatPanel book={book} inputRef={chatInputRef} locked={!canUseChat} />
 
             <Card className="rounded-[16px] bg-white/[0.035] p-6">
               <div className="flex items-center justify-between">

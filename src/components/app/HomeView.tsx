@@ -17,6 +17,7 @@ import {
   Home,
   LibraryBig,
   MessageCircle,
+  Percent,
   Play,
   Star,
   User,
@@ -278,6 +279,32 @@ export function HomeView({ books }: HomeViewProps) {
             </Link>
           ))}
         </section>
+
+        <Card className="mt-6 overflow-hidden rounded-[16px] border-brand-purple/35 bg-gradient-to-r from-brand-purple/20 via-white/[0.035] to-brand-blue/10 p-5">
+          <div className="grid gap-5 md:grid-cols-[72px_1fr_auto] md:items-center">
+            <span className="grid h-16 w-16 place-items-center rounded-[1.25rem] border border-brand-purple/40 bg-brand-purple/20 text-brand-purple shadow-[0_0_35px_rgba(124,58,237,0.35)]">
+              <Percent aria-hidden="true" size={30} />
+            </span>
+            <div>
+              <p className="text-sm font-medium uppercase tracking-[0.2em] text-brand-purple">
+                Oferta unica para usuarios nuevos
+              </p>
+              <h2 className="mt-2 text-2xl font-semibold">
+                15% de descuento en tu primer mes
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-text-secondary">
+                Activa audio, chat con IA y todas las experiencias premium desde
+                Pro. Esta oferta solo aparece en tu home inicial.
+              </p>
+            </div>
+            <Link
+              className="inline-flex min-h-12 items-center justify-center rounded-button bg-brand-gradient px-5 text-sm font-medium text-white transition hover:brightness-110"
+              href="/planes?plan=pro&offer=new-user-15"
+            >
+              Mejorar plan
+            </Link>
+          </div>
+        </Card>
 
         <section className="mt-8">
           <HeaderControls title="Continuar aprendiendo" />
