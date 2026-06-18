@@ -3,6 +3,10 @@ import type { SignInInput, SignUpInput } from "@/lib/validation/auth";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import type { AppUser } from "@/types";
 
+function getPlanRedirect(plan: string) {
+  return plan === "free" ? "/home" : `/planes?plan=${plan}&status=pending`;
+}
+
 export class SupabaseAuthProvider implements AuthProvider {
   async getCurrentUser(): Promise<AppUser | null> {
     const supabase = createBrowserSupabaseClient();
@@ -32,7 +36,7 @@ export class SupabaseAuthProvider implements AuthProvider {
     });
 
     if (error || !data.user) {
-      throw new Error(error?.message ?? "No pudimos iniciar sesión.");
+      throw new Error(error?.message ?? "No pudimos iniciar sesion.");
     }
 
     return {
@@ -47,7 +51,7 @@ export class SupabaseAuthProvider implements AuthProvider {
         isDemo: false,
       },
       redirectTo: "/home",
-      message: "Sesión iniciada.",
+      message: "Sesion iniciada.",
     };
   }
 
@@ -68,6 +72,8 @@ export class SupabaseAuthProvider implements AuthProvider {
       throw new Error(error?.message ?? "No pudimos crear la cuenta.");
     }
 
+    const isPaidPlan = input.plan !== "free";
+
     return {
       user: {
         id: data.user.id,
@@ -76,8 +82,10 @@ export class SupabaseAuthProvider implements AuthProvider {
         plan: "free",
         isDemo: false,
       },
-      redirectTo: "/home",
-      message: "Cuenta creada. Revisa tu email si Supabase requiere confirmación.",
+      redirectTo: getPlanRedirect(input.plan),
+      message: isPaidPlan
+        ? "Cuenta creada. Continuemos con la configuracion del pago."
+        : "Cuenta creada. Revisa tu email si Supabase requiere confirmacion.",
     };
   }
 
@@ -88,13 +96,14 @@ export class SupabaseAuthProvider implements AuthProvider {
 
   async signInWithGoogle(plan = "free"): Promise<AuthResult> {
     const supabase = createBrowserSupabaseClient();
+    const redirectPath = getPlanRedirect(plan);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         queryParams: {
           requested_plan: plan,
         },
-        redirectTo: `${window.location.origin}/home`,
+        redirectTo: `${window.location.origin}${redirectPath}`,
       },
     });
 
@@ -110,8 +119,8 @@ export class SupabaseAuthProvider implements AuthProvider {
         plan: "free",
         isDemo: false,
       },
-      redirectTo: "/home",
-      message: "Redirección a Google preparada.",
+      redirectTo: redirectPath,
+      message: "Redireccion a Google preparada.",
     };
   }
 }
