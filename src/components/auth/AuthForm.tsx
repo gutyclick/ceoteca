@@ -1,9 +1,10 @@
 "use client";
 
+import { Chrome, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Chrome, Loader2 } from "lucide-react";
 import type { ZodError } from "zod";
 
 import { SectionHeading } from "@/components/marketing/SectionHeading";
@@ -48,6 +49,7 @@ function applyZodErrors(
 }
 
 export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
+  const router = useRouter();
   const [status, setStatus] = useState<FormStatus>({ type: "idle" });
   const authProvider = useMemo(() => createAuthProvider(), []);
   const isRegister = mode === "register";
@@ -79,8 +81,10 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
 
       setStatus({
         type: "success",
-        message: `${result.message} Redirección preparada a ${result.redirectTo}.`,
+        message: result.message,
       });
+      router.push(result.redirectTo);
+      router.refresh();
     } catch (error) {
       setStatus({
         type: "error",
@@ -121,15 +125,17 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
       const result = await authProvider.signInWithGoogle(selectedPlan);
       setStatus({
         type: "success",
-        message: `${result.message} Redirección preparada a ${result.redirectTo}.`,
+        message: result.message,
       });
+      router.push(result.redirectTo);
+      router.refresh();
     } catch (error) {
       setStatus({
         type: "error",
         message:
           error instanceof Error
             ? error.message
-            : "Google OAuth todavía no está disponible.",
+            : "Google OAuth todavia no esta disponible.",
       });
     }
   }
@@ -148,8 +154,8 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
             }
             description={
               isRegister
-                ? "El modo demo crea una sesión simulada y respeta el plan seleccionado."
-                : "Ingresa con email y contraseña. En modo demo no se requieren credenciales reales."
+                ? "Crea tu cuenta y entra directo a la home. En demo se usa una sesion simulada."
+                : "Ingresa con email y contrasena para volver a tu home."
             }
           />
         </div>
@@ -211,10 +217,10 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
             </label>
 
             <label className="grid gap-2 text-sm">
-              Contraseña
+              Contrasena
               <input
                 className="min-h-12 rounded-button border border-white/10 bg-white/[0.04] px-4 text-text-primary outline-none transition focus:border-brand-purple"
-                placeholder="Mínimo 8 caracteres"
+                placeholder="Minimo 8 caracteres"
                 type="password"
                 {...register("password")}
               />
@@ -229,10 +235,10 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
               <>
                 <input type="hidden" value={selectedPlan} {...register("plan")} />
                 <label className="grid gap-2 text-sm">
-                  Confirmar contraseña
+                  Confirmar contrasena
                   <input
                     className="min-h-12 rounded-button border border-white/10 bg-white/[0.04] px-4 text-text-primary outline-none transition focus:border-brand-purple"
-                    placeholder="Repite tu contraseña"
+                    placeholder="Repite tu contrasena"
                     type="password"
                     {...register("confirmPassword")}
                   />
@@ -251,7 +257,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
                   <span>
                     Acepto{" "}
                     <Link className="text-brand-purple" href="/terminos">
-                      términos
+                      terminos
                     </Link>{" "}
                     y{" "}
                     <Link className="text-brand-purple" href="/privacidad">
@@ -284,17 +290,17 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
               {isSubmitting ? (
                 <Loader2 aria-hidden="true" className="animate-spin" size={18} />
               ) : null}
-              {isRegister ? "Crear cuenta demo" : "Iniciar sesión demo"}
+              {isRegister ? "Crear cuenta" : "Iniciar sesion"}
             </Button>
           </form>
 
           <p className="mt-6 text-center text-sm text-text-secondary">
-            {isRegister ? "¿Ya tienes cuenta?" : "¿No tienes cuenta?"}{" "}
+            {isRegister ? "Ya tienes cuenta?" : "No tienes cuenta?"}{" "}
             <Link
               className="font-medium text-brand-purple"
               href={isRegister ? "/login" : "/registro"}
             >
-              {isRegister ? "Inicia sesión" : "Regístrate"}
+              {isRegister ? "Inicia sesion" : "Registrate"}
             </Link>
           </p>
         </Card>
