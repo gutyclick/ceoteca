@@ -102,6 +102,40 @@ a {
   animation: reveal-up 700ms ease both;
 }
 
+.ceoteca-orbit {
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(168, 85, 247, 0.45) 0 12px, transparent 13px),
+    repeating-radial-gradient(ellipse at 50% 50%, transparent 0 18px, rgba(124, 58, 237, 0.28) 19px 20px, transparent 21px 34px);
+  filter: drop-shadow(0 0 22px rgba(124, 58, 237, 0.38));
+  transform: rotate(-12deg);
+}
+
+.ceoteca-orbit::before,
+.ceoteca-orbit::after {
+  content: "";
+  position: absolute;
+  border-radius: 999px;
+  background: rgba(139, 92, 246, 0.95);
+  box-shadow: 0 0 18px rgba(139, 92, 246, 0.9);
+  animation: orbit-dot 6s linear infinite;
+}
+
+.ceoteca-orbit::before {
+  height: 7px;
+  left: 18%;
+  top: 38%;
+  width: 7px;
+}
+
+.ceoteca-orbit::after {
+  animation-duration: 8s;
+  height: 5px;
+  right: 20%;
+  top: 18%;
+  width: 5px;
+}
+
 @keyframes ambient-drift {
   from {
     transform: translate3d(-2%, -1%, 0) scale(1);
@@ -147,5 +181,15 @@ a {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes orbit-dot {
+  from {
+    transform: rotate(0deg) translateX(18px) rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg) translateX(18px) rotate(-360deg);
   }
 }
