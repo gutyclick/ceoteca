@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import {
   ArrowRight,
   Bell,
@@ -9,6 +10,8 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  ChevronsDown,
+  ChevronsUp,
   Clock3,
   Flame,
   Home,
@@ -161,6 +164,7 @@ function HeaderControls({ title }: { title: string }) {
 }
 
 export function HomeView({ books }: HomeViewProps) {
+  const [isNavCollapsed, setIsNavCollapsed] = useState(false);
   const primaryBook = books[0];
   const continueBooks = books.slice(0, 3);
   const trendingBooks = books.slice(0, 5);
@@ -181,7 +185,12 @@ export function HomeView({ books }: HomeViewProps) {
   }
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#03040b] pb-28 text-text-primary">
+    <main
+      className={cn(
+        "min-h-screen overflow-hidden bg-[#03040b] text-text-primary transition-[padding] duration-300",
+        isNavCollapsed ? "pb-24" : "pb-44",
+      )}
+    >
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_22%_12%,rgba(124,58,237,0.18),transparent_30%),radial-gradient(circle_at_70%_0%,rgba(79,99,255,0.1),transparent_24%),linear-gradient(180deg,#02030a_0%,#050612_42%,#04040a_100%)]" />
 
       <section className="mx-auto w-full max-w-[1180px] px-5 pt-6 md:px-8">
@@ -534,30 +543,63 @@ export function HomeView({ books }: HomeViewProps) {
         </section>
       </section>
 
-      <nav className="fixed bottom-4 left-1/2 z-40 w-[min(92vw,1060px)] -translate-x-1/2 rounded-[24px] border border-white/10 bg-[#080915]/90 px-4 py-3 shadow-ambient backdrop-blur-xl">
-        <div className="grid grid-cols-5 items-center">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isCenter = item.label === "IA";
-
-            return (
-              <Link
-                className={cn(
-                  "flex flex-col items-center justify-center gap-1 rounded-button px-2 py-2 text-xs text-text-secondary transition hover:text-white md:flex-row md:text-sm",
-                  item.active && "text-brand-purple",
-                  isCenter &&
-                    "-mt-9 mx-auto h-[70px] w-[70px] rounded-full border border-brand-purple/70 bg-brand-purple/20 text-brand-purple shadow-[0_0_45px_rgba(124,58,237,0.55)] md:flex-col",
-                )}
-                href={item.href}
-                key={item.label}
+      <div className="fixed bottom-5 left-1/2 z-40 w-[min(94vw,1120px)] -translate-x-1/2">
+        <div
+          className={cn(
+            "relative mx-auto transition-all duration-300 ease-out",
+            isNavCollapsed
+              ? "w-fit translate-y-0 opacity-100"
+              : "w-full translate-y-0 opacity-100",
+          )}
+        >
+          {isNavCollapsed ? (
+            <button
+              aria-label="Mostrar menu"
+              className="mx-auto flex min-h-14 items-center gap-3 rounded-full border border-brand-purple/45 bg-[#080915]/92 px-5 text-sm text-text-primary shadow-[0_0_38px_rgba(124,58,237,0.28)] backdrop-blur-xl transition hover:border-brand-purple/80"
+              onClick={() => setIsNavCollapsed(false)}
+              type="button"
+            >
+              <Bot aria-hidden="true" className="text-brand-purple" size={22} />
+              Menu
+              <ChevronsUp aria-hidden="true" size={18} />
+            </button>
+          ) : (
+            <nav className="relative rounded-[24px] border border-white/10 bg-[#080915]/92 px-4 pb-3 pt-4 shadow-ambient backdrop-blur-xl">
+              <button
+                aria-label="Ocultar menu"
+                className="absolute -top-4 right-5 grid h-8 w-8 place-items-center rounded-full border border-white/10 bg-[#101121] text-text-secondary shadow-ambient transition hover:border-brand-purple/60 hover:text-white"
+                onClick={() => setIsNavCollapsed(true)}
+                type="button"
               >
-                <Icon aria-hidden="true" size={isCenter ? 27 : 22} />
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
+                <ChevronsDown aria-hidden="true" size={16} />
+              </button>
+
+              <div className="grid grid-cols-5 items-center">
+                {navItems.map((item) => {
+                  const Icon = item.icon;
+                  const isCenter = item.label === "IA";
+
+                  return (
+                    <Link
+                      className={cn(
+                        "flex min-h-14 flex-col items-center justify-center gap-1 rounded-button px-2 py-2 text-xs text-text-secondary transition hover:text-white md:flex-row md:text-base",
+                        item.active && "text-brand-purple",
+                        isCenter &&
+                          "-mt-11 mx-auto h-[78px] w-[78px] rounded-full border border-brand-purple/70 bg-brand-purple/20 text-brand-purple shadow-[0_0_45px_rgba(124,58,237,0.55)] md:flex-col md:text-sm",
+                      )}
+                      href={item.href}
+                      key={item.label}
+                    >
+                      <Icon aria-hidden="true" size={isCenter ? 28 : 24} />
+                      <span>{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </nav>
+          )}
         </div>
-      </nav>
+      </div>
     </main>
   );
 }

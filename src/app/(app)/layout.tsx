@@ -1,16 +1,9 @@
-import { Footer } from "@/components/marketing/Footer";
-import { PublicHeader } from "@/components/marketing/PublicHeader";
+import { AppChrome } from "@/components/app/AppChrome";
 
 export default function AppLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
-    <>
-      <PublicHeader />
-      {children}
-      <Footer />
-    </>
-  );
+  return <AppChrome>{children}</AppChrome>;
 }
