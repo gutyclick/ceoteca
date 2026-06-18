@@ -1,1 +1,0 @@
-export default function Page(){return <main className="container py-16 prose prose-invert"><h1>Términos provisionales</h1><p>Ceoteca MVP opera en modo demo. Los pagos y servicios externos quedan pendientes de configuración.</p></main>}

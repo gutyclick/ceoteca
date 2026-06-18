@@ -1,2 +1,0 @@
-import Link from 'next/link';
-export function Logo(){return <Link href="/" className="focus-ring inline-flex items-center gap-3" aria-label="CEOTECA inicio"><span className="relative grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-indigo-500 via-violet-600 to-pink-500 shadow-[0_0_30px_rgba(124,58,237,.7)]"><span className="h-4 w-4 rounded-l-full border-y-4 border-l-4 border-white/90" /></span><span className="text-lg font-black tracking-[.32em]">CEOTECA</span></Link>}

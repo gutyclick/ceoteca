@@ -1,2 +1,0 @@
-import type { KeyPoint } from '@/types';
-export function KeyPointCard({point,index}:{point:KeyPoint;index:number}){return <article className="glass rounded-3xl p-5"><span className="gradient-text text-4xl font-black">{index+1}</span><h3 className="mt-2 text-xl font-bold">{point.title}</h3><p className="mt-2 text-zinc-300">{point.explanation}</p><p className="mt-3 text-sm text-zinc-400"><b>Ejemplo:</b> {point.example}</p><p className="mt-2 text-sm text-green-300"><b>Acción:</b> {point.action}</p></article>}

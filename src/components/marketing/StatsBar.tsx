@@ -1,2 +1,0 @@
-const stats=['+500 libros analizados','+25,000 lectores activos','12 min de lectura promedio','4.9/5 de valoración'];
-export function StatsBar(){return <section className="container glass grid gap-4 rounded-3xl p-6 md:grid-cols-4">{/* Métricas de demostración hasta disponer de datos reales. */}{stats.map(s=><div className="text-center" key={s}><strong className="gradient-text text-2xl">{s.split(' ')[0]}</strong><p className="text-sm text-zinc-300">{s.split(' ').slice(1).join(' ')}</p></div>)}</section>}
