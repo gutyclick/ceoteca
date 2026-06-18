@@ -25,7 +25,6 @@ import {
   ShieldCheck,
   SlidersHorizontal,
   Sparkles,
-  Star,
   Trophy,
   User,
   UserRound,
@@ -72,8 +71,8 @@ const navItems = [
   { label: "Inicio", href: "/home", icon: Home, active: false },
   { label: "Biblioteca", href: "/biblioteca", icon: BookOpen, active: false },
   { label: "IA", href: "/home#ia", icon: Bot, active: false },
-  { label: "Favoritos", href: "/biblioteca", icon: Star, active: false },
   { label: "Perfil", href: "/perfil", icon: User, active: true },
+  { label: "Configuracion", href: "/perfil#ajustes", icon: Settings, active: false },
 ] as const;
 
 const planOrder: PlanKey[] = ["free", "pro", "unlimited", "founder"];
@@ -1224,7 +1223,7 @@ export function ProfileSettingsView() {
           />
         </section>
 
-        <section className="mt-7">
+        <section className="mt-7" id="ajustes">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-sm font-medium uppercase tracking-[0.22em] text-brand-purple">

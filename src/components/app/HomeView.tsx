@@ -19,6 +19,7 @@ import {
   MessageCircle,
   Percent,
   Play,
+  Settings,
   Star,
   User,
 } from "lucide-react";
@@ -83,8 +84,8 @@ const navItems = [
   { label: "Inicio", href: "/home", icon: Home, active: true },
   { label: "Biblioteca", href: "/biblioteca", icon: BookOpen, active: false },
   { label: "IA", href: "/home#ia", icon: Bot, active: false },
-  { label: "Favoritos", href: "/biblioteca", icon: Star, active: false },
   { label: "Perfil", href: "/perfil", icon: User, active: false },
+  { label: "Configuracion", href: "/perfil#ajustes", icon: Settings, active: false },
 ] as const;
 
 function getBookProgress(index: number) {
