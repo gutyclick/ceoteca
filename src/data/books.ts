@@ -1,5 +1,85 @@
 import type { Book, BookCategory } from "@/types";
 
+const defaultAnalysis = [
+  {
+    title: "Idea central",
+    content:
+      "Este análisis demo resume una interpretación editorial propia: el valor del libro está en convertir una idea amplia en decisiones pequeñas que el lector pueda probar esta semana.",
+  },
+  {
+    title: "Aplicación práctica",
+    content:
+      "La experiencia propone detectar un área concreta, elegir una acción mínima y medir si esa acción reduce fricción o mejora claridad. No busca prometer resultados, sino crear un punto de partida.",
+  },
+  {
+    title: "Limitación útil",
+    content:
+      "Ninguna idea funciona igual para todas las personas. El lector debe adaptar el enfoque a su contexto, energía, responsabilidades y recursos disponibles.",
+  },
+];
+
+const defaultKeyPoints = [
+  {
+    number: 1,
+    title: "Reduce la fricción",
+    explanation:
+      "Una acción sencilla tiene más probabilidad de repetirse que un plan perfecto pero pesado.",
+    example:
+      "Preparar el entorno la noche anterior puede hacer más fácil estudiar, ahorrar o entrenar.",
+    action: "Elige una acción de menos de cinco minutos para comenzar hoy.",
+    limitation:
+      "Lo pequeño no reemplaza una estrategia completa; solo ayuda a iniciar con menos resistencia.",
+  },
+  {
+    number: 2,
+    title: "Mide lo que importa",
+    explanation:
+      "El progreso se vuelve visible cuando se registra una señal concreta y fácil de revisar.",
+    example:
+      "Marcar tres sesiones completadas puede ser más útil que esperar motivación perfecta.",
+    action: "Define una métrica simple para los próximos siete días.",
+    limitation:
+      "Medir demasiado puede distraer; conviene elegir una sola señal principal.",
+  },
+  {
+    number: 3,
+    title: "Adapta antes de abandonar",
+    explanation:
+      "Cuando una práctica falla, puede necesitar ajuste de contexto, horario o dificultad.",
+    example:
+      "Si leer de noche no funciona, prueba diez minutos después del almuerzo.",
+    action: "Cambia una variable antes de descartar el hábito o sistema.",
+    limitation:
+      "Algunas metas requieren apoyo externo o condiciones que no dependen solo del usuario.",
+  },
+];
+
+const defaultActivities = [
+  {
+    title: "Pregunta de reflexión",
+    prompt:
+      "¿Qué acción pequeña te acercaría a este aprendizaje sin depender de motivación alta?",
+    type: "reflection" as const,
+  },
+  {
+    title: "Checklist de inicio",
+    prompt: "Marca tres condiciones que puedes preparar antes de empezar.",
+    type: "checklist" as const,
+    options: [
+      "Lugar definido",
+      "Recordatorio visible",
+      "Tiempo bloqueado",
+      "Meta reducida",
+    ],
+  },
+  {
+    title: "Escenario práctico",
+    prompt:
+      "Imagina que solo tienes 12 minutos al día. ¿Qué parte del aprendizaje conservarías y qué eliminarías?",
+    type: "scenario" as const,
+  },
+];
+
 export const bookCategories: Array<"Todos" | BookCategory> = [
   "Todos",
   "Finanzas",
@@ -31,6 +111,12 @@ export const demoBooks: Book[] = [
     isPublished: true,
     isDemoContent: true,
     progress: 38,
+    purchaseUrl: "https://www.google.com/search?q=Habitos+Atomicos+James+Clear",
+    analysis: defaultAnalysis,
+    keyPoints: defaultKeyPoints,
+    activities: defaultActivities,
+    conclusion:
+      "Conclusión editorial demo: el aprendizaje más útil no es acumular ideas, sino diseñar una acción pequeña que pueda repetirse hasta volverse parte del entorno.",
   },
   {
     id: "padre-rico-padre-pobre",
@@ -51,6 +137,13 @@ export const demoBooks: Book[] = [
     isPublished: true,
     isDemoContent: true,
     progress: 68,
+    purchaseUrl:
+      "https://www.google.com/search?q=Padre+Rico+Padre+Pobre+Robert+Kiyosaki",
+    analysis: defaultAnalysis,
+    keyPoints: defaultKeyPoints,
+    activities: defaultActivities,
+    conclusion:
+      "Conclusión editorial demo: pensar mejor sobre dinero empieza por distinguir entre consumo inmediato, activos posibles y hábitos de decisión más conscientes.",
   },
   {
     id: "startup-100",
@@ -71,6 +164,12 @@ export const demoBooks: Book[] = [
     isPublished: true,
     isDemoContent: true,
     progress: 0,
+    purchaseUrl: "https://www.google.com/search?q=La+Startup+de+100+Chris+Guillebeau",
+    analysis: defaultAnalysis,
+    keyPoints: defaultKeyPoints,
+    activities: defaultActivities,
+    conclusion:
+      "Conclusión editorial demo: una idea de negocio gana claridad cuando se convierte rápido en oferta, conversación con clientes y aprendizaje medible.",
   },
   {
     id: "hombre-rico-babilonia",
@@ -90,6 +189,13 @@ export const demoBooks: Book[] = [
     },
     isPublished: true,
     isDemoContent: true,
+    purchaseUrl:
+      "https://www.google.com/search?q=El+Hombre+Mas+Rico+de+Babilonia",
+    analysis: defaultAnalysis,
+    keyPoints: defaultKeyPoints,
+    activities: defaultActivities,
+    conclusion:
+      "Conclusión editorial demo: la estabilidad financiera suele comenzar con reglas simples, repetidas con paciencia y revisadas con honestidad.",
   },
   {
     id: "pensar-rapido-pensar-despacio",
@@ -109,6 +215,13 @@ export const demoBooks: Book[] = [
     },
     isPublished: true,
     isDemoContent: true,
+    purchaseUrl:
+      "https://www.google.com/search?q=Pensar+Rapido+Pensar+Despacio+Daniel+Kahneman",
+    analysis: defaultAnalysis,
+    keyPoints: defaultKeyPoints,
+    activities: defaultActivities,
+    conclusion:
+      "Conclusión editorial demo: tomar mejores decisiones exige reconocer cuándo la intuición ayuda y cuándo conviene detenerse a revisar supuestos.",
   },
   {
     id: "poder-del-ahora",
@@ -128,6 +241,12 @@ export const demoBooks: Book[] = [
     },
     isPublished: true,
     isDemoContent: true,
+    purchaseUrl: "https://www.google.com/search?q=El+Poder+del+Ahora+Eckhart+Tolle",
+    analysis: defaultAnalysis,
+    keyPoints: defaultKeyPoints,
+    activities: defaultActivities,
+    conclusion:
+      "Conclusión editorial demo: practicar presencia no elimina los problemas, pero puede cambiar la relación que tenemos con ellos.",
   },
   {
     id: "como-ganar-amigos",
@@ -147,6 +266,13 @@ export const demoBooks: Book[] = [
     },
     isPublished: true,
     isDemoContent: true,
+    purchaseUrl:
+      "https://www.google.com/search?q=Como+Ganar+Amigos+e+Influir+Sobre+las+Personas",
+    analysis: defaultAnalysis,
+    keyPoints: defaultKeyPoints,
+    activities: defaultActivities,
+    conclusion:
+      "Conclusión editorial demo: las relaciones mejoran cuando la atención deja de estar solo en convencer y empieza a incluir escucha real.",
   },
   {
     id: "semana-laboral-4-horas",
@@ -166,6 +292,13 @@ export const demoBooks: Book[] = [
     },
     isPublished: true,
     isDemoContent: true,
+    purchaseUrl:
+      "https://www.google.com/search?q=La+Semana+Laboral+de+4+Horas+Tim+Ferriss",
+    analysis: defaultAnalysis,
+    keyPoints: defaultKeyPoints,
+    activities: defaultActivities,
+    conclusion:
+      "Conclusión editorial demo: optimizar el tiempo exige elegir qué eliminar, qué delegar y qué merece atención profunda.",
   },
   {
     id: "mindset",
@@ -185,6 +318,12 @@ export const demoBooks: Book[] = [
     },
     isPublished: true,
     isDemoContent: true,
+    purchaseUrl: "https://www.google.com/search?q=Mindset+Carol+Dweck",
+    analysis: defaultAnalysis,
+    keyPoints: defaultKeyPoints,
+    activities: defaultActivities,
+    conclusion:
+      "Conclusión editorial demo: una mentalidad de aprendizaje se nota menos en lo que decimos creer y más en cómo respondemos al error.",
   },
   {
     id: "inversor-inteligente",
@@ -204,6 +343,13 @@ export const demoBooks: Book[] = [
     },
     isPublished: true,
     isDemoContent: true,
+    purchaseUrl:
+      "https://www.google.com/search?q=El+Inversor+Inteligente+Benjamin+Graham",
+    analysis: defaultAnalysis,
+    keyPoints: defaultKeyPoints,
+    activities: defaultActivities,
+    conclusion:
+      "Conclusión editorial demo: invertir con prudencia requiere reglas, margen de seguridad y una relación madura con la incertidumbre.",
   },
 ];
 
@@ -229,4 +375,8 @@ export function filterBooks(
 
 export function getBooksByCategory(category: BookCategory) {
   return demoBooks.filter((book) => book.category === category);
+}
+
+export function getBookBySlug(slug: string) {
+  return demoBooks.find((book) => book.slug === slug) ?? null;
 }

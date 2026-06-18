@@ -41,4 +41,30 @@ export type Book = {
   isPublished: boolean;
   isDemoContent: boolean;
   progress?: number;
+  purchaseUrl?: string;
+  analysis: BookSection[];
+  keyPoints: KeyPoint[];
+  activities: BookActivity[];
+  conclusion: string;
+};
+
+export type BookSection = {
+  title: string;
+  content: string;
+};
+
+export type KeyPoint = {
+  number: number;
+  title: string;
+  explanation: string;
+  example: string;
+  action: string;
+  limitation: string;
+};
+
+export type BookActivity = {
+  title: string;
+  prompt: string;
+  type: "reflection" | "checklist" | "scenario";
+  options?: string[];
 };
