@@ -12,7 +12,7 @@ type AppChromeProps = {
 export function AppChrome({ children }: AppChromeProps) {
   const pathname = usePathname();
   const usesDashboardChrome =
-    pathname === "/home" || pathname.startsWith("/libro/");
+    pathname === "/home" || pathname === "/perfil" || pathname.startsWith("/libro/");
 
   if (usesDashboardChrome) {
     return children;
