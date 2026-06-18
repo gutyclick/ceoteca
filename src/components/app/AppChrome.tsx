@@ -11,9 +11,10 @@ type AppChromeProps = {
 
 export function AppChrome({ children }: AppChromeProps) {
   const pathname = usePathname();
-  const isHome = pathname === "/home";
+  const usesDashboardChrome =
+    pathname === "/home" || pathname.startsWith("/libro/");
 
-  if (isHome) {
+  if (usesDashboardChrome) {
     return children;
   }
 
