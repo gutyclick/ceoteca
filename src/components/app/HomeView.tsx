@@ -10,21 +10,41 @@ import { CategoryFilter } from "@/components/books/CategoryFilter";
 import { EmptyState } from "@/components/books/EmptyState";
 import { SearchInput } from "@/components/books/SearchInput";
 import { ButtonLink } from "@/components/ui/Button";
-import { demoUser } from "@/lib/auth/demo";
-import { demoBooks, filterBooks, getBooksByCategory } from "@/data/books";
-import type { BookCategory } from "@/types";
+import { filterBooks } from "@/data/books";
+import type { Book, BookCategory } from "@/types";
 
-export function HomeView() {
+type HomeViewProps = {
+  books: Book[];
+};
+
+function getBooksByCategory(books: Book[], category: BookCategory) {
+  return books.filter((book) => book.category === category);
+}
+
+export function HomeView({ books }: HomeViewProps) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<"Todos" | BookCategory>("Todos");
-  const featuredBook = demoBooks.find((book) => book.isFeatured) ?? demoBooks[0];
+  const featuredBook = books.find((book) => book.isFeatured) ?? books[0];
 
   const filteredBooks = useMemo(
-    () => filterBooks(demoBooks, query, category),
-    [query, category],
+    () => filterBooks(books, query, category),
+    [books, query, category],
   );
 
-  const continueBooks = demoBooks.filter((book) => (book.progress ?? 0) > 0);
+  const continueBooks = books.filter((book) => (book.progress ?? 0) > 0);
+
+  if (!featuredBook) {
+    return (
+      <main className="min-h-screen bg-background text-text-primary">
+        <section className="ceoteca-container ceoteca-section">
+          <h1 className="text-3xl font-semibold">Biblioteca en preparación</h1>
+          <p className="mt-3 text-text-secondary">
+            Aún no hay libros publicados en Supabase.
+          </p>
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-background text-text-primary">
@@ -32,14 +52,13 @@ export function HomeView() {
         <div className="grid gap-8 lg:grid-cols-[1fr_360px] lg:items-center">
           <div>
             <p className="text-sm font-medium uppercase tracking-[0.24em] text-brand-purple">
-              Hola, {demoUser.fullName}
+              Hola
             </p>
             <h1 className="mt-4 max-w-3xl text-balance text-5xl font-semibold leading-tight">
               Continúa aprendiendo ideas que puedes aplicar hoy.
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-text-secondary">
-              Home privada en modo demo: catálogo navegable, progreso simulado y
-              carruseles por tema.
+              Home privada con catálogo navegable, progreso y carruseles por tema.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <ButtonLink href={`/libro/${featuredBook.slug}`}>
@@ -47,7 +66,7 @@ export function HomeView() {
                 Continuar destacado
               </ButtonLink>
               <ButtonLink href="/planes" variant="secondary">
-                Ver plan demo
+                Ver plan
                 <ArrowRight aria-hidden="true" size={18} />
               </ButtonLink>
             </div>
@@ -75,23 +94,23 @@ export function HomeView() {
         ) : (
           <div className="mt-12 space-y-12">
             <BookCarousel books={continueBooks} title="Continúa aprendiendo" />
-            <BookCarousel books={demoBooks.slice(0, 6)} title="Más populares" />
+            <BookCarousel books={books.slice(0, 6)} title="Más populares" />
             <BookCarousel
-              books={getBooksByCategory("Finanzas")}
+              books={getBooksByCategory(books, "Finanzas")}
               title="Finanzas personales"
             />
             <BookCarousel
-              books={getBooksByCategory("Hábitos").concat(
-                getBooksByCategory("Productividad"),
+              books={getBooksByCategory(books, "Hábitos").concat(
+                getBooksByCategory(books, "Productividad"),
               )}
               title="Hábitos y productividad"
             />
             <BookCarousel
-              books={getBooksByCategory("Emprendimiento")}
+              books={getBooksByCategory(books, "Emprendimiento")}
               title="Emprendimiento"
             />
             <BookCarousel
-              books={getBooksByCategory("Psicología")}
+              books={getBooksByCategory(books, "Psicología")}
               title="Psicología"
             />
           </div>

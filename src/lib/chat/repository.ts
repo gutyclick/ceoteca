@@ -48,8 +48,10 @@ export class MockChatRepository implements ChatRepository {
 }
 
 export class SupabaseChatRepository implements ChatRepository {
+  constructor(private readonly accessToken?: string) {}
+
   async getUsage(userId: string, bookId: string): Promise<number> {
-    const supabase = createServerSupabaseClient();
+    const supabase = createServerSupabaseClient(this.accessToken);
     const month = `${new Date().toISOString().slice(0, 7)}-01`;
     const { data, error } = await supabase
       .from("chat_usage")
@@ -67,7 +69,7 @@ export class SupabaseChatRepository implements ChatRepository {
   }
 
   async incrementUsage(userId: string, bookId: string): Promise<number> {
-    const supabase = createServerSupabaseClient();
+    const supabase = createServerSupabaseClient(this.accessToken);
     const month = `${new Date().toISOString().slice(0, 7)}-01`;
     const { data, error } = await supabase.rpc("increment_chat_usage", {
       target_user_id: userId,
@@ -83,7 +85,7 @@ export class SupabaseChatRepository implements ChatRepository {
   }
 
   async persistMessages(input: PersistChatInput): Promise<void> {
-    const supabase = createServerSupabaseClient();
+    const supabase = createServerSupabaseClient(this.accessToken);
     const { error } = await supabase.from("chat_messages").insert([
       {
         user_id: input.userId,
@@ -105,7 +107,7 @@ export class SupabaseChatRepository implements ChatRepository {
   }
 
   async listMessages(userId: string, bookId: string): Promise<ChatConversationMessage[]> {
-    const supabase = createServerSupabaseClient();
+    const supabase = createServerSupabaseClient(this.accessToken);
     const { data, error } = await supabase
       .from("chat_messages")
       .select("role, content")
@@ -121,10 +123,10 @@ export class SupabaseChatRepository implements ChatRepository {
   }
 }
 
-export function createChatRepository(): ChatRepository {
+export function createChatRepository(accessToken?: string): ChatRepository {
   if (clientEnv.NEXT_PUBLIC_DEMO_MODE) {
     return new MockChatRepository();
   }
 
-  return new SupabaseChatRepository();
+  return new SupabaseChatRepository(accessToken);
 }

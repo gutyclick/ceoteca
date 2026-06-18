@@ -7,16 +7,20 @@ import { CategoryFilter } from "@/components/books/CategoryFilter";
 import { EmptyState } from "@/components/books/EmptyState";
 import { SearchInput } from "@/components/books/SearchInput";
 import { ButtonLink } from "@/components/ui/Button";
-import { bookCategories, demoBooks, filterBooks } from "@/data/books";
-import type { BookCategory } from "@/types";
+import { bookCategories, filterBooks } from "@/data/books";
+import type { Book, BookCategory } from "@/types";
 
-export function PublicLibraryView() {
+type PublicLibraryViewProps = {
+  books: Book[];
+};
+
+export function PublicLibraryView({ books: initialBooks }: PublicLibraryViewProps) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<"Todos" | BookCategory>("Todos");
 
   const books = useMemo(
-    () => filterBooks(demoBooks, query, category),
-    [query, category],
+    () => filterBooks(initialBooks, query, category),
+    [initialBooks, query, category],
   );
 
   const visibleBooks = books.slice(0, 6);
@@ -30,11 +34,11 @@ export function PublicLibraryView() {
             Biblioteca pública
           </p>
           <h1 className="mt-4 text-balance text-5xl font-semibold leading-tight">
-            Explora análisis demo antes de registrarte.
+            Explora análisis editoriales antes de registrarte.
           </h1>
           <p className="mt-5 text-lg leading-8 text-text-secondary">
             Busca por título, autor, categoría o etiqueta. El contenido completo
-            se desbloquea al crear una cuenta demo.
+            se desbloquea al crear una cuenta.
           </p>
         </div>
 
@@ -61,7 +65,7 @@ export function PublicLibraryView() {
               {hiddenCount} libros más esperan dentro de Ceoteca.
             </p>
             <p className="mt-2 text-sm text-text-secondary">
-              Regístrate para acceder a la experiencia completa en modo demo.
+              Regístrate para acceder a la experiencia completa.
             </p>
             <ButtonLink className="mt-5" href="/registro">
               Crear cuenta gratis

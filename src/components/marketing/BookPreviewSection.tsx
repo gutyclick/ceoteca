@@ -12,7 +12,7 @@ export function BookPreviewSection() {
       <SectionHeading
         eyebrow="Vista previa"
         title="Portadas conceptuales, no oficiales."
-        description="Cada libro usa una identidad visual propia y contenido editorial demo original."
+        description="Cada libro usa una identidad visual propia y contenido editorial original."
       />
       <div className="mt-12 grid gap-5 md:grid-cols-3">
         {previewBooks.map((book) => (
@@ -43,7 +43,7 @@ export function BookPreviewSection() {
                   </span>
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-2">
                     <Sparkles aria-hidden="true" size={14} />
-                    Demo
+                    Editorial
                   </span>
                 </div>
               </div>

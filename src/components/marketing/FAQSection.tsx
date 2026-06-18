@@ -17,7 +17,7 @@ export function FAQSection() {
       <SectionHeading
         eyebrow="FAQ"
         title="Preguntas antes de empezar."
-        description="Lo esencial sobre contenido, modo demo, integraciones y alcance del producto."
+        description="Lo esencial sobre contenido, integraciones y alcance actual del producto."
       />
       <div className="mx-auto mt-12 max-w-3xl space-y-3">
         {landingFaqs.map((faq, index) => {

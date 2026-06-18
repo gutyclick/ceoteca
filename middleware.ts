@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 const protectedRoutes = ["/home", "/libro", "/perfil", "/planes"];
 
 export function middleware(request: NextRequest) {
-  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE !== "false";
+  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
   const pathname = request.nextUrl.pathname;
   const isProtected = protectedRoutes.some((route) => pathname.startsWith(route));
 

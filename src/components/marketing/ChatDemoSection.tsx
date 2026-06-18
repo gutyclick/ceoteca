@@ -79,7 +79,7 @@ export function ChatDemoSection() {
 
             <div className="mt-6 flex justify-end">
               <ButtonLink href="/registro" variant="secondary">
-                Probar chat demo
+                Crear cuenta
               </ButtonLink>
             </div>
           </div>

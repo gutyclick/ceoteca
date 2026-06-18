@@ -5,7 +5,7 @@ import { parsePlanKey } from "@/lib/plans/parse";
 
 export const metadata: Metadata = {
   title: "Registro",
-  description: "Crea una cuenta demo en Ceoteca con el plan seleccionado.",
+  description: "Crea una cuenta en Ceoteca con el plan seleccionado.",
 };
 
 type RegisterPageProps = {

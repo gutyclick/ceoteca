@@ -12,8 +12,7 @@ import { Card } from "@/components/ui/Card";
 import { LockedFeature } from "@/components/ui/LockedFeature";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { canAccessFeature } from "@/lib/permissions";
-import { demoUser } from "@/lib/auth/demo";
-import { demoBooks, getBookBySlug } from "@/data/books";
+import { createBookRepository } from "@/lib/books/repository";
 
 const disclaimer =
   "Contenido educativo y editorial propio. Ceoteca no está afiliada al autor ni a la editorial. Este análisis no reemplaza la obra original.";
@@ -24,8 +23,10 @@ type BookPageProps = {
   }>;
 };
 
-export function generateStaticParams() {
-  return demoBooks.map((book) => ({
+export async function generateStaticParams() {
+  const books = await createBookRepository().list();
+
+  return books.map((book) => ({
     slug: book.slug,
   }));
 }
@@ -34,7 +35,7 @@ export async function generateMetadata({
   params,
 }: BookPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const book = getBookBySlug(slug);
+  const book = await createBookRepository().getBySlug(slug);
 
   if (!book) {
     return {
@@ -50,14 +51,14 @@ export async function generateMetadata({
 
 export default async function BookPage({ params }: BookPageProps) {
   const { slug } = await params;
-  const book = getBookBySlug(slug);
+  const book = await createBookRepository().getBySlug(slug);
 
   if (!book || !book.isPublished) {
     notFound();
   }
 
-  const canUseAudio = canAccessFeature(demoUser.plan, "audio");
-  const canUseChat = canAccessFeature(demoUser.plan, "chat");
+  const canUseAudio = canAccessFeature("free", "audio");
+  const canUseChat = canAccessFeature("free", "chat");
 
   return (
     <main className="min-h-screen bg-background text-text-primary">
@@ -76,7 +77,7 @@ export default async function BookPage({ params }: BookPageProps) {
                 {book.difficulty}
               </span>
               <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-sm text-text-secondary">
-                Demo editorial
+                Editorial
               </span>
             </div>
 
@@ -107,7 +108,7 @@ export default async function BookPage({ params }: BookPageProps) {
             </div>
 
             <div className="mt-7">
-              <ProgressBar value={book.progress ?? 0} label="Progreso demo" />
+              <ProgressBar value={book.progress ?? 0} label="Progreso" />
             </div>
 
             <div className="mt-8 grid gap-4">
@@ -127,7 +128,7 @@ export default async function BookPage({ params }: BookPageProps) {
                 <Card className="p-5">
                   <h2 className="font-semibold">Chat contextual</h2>
                   <p className="mt-2 text-sm leading-6 text-text-secondary">
-                    Responde en español usando solo el análisis demo autorizado
+                    Responde en español usando solo el análisis autorizado
                     de Ceoteca para este libro.
                   </p>
                   <div className="mt-4">

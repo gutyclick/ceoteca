@@ -169,9 +169,9 @@ export const pricingFaqs = [
       "No. La integración de pagos está pendiente y no se simula ningún cobro exitoso.",
   },
   {
-    question: "¿Puedo usar Ceoteca en modo demo?",
+    question: "¿Necesito tarjeta para empezar?",
     answer:
-      "Sí. El modo demo permite explorar la experiencia sin credenciales externas.",
+      "No. Puedes crear una cuenta gratis; los pagos quedan pendientes hasta activar un proveedor real.",
   },
   {
     question: "¿Puedo cambiar de plan después?",

@@ -48,7 +48,7 @@ export function InteractiveExercise({ activity }: InteractiveExerciseProps) {
       ) : (
         <textarea
           className="mt-5 min-h-28 w-full rounded-button border border-white/10 bg-white/[0.035] p-4 text-sm text-text-primary outline-none transition placeholder:text-text-muted focus:border-brand-purple"
-          placeholder="Escribe una respuesta breve en modo demo..."
+          placeholder="Escribe una respuesta breve..."
         />
       )}
     </Card>

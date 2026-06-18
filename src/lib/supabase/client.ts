@@ -9,7 +9,7 @@ export function createBrowserSupabaseClient() {
     !clientEnv.NEXT_PUBLIC_SUPABASE_URL ||
     !clientEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY
   ) {
-    throw new Error("Supabase no está configurado en modo demo.");
+    throw new Error("Supabase no esta configurado para produccion.");
   }
 
   return createClient<Database>(

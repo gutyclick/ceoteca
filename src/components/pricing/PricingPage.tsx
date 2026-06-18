@@ -53,7 +53,7 @@ export function PricingPage() {
         <SectionHeading
           eyebrow="Precios"
           title="Elige cómo quieres aprender."
-          description="Planes centralizados, modo demo activo y pagos deshabilitados hasta definir proveedor real."
+          description="Planes centralizados para aprender con análisis, audio y chat según tu nivel de acceso."
         />
 
         <div className="mx-auto mt-8 flex w-fit rounded-full border border-white/10 bg-white/[0.04] p-1">
@@ -143,7 +143,7 @@ export function PricingPage() {
           <Info aria-hidden="true" className="mt-0.5 text-info" size={20} />
           <p className="text-sm leading-6 text-text-secondary">
             Integración de pagos pendiente. Los CTAs preparan el plan seleccionado,
-            pero no ejecutan checkout ni simulan cobros.
+            pero todavía no ejecutan checkout.
           </p>
         </Card>
       </section>

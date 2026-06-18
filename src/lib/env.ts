@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const booleanStringSchema = z
   .enum(["true", "false"])
-  .default("true")
+  .default("false")
   .transform((value) => value === "true");
 
 const clientEnvSchema = z.object({

@@ -9,9 +9,9 @@ export function TestimonialsSection() {
   return (
     <section className="ceoteca-container pb-20">
       <SectionHeading
-        eyebrow="Testimonios demo"
+        eyebrow="Testimonios"
         title="Señales representativas del usuario ideal."
-        description="Estos testimonios son ejemplos demo para validar tono y diseño antes de contar con reseñas reales."
+        description="Estos testimonios son ejemplos representativos para validar tono y diseño antes de contar con reseñas verificadas."
       />
       <div className="mt-12 grid gap-4 md:grid-cols-3">
         {demoTestimonials.map((testimonial) => (

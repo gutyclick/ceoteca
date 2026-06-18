@@ -5,6 +5,7 @@ import { useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import type { ChatConversationMessage } from "@/lib/validation/chat";
 import { cn } from "@/lib/utils/cn";
 
@@ -40,12 +41,12 @@ export function ChatDrawer({ bookSlug, bookTitle }: ChatDrawerProps) {
   const [messages, setMessages] = useState<ChatConversationMessage[]>([
     {
       role: "assistant",
-      content: `Estoy listo para responder sobre el análisis demo de ${bookTitle}.`,
+      content: `Estoy listo para responder sobre el análisis de ${bookTitle}.`,
     },
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [usage, setUsage] = useState<string>("Uso demo sin preguntas todavía.");
+  const [usage, setUsage] = useState<string>("Sin preguntas todavía.");
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const conversation = useMemo(
@@ -66,9 +67,18 @@ export function ChatDrawer({ bookSlug, bookTitle }: ChatDrawerProps) {
     setIsLoading(true);
 
     try {
+      const supabase = createBrowserSupabaseClient();
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+
+      if (!accessToken) {
+        throw new Error("Inicia sesion para usar el chat.");
+      }
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
+          Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({

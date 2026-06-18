@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
 
 import { HomeView } from "@/components/app/HomeView";
+import { createBookRepository } from "@/lib/books/repository";
 
 export const metadata: Metadata = {
   title: "Home",
-  description: "Home privada demo de Ceoteca con catálogo y carruseles.",
+  description: "Home privada de Ceoteca con catálogo y carruseles.",
 };
 
-export default function HomePage() {
-  return <HomeView />;
+export default async function HomePage() {
+  const books = await createBookRepository().list();
+
+  return <HomeView books={books} />;
 }

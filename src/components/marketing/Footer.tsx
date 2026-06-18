@@ -26,8 +26,8 @@ export function Footer() {
             autores ni editoriales.
           </p>
           <p className="text-xs text-text-muted">
-            Métricas y testimonios marcados como demo hasta contar con datos
-            verificados.
+            Métricas y testimonios representativos hasta contar con datos
+            verificados de uso.
           </p>
         </div>
         <nav aria-label="Producto" className="grid content-start gap-3">

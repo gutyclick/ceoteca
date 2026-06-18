@@ -88,7 +88,7 @@ export const featuredBookFacts = [
 export const chatBenefits = [
   "Respuestas basadas en el análisis",
   "Adaptadas a tu contexto",
-  "Disponible en modo demo",
+  "Disponible según plan",
 ] as const;
 
 export const chatSteps = [
@@ -247,12 +247,12 @@ export const landingFaqs = [
   {
     question: "¿El contenido usa textos copiados de los libros?",
     answer:
-      "No. El contenido demo y futuro debe ser original, sin capítulos reproducidos, portadas oficiales ni citas inventadas.",
+      "No. El contenido debe ser original, sin capítulos reproducidos, portadas oficiales ni citas inventadas.",
   },
   {
-    question: "¿Puedo usarlo sin conectar Supabase u OpenAI?",
+    question: "¿Qué integraciones están activas?",
     answer:
-      "Sí. El MVP está preparado para funcionar en modo demo sin credenciales externas.",
+      "Supabase ya gestiona autenticación y datos. El chat con OpenAI queda preparado y se activa cuando estén las credenciales y la llamada final.",
   },
   {
     question: "¿Qué pasa con pagos?",
@@ -273,7 +273,7 @@ export const finalCta = {
   },
   secondary: {
     href: "/biblioteca",
-    label: "Ver libros demo",
+    label: "Ver biblioteca",
     icon: LibraryBig,
   },
 } as const;

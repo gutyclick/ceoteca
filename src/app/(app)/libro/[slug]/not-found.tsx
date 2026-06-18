@@ -8,8 +8,7 @@ export default function BookNotFound() {
         <Card className="mx-auto max-w-xl p-8 text-center">
           <h1 className="text-3xl font-semibold">Libro no encontrado</h1>
           <p className="mt-3 text-sm leading-7 text-text-secondary">
-            El análisis solicitado no existe o todavía no está publicado en modo
-            demo.
+            El análisis solicitado no existe o todavía no está publicado.
           </p>
           <ButtonLink className="mt-6" href="/home">
             Volver a home

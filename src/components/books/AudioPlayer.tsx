@@ -18,7 +18,7 @@ export function AudioPlayer({ title, durationMinutes }: AudioPlayerProps) {
     <Card className="p-5">
       <div className="flex items-center gap-4">
         <Button
-          aria-label={isPlaying ? "Pausar audio demo" : "Reproducir audio demo"}
+          aria-label={isPlaying ? "Pausar audio" : "Reproducir audio"}
           className="h-12 w-12 px-0"
           onClick={() => setIsPlaying((current) => !current)}
         >
@@ -31,7 +31,7 @@ export function AudioPlayer({ title, durationMinutes }: AudioPlayerProps) {
         <div className="min-w-0 flex-1">
           <p className="truncate font-semibold">{title}</p>
           <p className="text-sm text-text-secondary">
-            Audio demo visual · {durationMinutes} min
+            Audio visual · {durationMinutes} min
           </p>
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
             <div

@@ -154,7 +154,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
             }
             description={
               isRegister
-                ? "Crea tu cuenta y entra directo a la home. En demo se usa una sesion simulada."
+                ? "Crea tu cuenta y entra directo a tu home."
                 : "Ingresa con email y contrasena para volver a tu home."
             }
           />
