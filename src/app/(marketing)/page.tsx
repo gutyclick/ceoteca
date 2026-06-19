@@ -1,5 +1,5 @@
 import { BookPreviewSection } from "@/components/marketing/BookPreviewSection";
-import { ChatDemoSection } from "@/components/marketing/ChatDemoSection";
+import { AiGuidanceSection } from "@/components/marketing/AiGuidanceSection";
 import { ComparisonSection } from "@/components/marketing/ComparisonSection";
 import { FAQSection } from "@/components/marketing/FAQSection";
 import { FinalCTASection } from "@/components/marketing/FinalCTASection";
@@ -12,7 +12,7 @@ export default function MarketingHomePage() {
   return (
     <main className="min-h-screen overflow-hidden bg-background text-text-primary">
       <LandingHero />
-      <ChatDemoSection />
+      <AiGuidanceSection />
       <StatsBar />
       <HowItWorksSection />
       <BookPreviewSection />

@@ -1,11 +1,11 @@
-import { demoStats } from "@/data/landing";
+import { productStats } from "@/data/landing";
 import { cn } from "@/lib/utils/cn";
 
 export function StatsBar() {
   return (
     <section className="ceoteca-container pb-20">
       <div className="grid gap-3 rounded-[1.5rem] border border-white/10 bg-surface-gradient p-4 shadow-ambient md:grid-cols-4">
-        {demoStats.map((stat) => {
+        {productStats.map((stat) => {
           const Icon = stat.icon;
 
           return (

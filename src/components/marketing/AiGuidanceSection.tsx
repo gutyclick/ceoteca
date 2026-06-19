@@ -2,10 +2,10 @@ import { Bot, CheckCircle2 } from "lucide-react";
 
 import { ButtonLink } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { chatBenefits, chatSteps, demoQuestion } from "@/data/landing";
+import { aiQuestion, chatBenefits, chatSteps } from "@/data/landing";
 
-export function ChatDemoSection() {
-  const QuestionIcon = demoQuestion.icon;
+export function AiGuidanceSection() {
+  const QuestionIcon = aiQuestion.icon;
 
   return (
     <section className="ceoteca-container pb-8">
@@ -18,12 +18,13 @@ export function ChatDemoSection() {
               Habla con el conocimiento
             </p>
             <h2 className="mt-6 max-w-lg text-balance text-4xl font-semibold leading-tight sm:text-5xl">
-              Hazle preguntas
-              <span className="block text-gradient-brand">al libro.</span>
+              Pregunta, compara
+              <span className="block text-gradient-brand">y aplica.</span>
             </h2>
             <p className="mt-5 max-w-md text-pretty leading-7 text-text-secondary">
-              Nuestra IA entiende el contenido editorial autorizado y responde
-              con ideas claras, breves y aplicadas a tu realidad.
+              La IA de Ceoteca esta pensada para trabajar con el contenido de la
+              biblioteca: recomienda libros, aterriza ideas y te ayuda a decidir
+              que hacer despues.
             </p>
             <ul className="mt-7 space-y-3">
               {chatBenefits.map((benefit) => (
@@ -49,7 +50,7 @@ export function ChatDemoSection() {
                 className="mt-0.5 shrink-0 text-brand-pink"
                 size={18}
               />
-              <p>{demoQuestion.text}</p>
+              <p>{aiQuestion.text}</p>
             </div>
 
             <div className="pulse-glow mt-5 rounded-[1.75rem] border border-white/10 bg-surface-raised/95 p-6 shadow-ambient">
@@ -58,8 +59,8 @@ export function ChatDemoSection() {
                   <Bot aria-hidden="true" size={24} />
                 </span>
                 <p className="text-sm leading-6 text-text-secondary">
-                  Basado en Hábitos Atómicos, esto es lo que funciona mejor en
-                  tu contexto:
+                  Basado en tus objetivos, Ceoteca puede recomendarte una ruta
+                  de lectura y aplicacion:
                 </p>
               </div>
               <ol className="space-y-4">
@@ -73,7 +74,8 @@ export function ChatDemoSection() {
                 ))}
               </ol>
               <p className="mt-5 text-sm leading-6 text-text-secondary">
-                ¿Quieres que lo convierta en una rutina de 7 días?
+                Tambien puedes pedir una rutina de 7 dias, una comparacion entre
+                libros o una recomendacion segun tu situacion.
               </p>
             </div>
 

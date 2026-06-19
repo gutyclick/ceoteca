@@ -30,7 +30,7 @@ export function LandingHero() {
             </span>
           ))}
         </span>
-        <span>Únete a +25,000 lectores</span>
+        <span>Lecturas accionables para crecer cada semana</span>
         <span className="h-1.5 w-1.5 rounded-full bg-brand-purple shadow-[0_0_16px_rgba(168,85,247,0.9)]" />
       </div>
 
@@ -40,7 +40,8 @@ export function LandingHero() {
           <span className="block text-gradient-brand">En 15 minutos.</span>
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-pretty text-lg leading-8 text-text-secondary sm:text-xl">
-          Libros transformados en experiencias interactivas impulsadas por IA.
+          Analisis editoriales en espanol, ejercicios practicos, audio y una IA
+          enfocada en ayudarte a aplicar lo que aprendes.
         </p>
       </div>
 

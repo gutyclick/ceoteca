@@ -1,7 +1,7 @@
 import { Quote } from "lucide-react";
 
 import { Card } from "@/components/ui/Card";
-import { demoTestimonials } from "@/data/landing";
+import { audienceCards } from "@/data/landing";
 
 import { SectionHeading } from "./SectionHeading";
 
@@ -9,16 +9,16 @@ export function TestimonialsSection() {
   return (
     <section className="ceoteca-container pb-20">
       <SectionHeading
-        eyebrow="Testimonios"
-        title="Señales representativas del usuario ideal."
-        description="Estos testimonios son ejemplos representativos para validar tono y diseño antes de contar con reseñas verificadas."
+        eyebrow="Para quien es"
+        title="Aprendizaje para personas que quieren aplicar."
+        description="Ceoteca esta pensada para convertir libros de ideas en decisiones, rutinas y proximos pasos concretos."
       />
       <div className="mt-12 grid gap-4 md:grid-cols-3">
-        {demoTestimonials.map((testimonial) => (
+        {audienceCards.map((testimonial) => (
           <Card className="p-6" key={testimonial.name}>
             <Quote aria-hidden="true" className="text-brand-pink" size={26} />
             <p className="mt-5 text-pretty text-sm leading-7 text-text-secondary">
-              “{testimonial.quote}”
+              &quot;{testimonial.quote}&quot;
             </p>
             <div className="mt-6">
               <p className="font-semibold">{testimonial.name}</p>

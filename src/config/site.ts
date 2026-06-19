@@ -5,11 +5,10 @@ export const siteConfig = {
     "Ceoteca transforma libros de finanzas, habitos, productividad, emprendimiento y desarrollo personal en experiencias de aprendizaje interactivas.",
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
   supportEmail: "soporte@ceoteca.com",
-  demoMetrics: {
-    booksAnalyzed: "+500",
-    activeReaders: "+25,000",
-    averageReadMinutes: "12",
-    rating: "4.9/5",
-    isDemoContent: true,
+  productMetrics: {
+    learningMinutes: "15",
+    categories: "7",
+    formats: "3",
+    focus: "100%",
   },
 } as const;

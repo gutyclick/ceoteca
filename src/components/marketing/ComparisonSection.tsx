@@ -10,12 +10,12 @@ export function ComparisonSection() {
     <section className="ceoteca-container pb-20">
       <SectionHeading
         eyebrow="Comparativa"
-        title="Más que un resumen plano."
-        description="Ceoteca combina lectura breve, aplicación práctica y preguntas contextuales por libro."
+        title="Mas que un resumen plano."
+        description="Ceoteca combina lectura breve, aplicacion practica, progreso y preguntas contextuales por libro."
       />
       <Card className="mt-12 overflow-hidden p-0">
         <div className="grid border-b border-white/10 bg-white/[0.04] p-5 text-sm font-semibold text-text-secondary md:grid-cols-[1.1fr_1fr_1fr]">
-          <span>Función</span>
+          <span>Funcion</span>
           <span>Ceoteca</span>
           <span>Lectura tradicional</span>
         </div>
