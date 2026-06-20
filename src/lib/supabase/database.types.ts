@@ -173,6 +173,46 @@ export type Database = {
         Update: Record<string, never>;
         Relationships: [];
       };
+      notifications: {
+        Row: {
+          id: string;
+          user_id: string;
+          type:
+            | "reading_reminder"
+            | "progress"
+            | "recommendation"
+            | "ai"
+            | "account"
+            | "subscription"
+            | "system";
+          title: string;
+          body: string;
+          href: string | null;
+          metadata: Json;
+          read_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          user_id: string;
+          type:
+            | "reading_reminder"
+            | "progress"
+            | "recommendation"
+            | "ai"
+            | "account"
+            | "subscription"
+            | "system";
+          title: string;
+          body: string;
+          href?: string | null;
+          metadata?: Json;
+          read_at?: string | null;
+        };
+        Update: {
+          read_at?: string | null;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {

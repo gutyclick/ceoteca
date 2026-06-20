@@ -18,6 +18,7 @@ const serverEnvSchema = clientEnvSchema.extend({
   OPENAI_CHAT_MODEL: z.string().optional(),
   OPENAI_TTS_MODEL: z.string().optional(),
   OPENAI_TTS_VOICE: z.string().optional(),
+  CRON_SECRET: z.string().optional(),
   PAYMENTS_PROVIDER: z.enum(["disabled"]).default("disabled"),
   PAYMENTS_SECRET_KEY: z.string().optional(),
   PAYMENTS_WEBHOOK_SECRET: z.string().optional(),

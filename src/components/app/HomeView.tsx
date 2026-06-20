@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   ArrowRight,
-  Bell,
   Brain,
   Bot,
   CheckCircle2,
@@ -25,6 +24,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 
 import { DashboardSidebar } from "@/components/app/DashboardSidebar";
+import { NotificationBell } from "@/components/app/NotificationBell";
 import { Card } from "@/components/ui/Card";
 import { Logo } from "@/components/ui/Logo";
 import type { PlanKey } from "@/config/plans";
@@ -342,14 +342,7 @@ export function HomeView({ books }: HomeViewProps) {
       <section className="mx-auto w-full max-w-[1180px] px-5 pt-6 md:px-8">
         <header className="flex items-center justify-between">
           <Logo className="[&>span]:text-[15px] [&>span]:tracking-[0.34em]" />
-          <button
-            aria-label="Notificaciones"
-            className="relative grid h-10 w-10 place-items-center rounded-full text-white transition hover:bg-white/[0.06]"
-            type="button"
-          >
-            <Bell aria-hidden="true" size={21} />
-            <span className="absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full bg-brand-purple ring-2 ring-[#03040b]" />
-          </button>
+          <NotificationBell />
         </header>
 
         <section className="mt-12 grid gap-7 lg:grid-cols-[1fr_305px] lg:items-end">
