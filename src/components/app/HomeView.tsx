@@ -1,28 +1,35 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   ArrowRight,
   Bell,
+  Brain,
   Bot,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Clock3,
+  DollarSign,
   Flame,
   LibraryBig,
   MessageCircle,
   Percent,
   Play,
+  Rocket,
   Star,
+  Target,
+  Zap,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 import { DashboardSidebar } from "@/components/app/DashboardSidebar";
 import { Card } from "@/components/ui/Card";
 import { Logo } from "@/components/ui/Logo";
 import type { PlanKey } from "@/config/plans";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
+import type { Database } from "@/lib/supabase/database.types";
 import { cn } from "@/lib/utils/cn";
 import type { Book } from "@/types";
 
@@ -30,57 +37,126 @@ type HomeViewProps = {
   books: Book[];
 };
 
+type ProgressRow = Database["public"]["Tables"]["user_book_progress"]["Row"];
+
+type HomeAccountData = {
+  fullName: string;
+  plan: PlanKey;
+  progress: ProgressRow[];
+  chatQuestionsThisMonth: number;
+};
+
+type CollectionCard = {
+  title: string;
+  icon: LucideIcon;
+  category: string;
+};
+
 const categoryCards = [
   {
     title: "Finanzas",
-    count: "95 libros",
-    icon: "💰",
     className: "from-emerald-400/18 via-emerald-900/20 to-black",
     border: "border-emerald-300/20",
   },
   {
     title: "Productividad",
-    count: "112 libros",
-    icon: "⚡",
     className: "from-blue-500/20 via-blue-950/35 to-black",
     border: "border-blue-400/20",
   },
   {
     title: "Negocios",
-    count: "97 libros",
-    icon: "🚀",
     className: "from-orange-500/22 via-red-950/30 to-black",
     border: "border-orange-400/20",
   },
   {
     title: "Mentalidad",
-    count: "124 libros",
-    icon: "🧠",
     className: "from-cyan-400/20 via-teal-950/30 to-black",
     border: "border-cyan-300/20",
   },
   {
     title: "Liderazgo",
-    count: "78 libros",
-    icon: "🎯",
     className: "from-purple-500/22 via-violet-950/32 to-black",
     border: "border-purple-300/20",
   },
 ] as const;
 
-const suggestions = [
-  "¿Como invertir con poco dinero?",
-  "¿Como ser mas productivo?",
-  "¿Como construir buenos habitos?",
-  "¿Como liderar mejor?",
-] as const;
-
-function getBookProgress(index: number) {
-  return [73, 35, 20][index] ?? 28;
-}
-
 function getRemainingMinutes(book: Book, progress: number) {
   return Math.max(Math.ceil(book.readingTime * (1 - progress / 100)), 3);
+}
+
+const categoryIcons: LucideIcon[] = [DollarSign, Zap, Rocket, Brain, Target];
+
+const finalSuggestions = [
+  "\u00bfC\u00f3mo invertir con poco dinero?",
+  "\u00bfC\u00f3mo ser m\u00e1s productivo?",
+  "\u00bfC\u00f3mo construir mejores h\u00e1bitos?",
+  "\u00bfC\u00f3mo liderar mejor?",
+] as const;
+
+const collectionCards: CollectionCard[] = [
+  { title: "Construye riqueza", icon: DollarSign, category: "Finanzas" },
+  { title: "Emprende desde cero", icon: Rocket, category: "Emprendimiento" },
+  { title: "Mejora tu enfoque", icon: Brain, category: "Psicología" },
+  { title: "Lidera con claridad", icon: Target, category: "Liderazgo" },
+  { title: "Productividad extrema", icon: Zap, category: "Productividad" },
+];
+
+function getFirstName(name: string) {
+  return name.trim().split(" ").filter(Boolean)[0] ?? "Lector";
+}
+
+function getSavedBookProgress(progressRows: ProgressRow[], bookId: string) {
+  return progressRows.find((item) => item.book_id === bookId)?.progress ?? 0;
+}
+
+function getActiveDays(progressRows: ProgressRow[]) {
+  return new Set(
+    progressRows.map((item) => new Date(item.updated_at).toISOString().slice(0, 10)),
+  ).size;
+}
+
+function getLearnedHours(progressRows: ProgressRow[], books: Book[]) {
+  const minutes = progressRows.reduce((total, item) => {
+    const book = books.find((currentBook) => currentBook.id === item.book_id);
+
+    if (!book) {
+      return total;
+    }
+
+    return total + book.readingTime * (item.progress / 100);
+  }, 0);
+
+  return Math.round((minutes / 60) * 10) / 10;
+}
+
+function getCategoryTitle(title: string) {
+  if (title === "Negocios") {
+    return "Emprendimiento";
+  }
+
+  if (title === "Mentalidad") {
+    return "PsicologÃ­a";
+  }
+
+  return title;
+}
+
+function getCategoryCount(books: Book[], title: string) {
+  const category = getCategoryTitle(title);
+
+  return books.filter((book) => book.category === category).length;
+}
+
+function getRecentLabel(index: number) {
+  if (index === 0) {
+    return "Hoy";
+  }
+
+  if (index === 1) {
+    return "Ayer";
+  }
+
+  return `Hace ${index + 1} dÃ­as`;
 }
 
 function getGradient(index: number) {
@@ -155,18 +231,34 @@ function HeaderControls({ title }: { title: string }) {
 }
 
 export function HomeView({ books }: HomeViewProps) {
-  const [currentPlan, setCurrentPlan] = useState<PlanKey>("free");
+  const [accountData, setAccountData] = useState<HomeAccountData>({
+    fullName: "Lector Ceoteca",
+    plan: "free",
+    progress: [],
+    chatQuestionsThisMonth: 0,
+  });
   const primaryBook = books[0];
-  const continueBooks = books.slice(0, 3);
+  const progressBookIds = new Set(accountData.progress.map((item) => item.book_id));
+  const continueBooks = accountData.progress
+    .map((item) => books.find((book) => book.id === item.book_id))
+    .filter((book): book is Book => Boolean(book))
+    .slice(0, 3);
   const trendingBooks = books.slice(0, 5);
   const recommendedBook =
-    books.find((book) => book.slug.includes("deep")) ?? books[2] ?? primaryBook;
-  const showNewUserOffer = currentPlan === "free";
+    books.find((book) => !progressBookIds.has(book.id)) ??
+    books.find((book) => book.slug.includes("deep")) ??
+    books[2] ??
+    primaryBook;
+  const showNewUserOffer = accountData.plan === "free";
+  const activeDays = getActiveDays(accountData.progress);
+  const learnedHours = getLearnedHours(accountData.progress, books);
+  const completedBooks = accountData.progress.filter((item) => item.completed).length;
+  const firstName = getFirstName(accountData.fullName);
 
   useEffect(() => {
     let isMounted = true;
 
-    async function loadPlan() {
+    async function loadAccountData() {
       try {
         const supabase = createBrowserSupabaseClient();
         const { data: userData } = await supabase.auth.getUser();
@@ -175,23 +267,52 @@ export function HomeView({ books }: HomeViewProps) {
           return;
         }
 
-        const { data } = await supabase
-          .from("profiles")
-          .select("plan")
-          .eq("id", userData.user.id)
-          .maybeSingle();
+        const userId = userData.user.id;
+        const [profileResponse, progressResponse, usageResponse] =
+          await Promise.all([
+            supabase
+              .from("profiles")
+              .select("full_name,plan")
+              .eq("id", userId)
+              .maybeSingle(),
+            supabase
+              .from("user_book_progress")
+              .select("*")
+              .eq("user_id", userId)
+              .order("updated_at", { ascending: false }),
+            supabase
+              .from("chat_usage")
+              .select("question_count")
+              .eq("user_id", userId)
+              .eq("month", `${new Date().toISOString().slice(0, 7)}-01`),
+          ]);
 
-        if (isMounted && data?.plan) {
-          setCurrentPlan(data.plan);
+        if (profileResponse.error) {
+          throw profileResponse.error;
+        }
+
+        if (isMounted) {
+          setAccountData({
+            fullName:
+              profileResponse.data?.full_name ??
+              userData.user.email?.split("@")[0] ??
+              "Lector Ceoteca",
+            plan: profileResponse.data?.plan ?? "free",
+            progress: progressResponse.data ?? [],
+            chatQuestionsThisMonth: (usageResponse.data ?? []).reduce(
+              (total, item) => total + item.question_count,
+              0,
+            ),
+          });
         }
       } catch {
         if (isMounted) {
-          setCurrentPlan("free");
+          setAccountData((current) => current);
         }
       }
     }
 
-    void loadPlan();
+    void loadAccountData();
 
     return () => {
       isMounted = false;
@@ -233,9 +354,11 @@ export function HomeView({ books }: HomeViewProps) {
 
         <section className="mt-12 grid gap-7 lg:grid-cols-[1fr_305px] lg:items-end">
           <div className="reveal-up">
-            <p className="text-lg font-medium text-brand-purple">Hola, Andres 👋</p>
+            <p className="text-lg font-medium text-brand-purple">
+              Hola, {firstName}
+            </p>
             <h1 className="mt-5 max-w-[650px] text-balance text-[52px] font-black leading-[0.98] tracking-normal text-white md:text-[72px]">
-              ¿Que quieres mejorar{" "}
+              ¿Qué quieres mejorar{" "}
               <span className="bg-gradient-to-r from-brand-purple to-brand-blue bg-clip-text text-transparent">
                 hoy?
               </span>
@@ -245,9 +368,9 @@ export function HomeView({ books }: HomeViewProps) {
           <Card className="reveal-up h-[170px] rounded-[18px] border-white/10 bg-white/[0.035] p-6 [animation-delay:120ms]">
             <div className="flex h-full items-start justify-between">
               <div>
-                <p className="text-sm font-semibold">Racha actual 🔥</p>
-                <p className="mt-6 text-5xl font-bold">12</p>
-                <p className="mt-2 text-sm text-text-secondary">dias seguidos</p>
+                <p className="text-sm font-semibold">Actividad actual</p>
+                <p className="mt-6 text-5xl font-bold">{activeDays}</p>
+                <p className="mt-2 text-sm text-text-secondary">días con aprendizaje</p>
               </div>
               <div className="grid h-full content-end">
                 <div className="flex h-[88px] items-end gap-3">
@@ -270,7 +393,12 @@ export function HomeView({ books }: HomeViewProps) {
         </section>
 
         <section className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
-          {categoryCards.map((card, index) => (
+          {categoryCards.map((card, index) => {
+            const Icon = categoryIcons[index] ?? LibraryBig;
+            const title = getCategoryTitle(card.title);
+            const count = getCategoryCount(books, card.title);
+
+            return (
             <Link className="group reveal-up" href="/biblioteca" key={card.title}>
               <Card
                 className={cn(
@@ -283,15 +411,15 @@ export function HomeView({ books }: HomeViewProps) {
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_28%,rgba(255,255,255,0.13),transparent_33%)]" />
                 <div className="relative z-10 flex h-full flex-col justify-between">
                   <div className="grid place-items-center pt-2">
-                    <span className="text-[58px] drop-shadow-[0_0_30px_rgba(124,58,237,0.55)]">
-                      {card.icon}
+                    <span className="grid h-20 w-20 place-items-center rounded-[1.35rem] border border-white/10 bg-white/[0.06] text-brand-purple shadow-[0_0_30px_rgba(124,58,237,0.35)]">
+                      <Icon aria-hidden="true" size={40} />
                     </span>
                   </div>
                   <div className="flex items-end justify-between gap-3">
                     <div>
-                      <h2 className="text-xl font-semibold">{card.title}</h2>
+                      <h2 className="text-xl font-semibold">{title}</h2>
                       <p className="mt-1 text-sm text-text-secondary">
-                        {card.count}
+                        {count} {count === 1 ? "libro" : "libros"}
                       </p>
                     </div>
                     <span className="grid h-9 w-9 place-items-center rounded-full bg-white/[0.07] text-text-secondary transition group-hover:bg-white/[0.14] group-hover:text-white">
@@ -301,7 +429,8 @@ export function HomeView({ books }: HomeViewProps) {
                 </div>
               </Card>
             </Link>
-          ))}
+            );
+          })}
         </section>
 
         {showNewUserOffer ? (
@@ -336,8 +465,9 @@ export function HomeView({ books }: HomeViewProps) {
         <section className="mt-8">
           <HeaderControls title="Continuar aprendiendo" />
           <div className="mt-4 grid gap-5 lg:grid-cols-3">
-            {continueBooks.map((book, index) => {
-              const progress = getBookProgress(index);
+            {continueBooks.length > 0 ? (
+              continueBooks.map((book, index) => {
+              const progress = getSavedBookProgress(accountData.progress, book.id);
 
               return (
                 <Card
@@ -373,7 +503,28 @@ export function HomeView({ books }: HomeViewProps) {
                   </div>
                 </Card>
               );
-            })}
+              })
+            ) : (
+              <Card className="rounded-[14px] border-dashed border-white/15 bg-white/[0.025] p-6 lg:col-span-3">
+                <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <h3 className="text-xl font-semibold">
+                      Empieza tu primera experiencia
+                    </h3>
+                    <p className="mt-2 max-w-2xl text-sm leading-6 text-text-secondary">
+                      Explora la biblioteca y guarda tu progreso mientras avanzas
+                      por ideas, ejercicios y recomendaciones editoriales.
+                    </p>
+                  </div>
+                  <Link
+                    className="inline-flex min-h-12 items-center justify-center rounded-button bg-brand-gradient px-5 text-sm font-medium text-white transition hover:brightness-110"
+                    href="/biblioteca"
+                  >
+                    Ir a biblioteca
+                  </Link>
+                </div>
+              </Card>
+            )}
           </div>
         </section>
 
@@ -391,16 +542,23 @@ export function HomeView({ books }: HomeViewProps) {
                   Recomendacion CEOTECA
                 </span>
                 <h3 className="mt-5 text-2xl font-semibold">
-                  Basado en tus lecturas
+                  {accountData.progress.length > 0
+                    ? "Basado en tus lecturas"
+                    : "Para comenzar tu ruta"}
                 </h3>
                 <p className="mt-4 max-w-sm text-sm leading-7 text-text-secondary">
-                  Creemos que este libro puede llevar tu aprendizaje al
-                  siguiente nivel.
+                  {accountData.progress.length > 0
+                    ? "Seleccionamos esta experiencia por tu historial de lectura y progreso reciente."
+                    : "Esta experiencia es una buena entrada para descubrir cómo funciona Ceoteca."}
                 </p>
               </div>
               <div className="space-y-4 text-sm">
-                <p className="text-text-secondary">Porque has leido:</p>
-                {books.slice(0, 2).map((book) => (
+                <p className="text-text-secondary">
+                  {accountData.progress.length > 0
+                    ? "Relacionado con:"
+                    : "Ideal para:"}
+                </p>
+                {(continueBooks.length > 0 ? continueBooks : books.slice(0, 2)).slice(0, 2).map((book) => (
                   <p className="flex items-center gap-2 text-text-secondary" key={book.id}>
                     <CheckCircle2
                       aria-hidden="true"
@@ -481,10 +639,11 @@ export function HomeView({ books }: HomeViewProps) {
               </span>
               <div>
                 <h2 className="text-2xl font-semibold">
-                  ¿Que quieres aprender hoy?
+                  ¿Qué quieres aprender hoy?
                 </h2>
                 <p className="mt-2 text-sm text-text-secondary">
-                  Pregunta cualquier cosa sobre un libro o idea...
+                  Pide recomendaciones, rutas de lectura o formas de aplicar
+                  una idea a tu situación.
                 </p>
               </div>
               <button
@@ -496,7 +655,7 @@ export function HomeView({ books }: HomeViewProps) {
               </button>
             </div>
             <div className="mt-5 grid gap-3 border-t border-white/10 pt-4 md:grid-cols-4">
-              {suggestions.map((suggestion) => (
+              {finalSuggestions.map((suggestion) => (
                 <button
                   className="rounded-full border border-white/10 bg-white/[0.045] px-4 py-3 text-sm text-text-secondary transition hover:border-brand-purple/50 hover:text-white"
                   key={suggestion}
@@ -512,27 +671,27 @@ export function HomeView({ books }: HomeViewProps) {
         <section className="mt-7">
           <HeaderControls title="Colecciones populares" />
           <div className="mt-4 grid gap-5 md:grid-cols-2 lg:grid-cols-5">
-            {[
-              ["Construye riqueza", "💵", "15 libros"],
-              ["Emprende desde cero", "🚀", "12 libros"],
-              ["Aprende a vender", "📣", "8 libros"],
-              ["Piensa como CEO", "👑", "20 libros"],
-              ["Productividad extrema", "⚡", "11 libros"],
-            ].map(([title, icon, count]) => (
+            {collectionCards.map(({ title, icon: Icon, category }) => {
+              const count = getCategoryCount(books, category);
+
+              return (
               <Link href="/biblioteca" key={title}>
                 <Card className="flex min-h-[116px] items-center justify-between rounded-[13px] bg-white/[0.035] p-5" interactive>
                   <div>
                     <h3 className="max-w-36 text-lg font-semibold leading-tight">
                       {title}
                     </h3>
-                    <p className="mt-2 text-sm text-text-secondary">{count}</p>
+                    <p className="mt-2 text-sm text-text-secondary">
+                      {count} {count === 1 ? "libro" : "libros"}
+                    </p>
                   </div>
-                  <span className="text-[42px] drop-shadow-[0_0_24px_rgba(124,58,237,0.45)]">
-                    {icon}
+                  <span className="grid h-12 w-12 place-items-center rounded-[14px] bg-white/[0.06] text-brand-purple drop-shadow-[0_0_24px_rgba(124,58,237,0.45)]">
+                    <Icon aria-hidden="true" size={26} />
                   </span>
                 </Card>
               </Link>
-            ))}
+              );
+            })}
           </div>
         </section>
 
@@ -546,10 +705,10 @@ export function HomeView({ books }: HomeViewProps) {
             </div>
             <div className="mt-5 grid grid-cols-2 gap-4 md:grid-cols-4">
               {[
-                ["23", "Libros explorados", LibraryBig, "text-emerald-300"],
-                ["7.4", "Horas aprendidas", CheckCircle2, "text-yellow-300"],
-                ["12", "Dias seguidos", Flame, "text-red-300"],
-                ["324", "Preguntas realizadas", MessageCircle, "text-blue-300"],
+                [`${accountData.progress.length}`, "Libros iniciados", LibraryBig, "text-emerald-300"],
+                [`${completedBooks}`, "Libros completados", CheckCircle2, "text-yellow-300"],
+                [`${learnedHours}`, "Horas aprendidas", Flame, "text-red-300"],
+                [`${accountData.chatQuestionsThisMonth}`, "Preguntas a la IA", MessageCircle, "text-blue-300"],
               ].map(([value, label, Icon, color]) => (
                 <div className="flex gap-3" key={label as string}>
                   <span
@@ -579,26 +738,33 @@ export function HomeView({ books }: HomeViewProps) {
               </Link>
             </div>
             <div className="mt-5 grid gap-3 text-sm">
-              {[
-                ["Hoy", "Terminaste Deep Work"],
-                ["Ayer", "Preguntaste 12 veces sobre inversion"],
-                ["Hace 3 dias", "Empezaste Habitos Atomicos"],
-              ].map(([time, activity]) => (
-                <div className="grid grid-cols-[110px_1fr] gap-3" key={time}>
+              {continueBooks.length > 0 ? (
+                continueBooks.map((book, index) => (
+                <div className="grid grid-cols-[110px_1fr] gap-3" key={book.id}>
                   <p className="flex items-center gap-2 text-text-secondary">
                     <CheckCircle2 aria-hidden="true" className="text-success" size={16} />
-                    {time}
+                    {getRecentLabel(index)}
                   </p>
-                  <p>{activity}</p>
+                  <p>
+                    {getSavedBookProgress(accountData.progress, book.id) >= 100
+                      ? "Completaste"
+                      : "Continuaste"}{" "}
+                    {book.title}
+                  </p>
                 </div>
-              ))}
+                ))
+              ) : (
+                <div className="rounded-card border border-dashed border-white/15 bg-white/[0.025] p-4 text-text-secondary">
+                  Tu actividad aparecerá aquí cuando empieces un libro.
+                </div>
+              )}
             </div>
           </Card>
         </section>
 
         <footer className="mt-10 border-t border-white/10 py-8 text-sm text-text-muted">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <p>© 2026 Ceoteca. Todos los derechos reservados.</p>
+            <p>&copy; 2026 Ceoteca. Todos los derechos reservados.</p>
             <nav
               aria-label="Legal del dashboard"
               className="flex flex-wrap gap-x-5 gap-y-2"
@@ -622,3 +788,4 @@ export function HomeView({ books }: HomeViewProps) {
     </main>
   );
 }
+
