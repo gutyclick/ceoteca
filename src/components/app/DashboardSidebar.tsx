@@ -63,7 +63,7 @@ export function DashboardSidebar({ active }: DashboardSidebarProps) {
 
     function syncLayout(event: MediaQueryList | MediaQueryListEvent) {
       setIsDesktop(event.matches);
-      setIsExpanded(event.matches);
+      setIsExpanded(false);
     }
 
     syncLayout(query);
