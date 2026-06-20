@@ -24,7 +24,6 @@ import type { LucideIcon } from "lucide-react";
 import { DashboardSidebar } from "@/components/app/DashboardSidebar";
 import { NotificationBell } from "@/components/app/NotificationBell";
 import { Card } from "@/components/ui/Card";
-import { Logo } from "@/components/ui/Logo";
 import { plans, type PlanKey } from "@/config/plans";
 import { siteConfig } from "@/config/site";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
@@ -551,9 +550,8 @@ export function SettingsView() {
       <DashboardSidebar active="settings" />
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_18%_8%,rgba(124,58,237,0.18),transparent_28%),radial-gradient(circle_at_76%_18%,rgba(79,99,255,0.12),transparent_30%),linear-gradient(180deg,#02030a_0%,#050612_52%,#04040a_100%)]" />
 
-      <section className="mx-auto w-full max-w-[1280px] px-5 pt-7 md:px-8">
-        <header className="flex items-center justify-between">
-          <Logo className="[&>span]:text-[15px] [&>span]:tracking-[0.34em]" />
+      <section className="w-full max-w-[1500px] px-5 pt-4 md:px-8 xl:px-10">
+        <header className="flex items-center justify-end">
           <NotificationBell />
         </header>
 

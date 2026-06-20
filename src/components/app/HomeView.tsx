@@ -26,7 +26,6 @@ import type { LucideIcon } from "lucide-react";
 import { DashboardSidebar } from "@/components/app/DashboardSidebar";
 import { NotificationBell } from "@/components/app/NotificationBell";
 import { Card } from "@/components/ui/Card";
-import { Logo } from "@/components/ui/Logo";
 import type { PlanKey } from "@/config/plans";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/database.types";
@@ -96,7 +95,7 @@ const finalSuggestions = [
 const collectionCards: CollectionCard[] = [
   { title: "Construye riqueza", icon: DollarSign, category: "Finanzas" },
   { title: "Emprende desde cero", icon: Rocket, category: "Emprendimiento" },
-  { title: "Mejora tu enfoque", icon: Brain, category: "Psicología" },
+  { title: "Mejora tu enfoque", icon: Brain, category: "Psicolog\u00eda" },
   { title: "Lidera con claridad", icon: Target, category: "Liderazgo" },
   { title: "Productividad extrema", icon: Zap, category: "Productividad" },
 ];
@@ -135,7 +134,7 @@ function getCategoryTitle(title: string) {
   }
 
   if (title === "Mentalidad") {
-    return "PsicologÃ­a";
+    return "Psicolog\u00eda";
   }
 
   return title;
@@ -339,18 +338,17 @@ export function HomeView({ books }: HomeViewProps) {
       <DashboardSidebar active="home" />
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_22%_12%,rgba(124,58,237,0.18),transparent_30%),radial-gradient(circle_at_70%_0%,rgba(79,99,255,0.1),transparent_24%),linear-gradient(180deg,#02030a_0%,#050612_42%,#04040a_100%)]" />
 
-      <section className="mx-auto w-full max-w-[1180px] px-5 pt-6 md:px-8">
-        <header className="flex items-center justify-between">
-          <Logo className="[&>span]:text-[15px] [&>span]:tracking-[0.34em]" />
+      <section className="w-full max-w-[1500px] px-5 pt-4 md:px-8 xl:px-10">
+        <header className="flex items-center justify-end">
           <NotificationBell />
         </header>
 
-        <section className="mt-12 grid gap-7 lg:grid-cols-[1fr_305px] lg:items-end">
+        <section className="mt-7 grid gap-7 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-end">
           <div className="reveal-up">
             <p className="text-lg font-medium text-brand-purple">
               Hola, {firstName}
             </p>
-            <h1 className="mt-5 max-w-[650px] text-balance text-[52px] font-black leading-[0.98] tracking-normal text-white md:text-[72px]">
+            <h1 className="mt-5 max-w-[680px] text-balance text-[48px] font-black leading-[0.98] tracking-normal text-white md:text-[66px]">
               ¿Qué quieres mejorar{" "}
               <span className="bg-gradient-to-r from-brand-purple to-brand-blue bg-clip-text text-transparent">
                 hoy?
@@ -358,7 +356,7 @@ export function HomeView({ books }: HomeViewProps) {
             </h1>
           </div>
 
-          <Card className="reveal-up h-[170px] rounded-[18px] border-white/10 bg-white/[0.035] p-6 [animation-delay:120ms]">
+          <Card className="reveal-up h-[164px] rounded-[18px] border-white/10 bg-white/[0.035] p-6 [animation-delay:120ms]">
             <div className="flex h-full items-start justify-between">
               <div>
                 <p className="text-sm font-semibold">Actividad actual</p>
@@ -385,7 +383,7 @@ export function HomeView({ books }: HomeViewProps) {
           </Card>
         </section>
 
-        <section className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
+        <section className="mt-7 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
           {categoryCards.map((card, index) => {
             const Icon = categoryIcons[index] ?? LibraryBig;
             const title = getCategoryTitle(card.title);
@@ -395,7 +393,7 @@ export function HomeView({ books }: HomeViewProps) {
             <Link className="group reveal-up" href="/biblioteca" key={card.title}>
               <Card
                 className={cn(
-                  "relative h-[210px] overflow-hidden rounded-[14px] bg-gradient-to-br p-5 transition duration-300 group-hover:-translate-y-1",
+                  "relative h-[190px] overflow-hidden rounded-[14px] bg-gradient-to-br p-5 transition duration-300 group-hover:-translate-y-1",
                   card.className,
                   card.border,
                 )}
@@ -404,8 +402,8 @@ export function HomeView({ books }: HomeViewProps) {
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_28%,rgba(255,255,255,0.13),transparent_33%)]" />
                 <div className="relative z-10 flex h-full flex-col justify-between">
                   <div className="grid place-items-center pt-2">
-                    <span className="grid h-20 w-20 place-items-center rounded-[1.35rem] border border-white/10 bg-white/[0.06] text-brand-purple shadow-[0_0_30px_rgba(124,58,237,0.35)]">
-                      <Icon aria-hidden="true" size={40} />
+                    <span className="grid h-[72px] w-[72px] place-items-center rounded-[1.25rem] border border-white/10 bg-white/[0.06] text-brand-purple shadow-[0_0_30px_rgba(124,58,237,0.35)]">
+                      <Icon aria-hidden="true" size={36} />
                     </span>
                   </div>
                   <div className="flex items-end justify-between gap-3">
