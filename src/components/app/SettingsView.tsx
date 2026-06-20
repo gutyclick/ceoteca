@@ -577,7 +577,7 @@ export function SettingsView() {
   const SelectedIcon = selectedItem.icon;
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#03040b] pb-16 pl-[92px] text-text-primary">
+    <main className="min-h-screen overflow-x-hidden bg-[#03040b] pb-16 pl-[var(--dashboard-sidebar-offset,84px)] text-text-primary transition-[padding] duration-300 ease-out">
       <DashboardSidebar active="settings" />
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_18%_8%,rgba(124,58,237,0.18),transparent_28%),radial-gradient(circle_at_76%_18%,rgba(79,99,255,0.12),transparent_30%),linear-gradient(180deg,#02030a_0%,#050612_52%,#04040a_100%)]" />
 

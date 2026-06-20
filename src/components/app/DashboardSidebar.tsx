@@ -11,6 +11,7 @@ import {
   LogOut,
   Settings,
   User,
+  X,
 } from "lucide-react";
 
 import { Logo } from "@/components/ui/Logo";
@@ -48,6 +49,7 @@ function getInitials(name: string, email: string) {
 export function DashboardSidebar({ active }: DashboardSidebarProps) {
   const router = useRouter();
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [profile, setProfile] = useState({
@@ -55,6 +57,29 @@ export function DashboardSidebar({ active }: DashboardSidebarProps) {
     email: "",
     avatarUrl: null as string | null,
   });
+
+  useEffect(() => {
+    const query = window.matchMedia("(min-width: 1280px)");
+
+    function syncLayout(event: MediaQueryList | MediaQueryListEvent) {
+      setIsDesktop(event.matches);
+      setIsExpanded(event.matches);
+    }
+
+    syncLayout(query);
+    query.addEventListener("change", syncLayout);
+
+    return () => query.removeEventListener("change", syncLayout);
+  }, []);
+
+  useEffect(() => {
+    const offset = isDesktop ? (isExpanded ? "292px" : "100px") : "84px";
+    document.documentElement.style.setProperty("--dashboard-sidebar-offset", offset);
+
+    return () => {
+      document.documentElement.style.removeProperty("--dashboard-sidebar-offset");
+    };
+  }, [isDesktop, isExpanded]);
 
   useEffect(() => {
     let isMounted = true;
@@ -115,12 +140,24 @@ export function DashboardSidebar({ active }: DashboardSidebarProps) {
   const initials = getInitials(profile.fullName, profile.email);
 
   return (
-    <aside
-      className={cn(
-        "fixed left-4 top-4 z-50 flex h-[calc(100svh-2rem)] flex-col rounded-[22px] border border-white/10 bg-[#080a10]/95 p-3 text-text-primary shadow-ambient backdrop-blur-xl transition-all duration-300",
-        isExpanded ? "w-[260px]" : "w-[68px]",
-      )}
-    >
+    <>
+      {!isDesktop && isExpanded ? (
+        <button
+          aria-label="Cerrar menu"
+          className="fixed inset-0 z-40 bg-black/55 backdrop-blur-[2px]"
+          onClick={() => setIsExpanded(false)}
+          type="button"
+        />
+      ) : null}
+
+      <aside
+        className={cn(
+          "fixed left-3 top-3 z-50 flex h-[calc(100svh-1.5rem)] flex-col rounded-[22px] border border-white/10 bg-[#080a10]/95 p-2.5 text-text-primary shadow-ambient backdrop-blur-xl transition-[width,transform,box-shadow] duration-300 ease-out sm:left-4 sm:top-4 sm:h-[calc(100svh-2rem)] sm:p-3",
+          isExpanded
+            ? "w-[min(280px,calc(100vw-1.5rem))] shadow-[0_24px_90px_rgba(0,0,0,0.45)] sm:w-[260px]"
+            : "w-[60px] sm:w-[68px]",
+        )}
+      >
       <div className="flex items-center justify-between gap-2">
         {isExpanded ? (
           <Logo className="[&>span]:text-[13px] [&>span]:tracking-[0.24em]" />
@@ -133,7 +170,9 @@ export function DashboardSidebar({ active }: DashboardSidebarProps) {
           onClick={() => setIsExpanded((current) => !current)}
           type="button"
         >
-          {isExpanded ? (
+          {!isDesktop && isExpanded ? (
+            <X aria-hidden="true" size={17} />
+          ) : isExpanded ? (
             <ChevronLeft aria-hidden="true" size={17} />
           ) : (
             <ChevronRight aria-hidden="true" size={17} />
@@ -172,8 +211,8 @@ export function DashboardSidebar({ active }: DashboardSidebarProps) {
         {isProfileOpen ? (
           <div
             className={cn(
-              "absolute bottom-[76px] left-0 rounded-[16px] border border-white/10 bg-[#0d0f17] p-2 shadow-ambient",
-              isExpanded ? "w-full" : "w-52",
+              "absolute bottom-[76px] rounded-[16px] border border-white/10 bg-[#0d0f17] p-2 shadow-ambient",
+              isExpanded ? "left-0 w-full" : "left-0 w-52",
             )}
           >
             <Link
@@ -227,6 +266,7 @@ export function DashboardSidebar({ active }: DashboardSidebarProps) {
           ) : null}
         </button>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }
