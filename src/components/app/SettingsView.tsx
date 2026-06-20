@@ -10,15 +10,12 @@ import {
   ChevronRight,
   CreditCard,
   Download,
-  Globe2,
   HelpCircle,
   KeyRound,
   Loader2,
-  LogOut,
   Mail,
   Settings,
   ShieldCheck,
-  SlidersHorizontal,
   Trash2,
   User,
 } from "lucide-react";
@@ -37,8 +34,6 @@ type SettingsSectionKey =
   | "security"
   | "billing"
   | "notifications"
-  | "learning"
-  | "locale"
   | "privacy"
   | "support";
 
@@ -55,6 +50,7 @@ type AccountForm = {
   email: string;
   birthDate: string;
   plan: PlanKey;
+  avatarUrl: string | null;
 };
 
 type MfaSetup = {
@@ -80,7 +76,7 @@ const settingsItems: SettingsItem[] = [
   {
     key: "billing",
     title: "Suscripcion y pagos",
-    description: "Plan actual, metodo de pago y facturas",
+    description: "Plan, pagos y comprobantes",
     icon: CreditCard,
   },
   {
@@ -90,21 +86,9 @@ const settingsItems: SettingsItem[] = [
     icon: Bell,
   },
   {
-    key: "learning",
-    title: "Preferencias de aprendizaje",
-    description: "Audio, IA, dificultad y recomendaciones",
-    icon: SlidersHorizontal,
-  },
-  {
-    key: "locale",
-    title: "Idioma y region",
-    description: "Idioma, zona horaria y moneda",
-    icon: Globe2,
-  },
-  {
     key: "privacy",
     title: "Datos y privacidad",
-    description: "Exporta o elimina tu informacion",
+    description: "Exportacion y control de datos",
     icon: Download,
     tone: "cyan",
   },
@@ -116,6 +100,25 @@ const settingsItems: SettingsItem[] = [
     tone: "blue",
   },
 ];
+
+const avatarOptions = [
+  "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=320&q=80",
+  "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=320&q=80",
+  "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=320&q=80",
+  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=320&q=80",
+  "https://images.unsplash.com/photo-1527980965255-d3b416303d12?auto=format&fit=crop&w=320&q=80",
+  "https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?auto=format&fit=crop&w=320&q=80",
+] as const;
+
+function getInitials(name: string, email: string) {
+  const source = name.trim().length > 0 ? name : email;
+  const parts = source.split(/[ @._-]+/).filter(Boolean);
+
+  return parts
+    .slice(0, 2)
+    .map((part) => part.at(0)?.toUpperCase() ?? "")
+    .join("");
+}
 
 function Field({
   label,
@@ -253,8 +256,6 @@ export function SettingsView() {
   const router = useRouter();
   const [activeSection, setActiveSection] =
     useState<SettingsSectionKey>("profile");
-  const [isSigningOut, setIsSigningOut] = useState(false);
-  const [signOutError, setSignOutError] = useState<string | null>(null);
   const [isDemo, setIsDemo] = useState(false);
   const [isLoadingAccount, setIsLoadingAccount] = useState(true);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
@@ -265,6 +266,7 @@ export function SettingsView() {
     email: "",
     birthDate: "",
     plan: "free",
+    avatarUrl: null,
   });
   const [passwordForm, setPasswordForm] = useState({
     password: "",
@@ -280,16 +282,6 @@ export function SettingsView() {
     reminders: true,
     weeklySummary: false,
     productNews: false,
-  });
-  const [learning, setLearning] = useState({
-    preferAudio: true,
-    aiRecommendations: true,
-    compactCards: false,
-  });
-  const [locale, setLocale] = useState({
-    language: "es",
-    timezone: "America/Panama",
-    currency: "USD",
   });
 
   useEffect(() => {
@@ -307,7 +299,7 @@ export function SettingsView() {
 
         const { data, error } = await supabase
           .from("profiles")
-          .select("full_name,birth_date,plan")
+          .select("full_name,birth_date,plan,avatar_url")
           .eq("id", userData.user.id)
           .maybeSingle();
 
@@ -321,6 +313,7 @@ export function SettingsView() {
             email: userData.user.email ?? "",
             birthDate: data?.birth_date ?? "",
             plan: data?.plan ?? "free",
+            avatarUrl: data?.avatar_url ?? null,
           });
         }
       } catch {
@@ -331,6 +324,7 @@ export function SettingsView() {
             email: "usuario@ceoteca.com",
             birthDate: "",
             plan: "free",
+            avatarUrl: avatarOptions[0],
           });
         }
       } finally {
@@ -372,6 +366,7 @@ export function SettingsView() {
           .update({
             full_name: accountForm.fullName.trim() || null,
             birth_date: accountForm.birthDate || null,
+            avatar_url: accountForm.avatarUrl,
           })
           .eq("id", userId);
 
@@ -389,13 +384,13 @@ export function SettingsView() {
           }
 
           setProfileMessage(
-            "Perfil guardado. Revisa tu correo para confirmar el cambio de email.",
+            "Datos guardados. Te enviaremos una verificacion al nuevo correo para completar el cambio.",
           );
         } else {
           setProfileMessage("Perfil actualizado correctamente.");
         }
       } else {
-        setProfileMessage("Perfil actualizado en modo demo.");
+        setProfileMessage("Perfil actualizado para esta sesion.");
       }
     } catch (caughtError) {
       setProfileError(
@@ -414,11 +409,11 @@ export function SettingsView() {
 
     try {
       if (passwordForm.password.length < 8) {
-        throw new Error("La contrasena debe tener al menos 8 caracteres.");
+        throw new Error("La nueva contrasena debe tener al menos 8 caracteres.");
       }
 
       if (passwordForm.password !== passwordForm.confirmPassword) {
-        throw new Error("Las contrasenas no coinciden.");
+        throw new Error("Las contrasenas no coinciden. Revisa ambos campos.");
       }
 
       setIsSavingPassword(true);
@@ -435,12 +430,12 @@ export function SettingsView() {
       }
 
       setPasswordForm({ password: "", confirmPassword: "" });
-      setSecurityMessage("Contrasena actualizada correctamente.");
+      setSecurityMessage("Tu contrasena fue actualizada correctamente.");
     } catch (caughtError) {
       setSecurityError(
         caughtError instanceof Error
           ? caughtError.message
-          : "No pudimos actualizar la contrasena.",
+          : "No pudimos actualizar la contrasena en este momento.",
       );
     } finally {
       setIsSavingPassword(false);
@@ -454,7 +449,7 @@ export function SettingsView() {
 
     try {
       if (isDemo) {
-        throw new Error("El 2FA requiere Supabase Auth activo.");
+        throw new Error("La autenticacion en dos pasos requiere una cuenta activa.");
       }
 
       const supabase = createBrowserSupabaseClient();
@@ -514,7 +509,7 @@ export function SettingsView() {
 
       setMfaSetup(null);
       setMfaCode("");
-      setSecurityMessage("Autenticacion en dos pasos activada.");
+      setSecurityMessage("La autenticacion en dos pasos quedo activada.");
     } catch (caughtError) {
       setSecurityError(
         caughtError instanceof Error
@@ -526,38 +521,11 @@ export function SettingsView() {
     }
   }
 
-  async function signOut() {
-    setIsSigningOut(true);
-    setSignOutError(null);
-
-    try {
-      const supabase = createBrowserSupabaseClient();
-      const { error } = await supabase.auth.signOut();
-
-      if (error) {
-        throw error;
-      }
-
-      router.push("/login");
-      router.refresh();
-    } catch (caughtError) {
-      setSignOutError(
-        caughtError instanceof Error
-          ? caughtError.message
-          : "No pudimos cerrar la sesion.",
-      );
-    } finally {
-      setIsSigningOut(false);
-    }
-  }
-
   function downloadAccountData() {
     const payload = {
       profile: accountForm,
       preferences: {
         notifications,
-        learning,
-        locale,
       },
       exportedAt: new Date().toISOString(),
     };
@@ -575,6 +543,7 @@ export function SettingsView() {
   const selectedItem =
     settingsItems.find((item) => item.key === activeSection) ?? settingsItems[0];
   const SelectedIcon = selectedItem.icon;
+  const initials = getInitials(accountForm.fullName, accountForm.email);
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#03040b] pb-16 pl-[var(--dashboard-sidebar-offset,84px)] text-text-primary transition-[padding] duration-300 ease-out">
@@ -655,9 +624,65 @@ export function SettingsView() {
 
             <div className="mt-6">
               {activeSection === "profile" ? (
-                <section className="grid gap-5">
+                <section className="grid gap-6">
+                  <div className="grid gap-6 rounded-[16px] border border-white/10 bg-white/[0.025] p-5 lg:grid-cols-[220px_1fr]">
+                    <div>
+                      <p className="text-sm font-medium text-text-secondary">
+                        Imagen de perfil
+                      </p>
+                      <div className="mt-4 flex items-center gap-4 lg:block">
+                        <div className="grid h-24 w-24 shrink-0 place-items-center overflow-hidden rounded-[24px] border border-brand-purple/40 bg-brand-purple/15 text-2xl font-semibold text-white shadow-[0_0_38px_rgba(124,58,237,0.28)]">
+                          {accountForm.avatarUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              alt=""
+                              className="h-full w-full object-cover"
+                              src={accountForm.avatarUrl}
+                            />
+                          ) : (
+                            initials
+                          )}
+                        </div>
+                        <p className="max-w-xs text-sm leading-6 text-text-secondary lg:mt-4">
+                          Elige una imagen preseleccionada para mantener una
+                          experiencia visual cuidada y consistente.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
+                      {avatarOptions.map((avatarUrl) => (
+                        <button
+                          aria-label="Seleccionar imagen de perfil"
+                          className={cn(
+                            "aspect-square overflow-hidden rounded-[16px] border bg-white/[0.04] transition hover:-translate-y-0.5 hover:border-brand-purple/70",
+                            accountForm.avatarUrl === avatarUrl
+                              ? "border-brand-purple shadow-[0_0_24px_rgba(124,58,237,0.35)]"
+                              : "border-white/10",
+                          )}
+                          disabled={isLoadingAccount}
+                          key={avatarUrl}
+                          onClick={() =>
+                            setAccountForm((current) => ({
+                              ...current,
+                              avatarUrl,
+                            }))
+                          }
+                          type="button"
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            alt=""
+                            className="h-full w-full object-cover"
+                            src={avatarUrl}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                   <div className="grid gap-4 md:grid-cols-2">
-                    <Field label="Nombre">
+                    <Field label="Nombre completo">
                       <input
                         className="min-h-12 rounded-button border border-white/10 bg-white/[0.035] px-4 outline-none transition focus:border-brand-purple/60"
                         disabled={isLoadingAccount}
@@ -667,12 +692,13 @@ export function SettingsView() {
                             fullName: event.target.value,
                           }))
                         }
+                        placeholder="Tu nombre"
                         value={accountForm.fullName}
                       />
                     </Field>
                     <Field
-                      hint="Si cambias el correo, Supabase enviara confirmacion."
-                      label="Correo"
+                      hint="Si actualizas tu correo, te enviaremos una verificacion para proteger la cuenta."
+                      label="Correo electronico"
                     >
                       <input
                         className="min-h-12 rounded-button border border-white/10 bg-white/[0.035] px-4 outline-none transition focus:border-brand-purple/60"
@@ -683,12 +709,13 @@ export function SettingsView() {
                             email: event.target.value,
                           }))
                         }
+                        placeholder="tu@email.com"
                         type="email"
                         value={accountForm.email}
                       />
                     </Field>
                     <Field
-                      hint="Opcional. Solo se usa para personalizar tu experiencia."
+                      hint="Campo opcional. Nos ayuda a personalizar recomendaciones y comunicaciones."
                       label="Fecha de nacimiento"
                     >
                       <input
@@ -702,13 +729,6 @@ export function SettingsView() {
                         }
                         type="date"
                         value={accountForm.birthDate}
-                      />
-                    </Field>
-                    <Field label="Plan actual">
-                      <input
-                        className="min-h-12 rounded-button border border-white/10 bg-white/[0.035] px-4 text-text-secondary outline-none"
-                        readOnly
-                        value={plans[accountForm.plan].name}
                       />
                     </Field>
                   </div>
@@ -767,7 +787,7 @@ export function SettingsView() {
                     type="button"
                   >
                     <KeyRound aria-hidden="true" size={18} />
-                    Actualizar contrasena
+                    Guardar nueva contrasena
                   </button>
 
                   <div className="rounded-[14px] border border-white/10 bg-white/[0.025] p-4">
@@ -777,8 +797,8 @@ export function SettingsView() {
                           Autenticacion en dos pasos
                         </h3>
                         <p className="mt-2 text-sm leading-6 text-text-secondary">
-                          Protege tu cuenta con una app autenticadora compatible
-                          con TOTP.
+                          Refuerza el acceso a tu cuenta con un codigo temporal
+                          desde tu app autenticadora.
                         </p>
                       </div>
                       <button
@@ -803,7 +823,7 @@ export function SettingsView() {
                         </div>
                         <div className="grid gap-3">
                           <p className="text-sm leading-6 text-text-secondary">
-                            Escanea el QR o usa este secreto:
+                            Escanea el codigo QR o guarda la clave de respaldo:
                           </p>
                           <code className="rounded-card border border-white/10 bg-white/[0.035] p-3 text-sm text-brand-purple">
                             {mfaSetup.secret}
@@ -837,7 +857,7 @@ export function SettingsView() {
               {activeSection === "billing" ? (
                 <section className="grid gap-5">
                   <div className="rounded-card border border-brand-purple/35 bg-brand-purple/10 p-5">
-                    <p className="text-sm text-text-secondary">Plan actual</p>
+                    <p className="text-sm text-text-secondary">Tu suscripcion</p>
                     <p className="mt-2 text-2xl font-semibold">
                       {plans[accountForm.plan].name}
                     </p>
@@ -857,12 +877,12 @@ export function SettingsView() {
                       disabled
                       type="button"
                     >
-                      Metodo de pago pendiente de pasarela
+                      Gestion de metodo de pago
                     </button>
                   </div>
                   <div className="rounded-card border border-dashed border-white/15 bg-white/[0.025] p-5 text-sm leading-6 text-text-secondary">
-                    Todavia no hay facturas porque la pasarela de pagos no esta
-                    integrada.
+                    Tus facturas y comprobantes apareceran aqui cuando tengas
+                    movimientos de suscripcion.
                   </div>
                 </section>
               ) : null}
@@ -870,7 +890,7 @@ export function SettingsView() {
               {activeSection === "notifications" ? (
                 <section className="grid gap-3">
                   <Toggle
-                    description="Avisos para continuar libros pendientes."
+                    description="Recibe avisos utiles para retomar libros pendientes."
                     enabled={notifications.reminders}
                     label="Recordatorios de aprendizaje"
                     onChange={() =>
@@ -881,7 +901,7 @@ export function SettingsView() {
                     }
                   />
                   <Toggle
-                    description="Resumen semanal con progreso, logros y recomendaciones."
+                    description="Recibe un informe semanal con progreso, logros y recomendaciones."
                     enabled={notifications.weeklySummary}
                     label="Resumen semanal por correo"
                     onChange={() =>
@@ -892,7 +912,7 @@ export function SettingsView() {
                     }
                   />
                   <Toggle
-                    description="Novedades de producto y nuevas colecciones."
+                    description="Enterate de nuevas colecciones, mejoras y lanzamientos importantes."
                     enabled={notifications.productNews}
                     label="Novedades de Ceoteca"
                     onChange={() =>
@@ -902,97 +922,6 @@ export function SettingsView() {
                       }))
                     }
                   />
-                </section>
-              ) : null}
-
-              {activeSection === "learning" ? (
-                <section className="grid gap-3">
-                  <Toggle
-                    description="Prioriza contenido con audio cuando este disponible."
-                    enabled={learning.preferAudio}
-                    label="Preferir experiencias con audio"
-                    onChange={() =>
-                      setLearning((current) => ({
-                        ...current,
-                        preferAudio: !current.preferAudio,
-                      }))
-                    }
-                  />
-                  <Toggle
-                    description="Ordena recomendaciones segun tu progreso y preguntas."
-                    enabled={learning.aiRecommendations}
-                    label="Recomendaciones con IA"
-                    onChange={() =>
-                      setLearning((current) => ({
-                        ...current,
-                        aiRecommendations: !current.aiRecommendations,
-                      }))
-                    }
-                  />
-                  <Toggle
-                    description="Reduce densidad visual en tarjetas de biblioteca."
-                    enabled={learning.compactCards}
-                    label="Vista compacta"
-                    onChange={() =>
-                      setLearning((current) => ({
-                        ...current,
-                        compactCards: !current.compactCards,
-                      }))
-                    }
-                  />
-                </section>
-              ) : null}
-
-              {activeSection === "locale" ? (
-                <section className="grid gap-4 md:grid-cols-3">
-                  <Field label="Idioma">
-                    <select
-                      className="min-h-12 rounded-button border border-white/10 bg-[#0b0c18] px-4 outline-none"
-                      onChange={(event) =>
-                        setLocale((current) => ({
-                          ...current,
-                          language: event.target.value,
-                        }))
-                      }
-                      value={locale.language}
-                    >
-                      <option value="es">Espanol</option>
-                      <option value="en">English</option>
-                    </select>
-                  </Field>
-                  <Field label="Zona horaria">
-                    <select
-                      className="min-h-12 rounded-button border border-white/10 bg-[#0b0c18] px-4 outline-none"
-                      onChange={(event) =>
-                        setLocale((current) => ({
-                          ...current,
-                          timezone: event.target.value,
-                        }))
-                      }
-                      value={locale.timezone}
-                    >
-                      <option value="America/Panama">America/Panama</option>
-                      <option value="America/Bogota">America/Bogota</option>
-                      <option value="America/New_York">America/New_York</option>
-                      <option value="Europe/Madrid">Europe/Madrid</option>
-                    </select>
-                  </Field>
-                  <Field label="Moneda">
-                    <select
-                      className="min-h-12 rounded-button border border-white/10 bg-[#0b0c18] px-4 outline-none"
-                      onChange={(event) =>
-                        setLocale((current) => ({
-                          ...current,
-                          currency: event.target.value,
-                        }))
-                      }
-                      value={locale.currency}
-                    >
-                      <option value="USD">USD</option>
-                      <option value="EUR">EUR</option>
-                      <option value="COP">COP</option>
-                    </select>
-                  </Field>
                 </section>
               ) : null}
 
@@ -1014,9 +943,8 @@ export function SettingsView() {
                           Eliminar cuenta
                         </h3>
                         <p className="mt-2 text-sm leading-6 text-text-secondary">
-                          Esta accion requiere un flujo de confirmacion y backend
-                          administrativo. No esta habilitada para evitar
-                          eliminaciones accidentales.
+                          Para proteger tu informacion, la eliminacion de cuenta
+                          requiere una verificacion adicional con soporte.
                         </p>
                       </div>
                     </div>
@@ -1034,43 +962,13 @@ export function SettingsView() {
                     Contactar soporte
                   </Link>
                   <div className="rounded-card border border-white/10 bg-white/[0.025] p-5 text-sm leading-6 text-text-secondary">
-                    Correo de soporte: {siteConfig.supportEmail}
+                    Nuestro equipo te respondera desde {siteConfig.supportEmail}.
                   </div>
                 </section>
               ) : null}
             </div>
           </Card>
         </section>
-
-        <Card className="mt-5 rounded-[18px] bg-white/[0.035] p-5 md:p-6">
-          <p className="text-sm font-medium uppercase tracking-[0.18em] text-text-muted">
-            Cuenta
-          </p>
-          <button
-            className="mt-4 flex w-full items-center gap-4 rounded-card p-3 text-left text-danger transition hover:bg-danger/5"
-            disabled={isSigningOut}
-            onClick={() => void signOut()}
-            type="button"
-          >
-            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-[12px] border border-danger/25 bg-danger/12 text-danger">
-              <LogOut aria-hidden="true" size={22} />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-base font-semibold">
-                {isSigningOut ? "Cerrando sesion..." : "Cerrar sesion"}
-              </span>
-              <span className="mt-1 block text-sm text-text-secondary">
-                Sal de tu cuenta de Ceoteca
-              </span>
-            </span>
-            <ChevronRight aria-hidden="true" size={20} />
-          </button>
-          {signOutError ? (
-            <div className="mt-5 rounded-card border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
-              {signOutError}
-            </div>
-          ) : null}
-        </Card>
 
         <footer className="mt-10 border-t border-white/10 py-8 text-sm text-text-muted">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
