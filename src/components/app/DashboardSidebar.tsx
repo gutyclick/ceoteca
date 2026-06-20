@@ -215,13 +215,6 @@ export function DashboardSidebar({ active }: DashboardSidebarProps) {
               isExpanded ? "left-0 w-full" : "left-0 w-52",
             )}
           >
-            <Link
-              className="flex items-center gap-2 rounded-[12px] px-3 py-2 text-sm text-text-secondary transition hover:bg-white/[0.06] hover:text-white"
-              href="/perfil"
-            >
-              <User aria-hidden="true" size={17} />
-              Ver perfil
-            </Link>
             <button
               className="flex w-full items-center gap-2 rounded-[12px] px-3 py-2 text-left text-sm text-danger transition hover:bg-danger/10"
               disabled={isSigningOut}
