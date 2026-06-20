@@ -13,19 +13,17 @@ import {
   ExternalLink,
   Headphones,
   Heart,
-  Home,
   Lock,
   Loader2,
   MoreHorizontal,
   Play,
   Send,
   Share2,
-  Settings,
   Sparkles,
   Star,
-  User,
 } from "lucide-react";
 
+import { DashboardSidebar } from "@/components/app/DashboardSidebar";
 import { Card } from "@/components/ui/Card";
 import type { PlanKey } from "@/config/plans";
 import { canAccessFeature } from "@/lib/permissions";
@@ -65,14 +63,6 @@ const tabs: Array<{ key: TabKey; label: string }> = [
   { key: "audio", label: "Audio" },
   { key: "chat", label: "Chat IA" },
 ];
-
-const navItems = [
-  { label: "Inicio", href: "/home", icon: Home, active: true },
-  { label: "Biblioteca", href: "/biblioteca", icon: BookOpen, active: false },
-  { label: "IA", href: "#chat-libro", icon: Bot, active: false },
-  { label: "Perfil", href: "/perfil", icon: User, active: false },
-  { label: "Configuracion", href: "/configuracion", icon: Settings, active: false },
-] as const;
 
 const keyPointIcons = ["👁", "⭐", "⚡", "🙂", "🔒", "🎯", "🧠"] as const;
 
@@ -530,7 +520,8 @@ export function BookExperience({ book }: BookExperienceProps) {
   }
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#03040b] pb-36 text-text-primary">
+    <main className="min-h-screen overflow-hidden bg-[#03040b] pb-16 pl-[92px] text-text-primary">
+      <DashboardSidebar active="home" />
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_18%_8%,rgba(124,58,237,0.18),transparent_28%),radial-gradient(circle_at_76%_18%,rgba(79,99,255,0.12),transparent_30%),linear-gradient(180deg,#02030a_0%,#050612_52%,#04040a_100%)]" />
 
       <section className="mx-auto w-full max-w-[1220px] px-5 pt-7 md:px-8">
@@ -708,8 +699,8 @@ export function BookExperience({ book }: BookExperienceProps) {
                   <h2 className="text-xl font-semibold">Chat IA</h2>
                   <p className="mt-3 text-sm leading-7 text-text-secondary">
                     El chat contextual esta disponible en el panel del libro.
-                    Usa el boton IA del menu inferior o el panel lateral para
-                    abrir la conversacion entrenada en este contenido.
+                    Usa el panel lateral del libro para abrir la conversacion
+                    entrenada en este contenido.
                   </p>
                 </section>
               ) : null}
@@ -805,42 +796,6 @@ export function BookExperience({ book }: BookExperienceProps) {
         </section>
       </section>
 
-      <nav className="fixed bottom-4 left-1/2 z-40 w-[min(94vw,1120px)] -translate-x-1/2 rounded-[24px] border border-white/10 bg-[#080915]/92 px-4 py-3 shadow-ambient backdrop-blur-xl">
-        <div className="grid grid-cols-5 items-center">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isCenter = item.label === "IA";
-
-            if (isCenter) {
-              return (
-                <button
-                  className="-mt-10 mx-auto flex h-[74px] w-[74px] flex-col items-center justify-center gap-1 rounded-full border border-brand-purple/70 bg-brand-purple/20 text-xs text-brand-purple shadow-[0_0_45px_rgba(124,58,237,0.55)] transition hover:bg-brand-purple/30"
-                  key={item.label}
-                  onClick={openBookChat}
-                  type="button"
-                >
-                  <Icon aria-hidden="true" size={27} />
-                  {item.label}
-                </button>
-              );
-            }
-
-            return (
-              <Link
-                className={cn(
-                  "flex min-h-14 flex-col items-center justify-center gap-1 rounded-button px-2 py-2 text-xs text-text-secondary transition hover:text-white md:flex-row md:text-base",
-                  item.active && "text-brand-purple",
-                )}
-                href={item.href}
-                key={item.label}
-              >
-                <Icon aria-hidden="true" size={24} />
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
     </main>
   );
 }

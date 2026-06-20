@@ -8,23 +8,19 @@ import {
   Bot,
   CalendarDays,
   ChevronRight,
-  ChevronsDown,
-  ChevronsUp,
   Crown,
   Flame,
   Headphones,
   HelpCircle,
-  Home,
   LibraryBig,
   Lock,
   Pencil,
-  Settings,
   Sparkles,
   TrendingUp,
-  User,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
+import { DashboardSidebar } from "@/components/app/DashboardSidebar";
 import { Card } from "@/components/ui/Card";
 import { Logo } from "@/components/ui/Logo";
 import { plans } from "@/config/plans";
@@ -58,14 +54,6 @@ type ViewState =
   | { status: "loading" }
   | { status: "unauthorized" }
   | { status: "ready"; data: ProfileData; notice?: string };
-
-const navItems = [
-  { label: "Inicio", href: "/home", icon: Home, active: false },
-  { label: "Biblioteca", href: "/biblioteca", icon: BookOpen, active: false },
-  { label: "IA", href: "/home#ia", icon: Bot, active: false },
-  { label: "Perfil", href: "/perfil", icon: User, active: true },
-  { label: "Configuracion", href: "/configuracion", icon: Settings, active: false },
-] as const;
 
 const avatarOptions = [
   "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=320&q=80",
@@ -182,61 +170,6 @@ function createDemoProfileData(): ProfileData {
       },
     ],
   };
-}
-
-function BottomNavigation() {
-  const [isCollapsed, setIsCollapsed] = useState(false);
-
-  return (
-    <div className="fixed bottom-5 left-1/2 z-40 w-[min(94vw,1120px)] -translate-x-1/2">
-      {isCollapsed ? (
-        <button
-          aria-label="Mostrar menu"
-          className="mx-auto flex min-h-14 items-center gap-3 rounded-full border border-brand-purple/45 bg-[#080915]/92 px-5 text-sm text-text-primary shadow-[0_0_38px_rgba(124,58,237,0.28)] backdrop-blur-xl transition hover:border-brand-purple/80"
-          onClick={() => setIsCollapsed(false)}
-          type="button"
-        >
-          <User aria-hidden="true" className="text-brand-purple" size={22} />
-          Menu
-          <ChevronsUp aria-hidden="true" size={18} />
-        </button>
-      ) : (
-        <nav className="relative rounded-[24px] border border-white/10 bg-[#080915]/92 px-4 pb-3 pt-4 shadow-ambient backdrop-blur-xl">
-          <button
-            aria-label="Ocultar menu"
-            className="absolute -top-4 right-5 grid h-8 w-8 place-items-center rounded-full border border-white/10 bg-[#101121] text-text-secondary shadow-ambient transition hover:border-brand-purple/60 hover:text-white"
-            onClick={() => setIsCollapsed(true)}
-            type="button"
-          >
-            <ChevronsDown aria-hidden="true" size={16} />
-          </button>
-
-          <div className="grid grid-cols-5 items-center">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isCenter = item.label === "IA";
-
-              return (
-                <Link
-                  className={cn(
-                    "flex min-h-14 flex-col items-center justify-center gap-1 rounded-button px-2 py-2 text-xs text-text-secondary transition hover:text-white md:flex-row md:text-base",
-                    item.active && "text-brand-purple",
-                    isCenter &&
-                      "-mt-11 mx-auto h-[78px] w-[78px] rounded-full border border-brand-purple/70 bg-brand-purple/20 text-brand-purple shadow-[0_0_45px_rgba(124,58,237,0.55)] md:flex-col md:text-sm",
-                  )}
-                  href={item.href}
-                  key={item.label}
-                >
-                  <Icon aria-hidden="true" size={isCenter ? 28 : 24} />
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
-          </div>
-        </nav>
-      )}
-    </div>
-  );
 }
 
 function ProfileStatCard({
@@ -904,7 +837,8 @@ export function ProfileSettingsView() {
   ];
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#03040b] pb-40 text-text-primary">
+    <main className="min-h-screen overflow-hidden bg-[#03040b] pb-16 pl-[92px] text-text-primary">
+      <DashboardSidebar active="profile" />
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_18%_8%,rgba(124,58,237,0.18),transparent_28%),radial-gradient(circle_at_78%_12%,rgba(79,99,255,0.12),transparent_30%),linear-gradient(180deg,#02030a_0%,#050612_52%,#04040a_100%)]" />
 
       <section className="mx-auto w-full max-w-[1220px] px-5 pt-7 md:px-8">
@@ -1061,8 +995,6 @@ export function ProfileSettingsView() {
           onSelect={(avatarUrl) => void saveAvatar(avatarUrl)}
         />
       ) : null}
-
-      <BottomNavigation />
     </main>
   );
 }
