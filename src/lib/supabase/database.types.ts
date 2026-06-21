@@ -169,8 +169,28 @@ export type Database = {
           created_at: string;
           updated_at: string;
         };
-        Insert: Record<string, never>;
-        Update: Record<string, never>;
+        Insert: {
+          id?: string;
+          book_id: string;
+          storage_path: string;
+          voice?: string | null;
+          model?: string | null;
+          duration_seconds?: number | null;
+          status?: "pending" | "processing" | "ready" | "failed";
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          book_id?: string;
+          storage_path?: string;
+          voice?: string | null;
+          model?: string | null;
+          duration_seconds?: number | null;
+          status?: "pending" | "processing" | "ready" | "failed";
+          created_at?: string;
+          updated_at?: string;
+        };
         Relationships: [];
       };
       notifications: {

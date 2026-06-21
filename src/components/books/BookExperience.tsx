@@ -154,6 +154,90 @@ function LockedPremiumOverlay({
 }
 
 function AudioPanel({ book, locked = false }: { book: Book; locked?: boolean }) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [durationSeconds, setDurationSeconds] = useState<number | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isLoadingAudio, setIsLoadingAudio] = useState(false);
+  const [audioError, setAudioError] = useState<string | null>(null);
+
+  async function loadAudioUrl() {
+    if (audioUrl) {
+      return audioUrl;
+    }
+
+    const supabase = createBrowserSupabaseClient();
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData.session?.access_token;
+
+    if (!accessToken) {
+      throw new Error("Inicia sesión para escuchar audio.");
+    }
+
+    const response = await fetch("/api/audio", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ bookSlug: book.slug }),
+    });
+    const payload = (await response.json()) as {
+      data?: {
+        audioUrl: string;
+        durationSeconds: number | null;
+      };
+      error?: {
+        message: string;
+      };
+    };
+
+    if (!response.ok || payload.error || !payload.data?.audioUrl) {
+      throw new Error(payload.error?.message ?? "No pudimos cargar el audio.");
+    }
+
+    setAudioUrl(payload.data.audioUrl);
+    setDurationSeconds(payload.data.durationSeconds);
+
+    return payload.data.audioUrl;
+  }
+
+  async function toggleAudio() {
+    if (locked || isLoadingAudio) {
+      return;
+    }
+
+    setAudioError(null);
+
+    if (isPlaying) {
+      audioRef.current?.pause();
+      setIsPlaying(false);
+      return;
+    }
+
+    setIsLoadingAudio(true);
+
+    try {
+      await loadAudioUrl();
+      window.setTimeout(() => {
+        void audioRef.current?.play();
+      }, 0);
+      setIsPlaying(true);
+    } catch (caughtError) {
+      setAudioError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "No pudimos reproducir el audio.",
+      );
+    } finally {
+      setIsLoadingAudio(false);
+    }
+  }
+
+  const durationLabel = durationSeconds
+    ? `${Math.max(1, Math.ceil(durationSeconds / 60))} min`
+    : `${book.readingTime} min`;
+
   return (
     <Card className="relative overflow-hidden rounded-[16px] bg-white/[0.035] p-6">
       {locked ? (
@@ -166,27 +250,43 @@ function AudioPanel({ book, locked = false }: { book: Book; locked?: boolean }) 
         <h2 className="text-xl font-semibold">Escucha el resumen</h2>
       <div className="mt-6 flex items-center gap-5">
         <button
-          aria-label="Reproducir audio"
+          aria-label={isPlaying ? "Pausar audio" : "Reproducir audio"}
           className="grid h-16 w-16 shrink-0 place-items-center rounded-full bg-brand-purple/70 text-white shadow-[0_0_38px_rgba(124,58,237,0.42)] transition hover:bg-brand-purple"
+          disabled={isLoadingAudio}
+          onClick={() => void toggleAudio()}
           type="button"
         >
-          <Play aria-hidden="true" fill="currentColor" size={25} />
+          {isLoadingAudio ? (
+            <Loader2 aria-hidden="true" className="animate-spin" size={25} />
+          ) : isPlaying ? (
+            <span className="h-6 w-6 rounded-sm bg-current" />
+          ) : (
+            <Play aria-hidden="true" fill="currentColor" size={25} />
+          )}
         </button>
         <div className="flex min-w-0 flex-1 items-center gap-1">
           {Array.from({ length: 30 }).map((_, index) => (
             <span
-              className="w-1 rounded-full bg-brand-purple"
+              className={cn(
+                "w-1 rounded-full bg-brand-purple transition-opacity",
+                !isPlaying && "opacity-45",
+              )}
               key={index}
               style={{ height: 10 + ((index * 7) % 34) }}
             />
           ))}
         </div>
-        <p className="text-sm text-text-secondary">{book.readingTime}:45</p>
+        <p className="text-sm text-text-secondary">{durationLabel}</p>
       </div>
       <p className="mt-6 text-sm text-text-secondary">
-        Resumen narrado por IA. Luego lo conectaremos al texto que subas para
-        generar el audio real.
+        Audio editorial narrado por IA. Se genera una sola vez y queda guardado
+        para próximas reproducciones.
       </p>
+        {audioError ? (
+          <div className="mt-4 rounded-card border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
+            {audioError}
+          </div>
+        ) : null}
         <button
           className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-button border border-white/10 bg-white/[0.04] px-4 text-sm text-text-secondary transition hover:text-white"
           type="button"
@@ -194,6 +294,17 @@ function AudioPanel({ book, locked = false }: { book: Book; locked?: boolean }) 
           Cambiar voz
           <Headphones aria-hidden="true" size={17} />
         </button>
+        {audioUrl ? (
+          <audio
+            onEnded={() => setIsPlaying(false)}
+            onPause={() => setIsPlaying(false)}
+            onPlay={() => setIsPlaying(true)}
+            ref={audioRef}
+            src={audioUrl}
+          >
+            <track kind="captions" />
+          </audio>
+        ) : null}
       </div>
     </Card>
   );
