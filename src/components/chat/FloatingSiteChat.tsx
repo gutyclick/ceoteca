@@ -1,8 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { Bot, Lock, Loader2, MessageCircle, Send, Sparkles, X } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import {
+  Bot,
+  ChevronRight,
+  Lock,
+  Loader2,
+  MessageCircle,
+  Send,
+  Sparkles,
+  X,
+} from "lucide-react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -32,11 +41,86 @@ type ChatResponse = {
 };
 
 const siteSuggestions = [
-  "Recomiéndame qué análisis explorar para mejorar mi enfoque.",
-  "¿Cómo puedo crear una rutina de lectura sostenible?",
-  "Quiero mejorar mis finanzas personales, ¿por dónde empiezo?",
-  "Dame una ruta de 7 días para construir mejores hábitos.",
+  "Recomiéndame análisis para mejorar mi enfoque.",
+  "¿Cómo creo una rutina de lectura sostenible?",
+  "Quiero mejorar mis finanzas personales.",
+  "Dame una ruta de 7 días para mejores hábitos.",
 ] as const;
+
+function renderInlineText(value: string) {
+  const parts = value.split(/(\*\*[^*]+\*\*)/g);
+
+  return parts.map((part, index) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return (
+        <strong className="font-semibold text-white" key={`${part}-${index}`}>
+          {part.slice(2, -2)}
+        </strong>
+      );
+    }
+
+    return <Fragment key={`${part}-${index}`}>{part}</Fragment>;
+  });
+}
+
+function RichMessage({ content }: { content: string }) {
+  const lines = content
+    .replace(/\r\n/g, "\n")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  if (lines.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="space-y-3 text-[15px] leading-7">
+      {lines.map((line, index) => {
+        const heading = line.match(/^#{1,3}\s+(.+)$/);
+        const numbered = line.match(/^(\d+)[.)]\s+(.+)$/);
+        const bullet = line.match(/^[-*]\s+(.+)$/);
+
+        if (heading) {
+          return (
+            <h3
+              className="pt-1 text-base font-semibold leading-6 text-white"
+              key={`${line}-${index}`}
+            >
+              {renderInlineText(heading[1])}
+            </h3>
+          );
+        }
+
+        if (numbered) {
+          return (
+            <div className="grid grid-cols-[28px_1fr] gap-3" key={`${line}-${index}`}>
+              <span className="mt-0.5 grid h-7 w-7 place-items-center rounded-full bg-brand-purple/25 text-xs font-semibold text-brand-purple">
+                {numbered[1]}
+              </span>
+              <p className="min-w-0 text-text-primary">{renderInlineText(numbered[2])}</p>
+            </div>
+          );
+        }
+
+        if (bullet) {
+          return (
+            <div className="grid grid-cols-[18px_1fr] gap-3" key={`${line}-${index}`}>
+              <span className="mt-3 h-1.5 w-1.5 rounded-full bg-brand-purple" />
+              <p className="min-w-0 text-text-primary">{renderInlineText(bullet[1])}</p>
+            </div>
+          );
+        }
+
+        return (
+          <p className="text-text-primary" key={`${line}-${index}`}>
+            {renderInlineText(line)}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
 
 export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -45,13 +129,14 @@ export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
     {
       role: "assistant",
       content:
-        "Hola. Soy la IA de Ceoteca. Puedo recomendarte análisis del catálogo, ayudarte con productividad, mentalidad, desarrollo personal, hábitos de lectura y formas prácticas de aplicar ideas.",
+        "Hola. Soy CEO, tu IA de Ceoteca. Puedo recomendarte análisis del catálogo, ayudarte con productividad, mentalidad, desarrollo personal, hábitos de lectura y formas prácticas de aplicar ideas.",
     },
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [usage, setUsage] = useState<string>("Lista para orientarte.");
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const bottomRef = useRef<HTMLDivElement | null>(null);
   const hasChatAccess = canAccessFeature(plan, "chat");
 
   const conversation = useMemo(
@@ -61,6 +146,12 @@ export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
       ),
     [messages],
   );
+
+  useEffect(() => {
+    if (isOpen) {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    }
+  }, [isOpen, messages, isLoading]);
 
   async function sendMessage(message: string) {
     const trimmed = message.trim();
@@ -80,7 +171,7 @@ export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
       const accessToken = sessionData.session?.access_token;
 
       if (!accessToken) {
-        throw new Error("Inicia sesión para usar la IA de Ceoteca.");
+        throw new Error("Inicia sesión para usar CEO.");
       }
 
       const response = await fetch("/api/chat", {
@@ -127,79 +218,101 @@ export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
   }
 
   return (
-    <div className="fixed bottom-5 right-5 z-40 flex flex-col items-end gap-3 sm:bottom-6 sm:right-6">
+    <div className="fixed inset-x-3 bottom-4 z-40 flex flex-col items-end gap-3 sm:inset-x-auto sm:right-6">
       {isOpen ? (
-        <Card className="w-[calc(100vw-40px)] overflow-hidden rounded-[22px] border-brand-purple/35 bg-[#090a12]/95 p-0 shadow-[0_24px_90px_rgba(0,0,0,0.56)] backdrop-blur-xl sm:w-[430px]">
-          <header className="flex items-start justify-between gap-4 border-b border-white/10 p-5">
-            <div className="flex gap-3">
-              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-brand-purple/40 bg-brand-purple/20 text-brand-purple shadow-[0_0_32px_rgba(168,85,247,0.35)]">
-                <Bot aria-hidden="true" size={24} />
-              </span>
-              <div>
-                <p className="text-base font-semibold">IA de Ceoteca</p>
-                <p className="mt-1 text-xs leading-5 text-text-secondary">
-                  Recomendaciones del sitio, lectura, productividad y aplicación.
-                </p>
+        <Card className="flex h-[min(760px,calc(100svh-112px))] w-full max-w-[520px] flex-col overflow-hidden rounded-[24px] border-brand-purple/30 bg-[#090a12]/95 p-0 shadow-[0_24px_90px_rgba(0,0,0,0.58)] backdrop-blur-xl sm:w-[520px]">
+          <header className="shrink-0 border-b border-white/10 bg-white/[0.025] p-4 sm:p-5">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex min-w-0 gap-3">
+                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-brand-purple/40 bg-brand-purple/20 text-brand-purple shadow-[0_0_32px_rgba(168,85,247,0.35)]">
+                  <Bot aria-hidden="true" size={24} />
+                </span>
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-base font-semibold text-white">CEO</p>
+                    <span className="rounded-full border border-success/25 bg-success/10 px-2 py-0.5 text-[11px] font-medium text-success">
+                      En línea
+                    </span>
+                  </div>
+                  <p className="mt-1 max-w-[340px] text-xs leading-5 text-text-secondary">
+                    IA de Ceoteca para recomendaciones, lectura, productividad y aplicación.
+                  </p>
+                </div>
               </div>
+              <Button
+                aria-label="Cerrar chat"
+                className="h-9 w-9 shrink-0 px-0"
+                onClick={() => setIsOpen(false)}
+                type="button"
+                variant="ghost"
+              >
+                <X aria-hidden="true" size={18} />
+              </Button>
             </div>
-            <Button
-              aria-label="Cerrar chat"
-              className="h-9 w-9 shrink-0 px-0"
-              onClick={() => setIsOpen(false)}
-              type="button"
-              variant="ghost"
-            >
-              <X aria-hidden="true" size={18} />
-            </Button>
           </header>
 
           {hasChatAccess ? (
             <>
-              <div className="max-h-[min(58vh,500px)] space-y-4 overflow-y-auto p-5">
-                <p className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.045] px-3 py-1.5 text-xs text-text-secondary">
-                  <Sparkles aria-hidden="true" className="text-brand-purple" size={14} />
-                  {usage}
+              <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5">
+                <p className="mb-4 inline-flex max-w-full items-center gap-2 rounded-full border border-white/10 bg-white/[0.045] px-3 py-1.5 text-xs text-text-secondary">
+                  <Sparkles aria-hidden="true" className="shrink-0 text-brand-purple" size={14} />
+                  <span className="truncate">{usage}</span>
                 </p>
-                {messages.map((message, index) => (
-                  <div
-                    className={cn(
-                      "flex",
-                      message.role === "user" ? "justify-end" : "justify-start",
-                    )}
-                    key={`${message.role}-${index}`}
-                  >
+
+                <div className="space-y-4">
+                  {messages.map((message, index) => (
                     <div
                       className={cn(
-                        "max-w-[86%] rounded-[18px] px-4 py-3 text-sm leading-6",
-                        message.role === "user"
-                          ? "bg-brand-gradient text-white"
-                          : "border border-white/10 bg-white/[0.055] text-text-secondary",
+                        "flex",
+                        message.role === "user" ? "justify-end" : "justify-start",
                       )}
+                      key={`${message.role}-${index}`}
                     >
-                      {message.content}
+                      <div
+                        className={cn(
+                          "min-w-0 max-w-[88%] rounded-[20px] px-4 py-3.5 shadow-[0_14px_40px_rgba(0,0,0,0.22)]",
+                          message.role === "user"
+                            ? "rounded-br-md bg-brand-gradient text-white"
+                            : "rounded-bl-md border border-white/10 bg-white/[0.065] text-text-primary",
+                        )}
+                      >
+                        {message.role === "assistant" ? (
+                          <RichMessage content={message.content} />
+                        ) : (
+                          <p className="whitespace-pre-wrap text-[15px] font-medium leading-7">
+                            {message.content}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
-                {isLoading ? (
-                  <div className="flex justify-start">
-                    <div className="inline-flex items-center gap-2 rounded-[18px] border border-white/10 bg-white/[0.055] px-4 py-3 text-sm text-text-secondary">
-                      <Loader2 aria-hidden="true" className="animate-spin" size={16} />
-                      Pensando...
+                  ))}
+                  {isLoading ? (
+                    <div className="flex justify-start">
+                      <div className="inline-flex items-center gap-2 rounded-[18px] border border-white/10 bg-white/[0.055] px-4 py-3 text-sm text-text-secondary">
+                        <Loader2 aria-hidden="true" className="animate-spin" size={16} />
+                        CEO está pensando...
+                      </div>
                     </div>
-                  </div>
-                ) : null}
+                  ) : null}
+                  <div ref={bottomRef} />
+                </div>
               </div>
 
-              <footer className="border-t border-white/10 p-4">
-                <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
+              <footer className="shrink-0 border-t border-white/10 bg-[#090a12]/98 p-3 sm:p-4">
+                <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {siteSuggestions.map((suggestion) => (
                     <button
-                      className="shrink-0 rounded-full border border-white/10 bg-white/[0.045] px-3 py-2 text-xs text-text-secondary transition hover:border-brand-purple/50 hover:text-white"
+                      className="group flex min-h-10 items-center justify-between gap-2 rounded-full border border-white/10 bg-white/[0.045] px-3 py-2 text-left text-xs leading-5 text-text-secondary transition hover:border-brand-purple/50 hover:text-white"
                       key={suggestion}
                       onClick={() => void sendMessage(suggestion)}
                       type="button"
                     >
-                      {suggestion}
+                      <span className="line-clamp-1 min-w-0">{suggestion}</span>
+                      <ChevronRight
+                        aria-hidden="true"
+                        className="shrink-0 opacity-60 transition group-hover:translate-x-0.5 group-hover:opacity-100"
+                        size={14}
+                      />
                     </button>
                   ))}
                 </div>
@@ -209,24 +322,30 @@ export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
                   </div>
                 ) : null}
                 <form
-                  className="flex gap-2"
+                  className="grid grid-cols-[1fr_48px] gap-2 rounded-[18px] border border-white/10 bg-white/[0.045] p-2 focus-within:border-brand-purple/70 focus-within:ring-2 focus-within:ring-brand-purple/25"
                   onSubmit={(event) => {
                     event.preventDefault();
                     void sendMessage(input);
                   }}
                 >
                   <textarea
-                    className="min-h-12 flex-1 resize-none rounded-button border border-white/10 bg-white/[0.045] px-4 py-3 text-sm outline-none transition placeholder:text-text-muted focus:border-brand-purple"
+                    className="max-h-28 min-h-11 resize-none bg-transparent px-2 py-2 text-sm leading-6 text-white outline-none placeholder:text-text-muted"
                     maxLength={2000}
                     onChange={(event) => setInput(event.target.value)}
-                    placeholder="Pregunta sobre Ceoteca, lectura o hábitos..."
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" && !event.shiftKey) {
+                        event.preventDefault();
+                        void sendMessage(input);
+                      }
+                    }}
+                    placeholder="Pregúntale a CEO..."
                     ref={inputRef}
                     rows={1}
                     value={input}
                   />
                   <Button
                     aria-label="Enviar pregunta"
-                    className="h-12 w-12 px-0"
+                    className="h-11 w-11 rounded-[14px] px-0"
                     disabled={isLoading || input.trim().length === 0}
                     type="submit"
                   >
@@ -236,13 +355,13 @@ export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
               </footer>
             </>
           ) : (
-            <div className="p-5">
-              <div className="rounded-[18px] border border-brand-purple/30 bg-brand-purple/10 p-5">
+            <div className="flex min-h-0 flex-1 items-center p-5">
+              <div className="rounded-[20px] border border-brand-purple/30 bg-brand-purple/10 p-5">
                 <span className="grid h-12 w-12 place-items-center rounded-2xl bg-brand-purple/20 text-brand-purple">
                   <Lock aria-hidden="true" size={22} />
                 </span>
-                <h2 className="mt-4 text-xl font-semibold">
-                  La IA está incluida desde Pro
+                <h2 className="mt-4 text-xl font-semibold text-white">
+                  CEO está incluido desde Pro
                 </h2>
                 <p className="mt-2 text-sm leading-6 text-text-secondary">
                   Activa recomendaciones personalizadas, rutas de lectura,
@@ -261,13 +380,17 @@ export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
       ) : null}
 
       <button
-        aria-label={isOpen ? "Cerrar IA de Ceoteca" : "Abrir IA de Ceoteca"}
-        className="group relative grid h-16 w-16 place-items-center rounded-full border border-brand-purple/50 bg-brand-gradient text-white shadow-[0_18px_55px_rgba(124,58,237,0.45)] transition duration-300 hover:-translate-y-1 hover:brightness-110"
+        aria-label={isOpen ? "Cerrar CEO" : "Abrir CEO"}
+        className="group relative grid h-16 w-16 place-items-center self-end rounded-full border border-brand-purple/50 bg-brand-gradient text-white shadow-[0_18px_55px_rgba(124,58,237,0.45)] transition duration-300 hover:-translate-y-1 hover:brightness-110"
         onClick={() => setIsOpen((current) => !current)}
         type="button"
       >
         <span className="absolute inset-[-7px] rounded-full border border-brand-purple/25 opacity-0 transition group-hover:opacity-100" />
-        {isOpen ? <X aria-hidden="true" size={24} /> : <MessageCircle aria-hidden="true" size={25} />}
+        {isOpen ? (
+          <X aria-hidden="true" size={24} />
+        ) : (
+          <MessageCircle aria-hidden="true" size={25} />
+        )}
       </button>
     </div>
   );

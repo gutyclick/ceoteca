@@ -51,7 +51,7 @@ export class MockAIProvider implements AIProvider {
     if (!matchingBook) {
       return {
         message:
-          "Puedo ayudarte con recomendaciones de Ceoteca, hábitos de lectura, productividad, mentalidad y desarrollo personal.",
+          "Soy CEO. Puedo ayudarte con recomendaciones de Ceoteca, hábitos de lectura, productividad, mentalidad y desarrollo personal.",
       };
     }
 
@@ -62,7 +62,7 @@ export class MockAIProvider implements AIProvider {
       .join(" y ");
 
     return {
-      message: `Te recomiendo empezar por ${matchingBook.title}, porque conecta con ${matchingBook.category.toLowerCase()}. Úsalo como complemento: revisa sus ideas clave, elige un ejercicio y aplícalo durante 7 días. ${alternatives ? `También podrías explorar ${alternatives}. ` : ""}Si quieres comprar el libro completo, busca una edición legal en librerías reconocidas o en la tienda oficial de tu país.`,
+      message: `### Ruta sugerida\n1. Empieza por **${matchingBook.title}**, porque conecta con ${matchingBook.category.toLowerCase()}.\n2. Revisa sus ideas clave y elige un ejercicio concreto.\n3. Aplícalo durante 7 días y vuelve a ajustar.\n${alternatives ? `\nTambién podrías explorar **${alternatives}**.` : ""}\n\nSi quieres comprar el libro completo, busca una edición legal en librerías reconocidas o en la tienda oficial de tu país.`,
     };
   }
 }
