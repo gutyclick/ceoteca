@@ -30,18 +30,18 @@ export function LandingHero() {
             </span>
           ))}
         </span>
-        <span>Lecturas accionables para crecer cada semana</span>
+        <span>Ideas clave para aplicar con intención</span>
         <span className="h-1.5 w-1.5 rounded-full bg-brand-purple shadow-[0_0_16px_rgba(168,85,247,0.9)]" />
       </div>
 
       <div className="reveal-up mt-7 max-w-5xl [animation-delay:100ms]">
         <h1 className="text-balance text-[clamp(3rem,8vw,6.5rem)] font-semibold leading-[0.95] tracking-normal">
-          Aprende las mejores ideas del mundo.
-          <span className="block text-gradient-brand">En 15 minutos.</span>
+          Aprende ideas clave.
+          <span className="block text-gradient-brand">Convierte lectura en acción.</span>
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-pretty text-lg leading-8 text-text-secondary sm:text-xl">
-          Análisis editoriales en español, ejercicios prácticos, audio y una IA
-          enfocada en ayudarte a aplicar lo que aprendes.
+          Análisis editoriales en español para complementar tus lecturas con
+          contexto, ejercicios prácticos, audio y una IA enfocada en aplicación.
         </p>
       </div>
 

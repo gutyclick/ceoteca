@@ -11,8 +11,8 @@ export function BookPreviewSection() {
     <section className="ceoteca-container pb-20">
       <SectionHeading
         eyebrow="Biblioteca"
-        title="Libros convertidos en experiencias accionables."
-        description="Cada análisis usa contenido editorial propio, portadas conceptuales y ejercicios diseñados para aplicar."
+        title="Ideas de libros, llevadas a la práctica."
+        description="Cada análisis usa contenido editorial propio, portadas conceptuales y ejercicios diseñados para complementar tus lecturas."
       />
       <div className="mt-12 grid gap-5 md:grid-cols-3">
         {previewBooks.map((book) => (

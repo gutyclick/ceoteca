@@ -1,12 +1,12 @@
 export const siteConfig = {
   name: "Ceoteca",
-  tagline: "Aprende las mejores ideas del mundo en 15 minutos.",
+  tagline: "Aprende ideas clave y conviértelas en acción.",
   description:
-    "Ceoteca transforma libros de finanzas, hábitos, productividad, emprendimiento y desarrollo personal en experiencias de aprendizaje interactivas.",
+    "Ceoteca reúne análisis editoriales propios, ejercicios prácticos y recomendaciones para complementar tus lecturas.",
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
   supportEmail: "soporte@ceoteca.com",
   productMetrics: {
-    learningMinutes: "15",
+    learningPaths: "15+",
     categories: "7",
     formats: "3",
     focus: "100%",

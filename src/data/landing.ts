@@ -79,8 +79,8 @@ export const visualCards = [
 ] as const;
 
 export const featuredBookFacts = [
-  { label: "15 min", icon: Clock3 },
   { label: "Ideas clave", icon: Sparkles },
+  { label: "Contexto", icon: Clock3 },
   { label: "Ejercicios", icon: CheckCircle2 },
   { label: "Chat IA", icon: Bot },
 ] as const;
@@ -88,25 +88,25 @@ export const featuredBookFacts = [
 export const chatBenefits = [
   "Respuestas basadas en contenido editorial propio",
   "Recomendaciones según tus objetivos",
-  "Aplicación práctica sin salir del libro",
+  "Aplicación práctica para complementar tu lectura",
 ] as const;
 
 export const chatSteps = [
   "Define el objetivo que quieres mejorar: dinero, foco, liderazgo, hábitos o negocio.",
   "Recibe una ruta breve con ideas del catálogo que conectan con esa meta.",
-  "Convierte la lectura en un ejercicio concreto para aplicar hoy.",
+  "Convierte una idea en un ejercicio concreto para aplicar hoy.",
 ] as const;
 
 export const productStats = [
   {
-    label: "Minutos por experiencia",
-    value: siteConfig.productMetrics.learningMinutes,
+    label: "Rutas accionables",
+    value: siteConfig.productMetrics.learningPaths,
     icon: LibraryBig,
     accent: "text-brand-purple",
     background: "bg-brand-purple/15",
   },
   {
-    label: "Categorias clave",
+    label: "Categorías clave",
     value: siteConfig.productMetrics.categories,
     icon: Users,
     accent: "text-success",
@@ -143,7 +143,7 @@ export const heroActions = {
 
 export const aiQuestion = {
   icon: MessageCircle,
-  text: "Quiero mejorar mi enfoque y organizar mejor mi semana. Qué libros debería empezar y cómo los aplico?",
+  text: "Quiero mejorar mi enfoque y organizar mejor mi semana. ¿Qué libros debería explorar y cómo puedo aplicar sus ideas?",
 } as const;
 
 export const howItWorksSteps = [
@@ -154,15 +154,15 @@ export const howItWorksSteps = [
     icon: Compass,
   },
   {
-    title: "Aprende en 15 minutos",
+    title: "Aprende ideas clave",
     description:
-      "Lee una experiencia clara con ideas principales, contexto, puntos clave y ejercicios prácticos.",
+      "Revisa contexto, puntos centrales y ejercicios diseñados para complementar tu lectura.",
     icon: Zap,
   },
   {
-    title: "Pregunta y aterriza",
+    title: "Aplica con intención",
     description:
-      "Usa la IA para encontrar recomendaciones, comparar ideas y convertir lo aprendido en acciones concretas.",
+      "Usa la IA para encontrar conexiones, preparar próximos pasos y convertir ideas en acción.",
     icon: Target,
   },
 ] as const;
@@ -172,7 +172,7 @@ export const previewBooks = [
     title: "Hábitos Atómicos",
     author: "James Clear",
     category: "Hábitos",
-    duration: "15 min",
+    duration: "Guía breve",
     accent: "from-brand-blue via-brand-purple to-brand-pink",
     pattern: "orb",
   },
@@ -180,7 +180,7 @@ export const previewBooks = [
     title: "Padre Rico, Padre Pobre",
     author: "Robert Kiyosaki",
     category: "Finanzas",
-    duration: "15 min",
+    duration: "Ideas clave",
     accent: "from-emerald-300 to-cyan-300",
     pattern: "steps",
   },
@@ -188,7 +188,7 @@ export const previewBooks = [
     title: "La Startup de $100",
     author: "Chris Guillebeau",
     category: "Emprendimiento",
-    duration: "15 min",
+    duration: "Aplicación",
     accent: "from-orange-300 to-rose-400",
     pattern: "growth",
   },
@@ -196,9 +196,9 @@ export const previewBooks = [
 
 export const comparisonRows = [
   {
-    feature: "Lectura guiada de 15 minutos",
+    feature: "Aprendizaje guiado",
     ceoteca: "Análisis editorial accionable",
-    traditional: "Lectura completa sin guia",
+    traditional: "Lectura completa sin guía",
   },
   {
     feature: "Aplicación práctica",
@@ -212,7 +212,7 @@ export const comparisonRows = [
   },
   {
     feature: "Audio",
-    ceoteca: "Resúmenes narrados según plan",
+    ceoteca: "Audio editorial según plan",
     traditional: "No siempre incluido",
   },
 ] as const;
@@ -234,28 +234,28 @@ export const audienceCards = [
     name: "Lectores curiosos",
     role: "Crecimiento personal",
     quote:
-      "Descubren que libros profundizar después y construyen el hábito de aprender sin depender de sesiones largas.",
+      "Descubren qué libros profundizar después y construyen el hábito de aprender con más intención.",
   },
 ] as const;
 
 export const landingFaqs = [
   {
-    question: "Ceoteca reemplaza leer el libro completo?",
+    question: "¿Cómo se relaciona Ceoteca con los libros completos?",
     answer:
-      "No. Ceoteca es una experiencia educativa y editorial propia para comprender ideas centrales, aplicarlas y decidir que obras quieres leer completas.",
+      "Ceoteca complementa tus lecturas con análisis editoriales propios, ejercicios y contexto práctico para decidir qué obras quieres profundizar después.",
   },
   {
-    question: "El contenido usa textos copiados de los libros?",
+    question: "¿El contenido usa textos copiados de los libros?",
     answer:
       "No. Los análisis son textos propios de Ceoteca. No reproducimos capítulos, portadas oficiales ni citas inventadas.",
   },
   {
-    question: "Qué puede hacer la IA de Ceoteca?",
+    question: "¿Qué puede hacer la IA de Ceoteca?",
     answer:
       "Puede recomendar libros del catálogo, conectar ideas entre temas, ayudarte a aplicar un concepto, sugerir ejercicios y responder dentro del contexto autorizado de cada análisis.",
   },
   {
-    question: "Puedo empezar gratis?",
+    question: "¿Puedo empezar gratis?",
     answer:
       "Sí. Puedes crear una cuenta gratis para explorar Ceoteca. Los planes superiores desbloquean más acceso, audio, actividades avanzadas y chat contextual según disponibilidad.",
   },
@@ -263,9 +263,9 @@ export const landingFaqs = [
 
 export const finalCta = {
   eyebrow: "Tu biblioteca accionable",
-  title: "Construye el hábito de aprender y aplicar.",
+  title: "Convierte ideas en acción.",
   description:
-    "Empieza con una experiencia breve, descubre ideas ?tiles y usa Ceoteca para mejorar tus decisiones cada semana.",
+    "Complementa tus lecturas con contexto editorial, ejercicios prácticos y recomendaciones para decidir qué profundizar después.",
   primary: {
     href: "/registro",
     label: "Crear cuenta gratis",

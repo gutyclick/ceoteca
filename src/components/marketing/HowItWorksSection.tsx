@@ -8,8 +8,8 @@ export function HowItWorksSection() {
     <section className="ceoteca-container ceoteca-section">
       <SectionHeading
         eyebrow="Cómo funciona"
-        title="Una forma más clara de aprender de libros."
-        description="Ceoteca transforma análisis editoriales en experiencias breves, visuales y accionables."
+        title="Una forma más clara de aplicar ideas."
+        description="Ceoteca organiza análisis editoriales en rutas visuales, prácticas y fáciles de retomar."
       />
       <div className="mt-12 grid gap-4 md:grid-cols-3">
         {howItWorksSteps.map((step, index) => {
