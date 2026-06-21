@@ -31,7 +31,7 @@ import type { PlanKey } from "@/config/plans";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/database.types";
 import { cn } from "@/lib/utils/cn";
-import type { Book } from "@/types";
+import type { Book, BookCategory } from "@/types";
 
 type HomeViewProps = {
   books: Book[];
@@ -49,12 +49,12 @@ type HomeAccountData = {
 type CollectionCard = {
   title: string;
   icon: LucideIcon;
-  category: string;
+  category: BookCategory;
 };
 
 const categoryCards = [
   {
-    title: "Finanzas",
+    title: "Finanzas personales",
     className: "from-emerald-400/18 via-emerald-900/20 to-black",
     border: "border-emerald-300/20",
   },
@@ -64,12 +64,12 @@ const categoryCards = [
     border: "border-blue-400/20",
   },
   {
-    title: "Negocios",
+    title: "Emprendimiento",
     className: "from-orange-500/22 via-red-950/30 to-black",
     border: "border-orange-400/20",
   },
   {
-    title: "Mentalidad",
+    title: "Desarrollo personal",
     className: "from-cyan-400/20 via-teal-950/30 to-black",
     border: "border-cyan-300/20",
   },
@@ -87,9 +87,9 @@ function getRemainingMinutes(book: Book, progress: number) {
 const categoryIcons: LucideIcon[] = [DollarSign, Zap, Rocket, Brain, Target];
 
 const collectionCards: CollectionCard[] = [
-  { title: "Construye riqueza", icon: DollarSign, category: "Finanzas" },
+  { title: "Construye riqueza", icon: DollarSign, category: "Ingresos y riqueza" },
   { title: "Emprende desde cero", icon: Rocket, category: "Emprendimiento" },
-  { title: "Mejora tu enfoque", icon: Brain, category: "Psicolog\u00eda" },
+  { title: "Mejora tu enfoque", icon: Brain, category: "Psicología y comportamiento" },
   { title: "Lidera con claridad", icon: Target, category: "Liderazgo" },
   { title: "Productividad extrema", icon: Zap, category: "Productividad" },
 ];
@@ -122,22 +122,8 @@ function getLearnedHours(progressRows: ProgressRow[], books: Book[]) {
   return Math.round((minutes / 60) * 10) / 10;
 }
 
-function getCategoryTitle(title: string) {
-  if (title === "Negocios") {
-    return "Emprendimiento";
-  }
-
-  if (title === "Mentalidad") {
-    return "Psicolog\u00eda";
-  }
-
-  return title;
-}
-
 function getCategoryCount(books: Book[], title: string) {
-  const category = getCategoryTitle(title);
-
-  return books.filter((book) => book.category === category).length;
+  return books.filter((book) => book.category === title).length;
 }
 
 function getRecentLabel(index: number) {
@@ -380,7 +366,6 @@ export function HomeView({ books }: HomeViewProps) {
         <section className="mt-7 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
           {categoryCards.map((card, index) => {
             const Icon = categoryIcons[index] ?? LibraryBig;
-            const title = getCategoryTitle(card.title);
             const count = getCategoryCount(books, card.title);
 
             return (
@@ -402,7 +387,7 @@ export function HomeView({ books }: HomeViewProps) {
                   </div>
                   <div className="flex items-end justify-between gap-3">
                     <div>
-                      <h2 className="text-xl font-semibold">{title}</h2>
+                      <h2 className="text-xl font-semibold">{card.title}</h2>
                       <p className="mt-1 text-sm text-text-secondary">
                         {count} {count === 1 ? "libro" : "libros"}
                       </p>

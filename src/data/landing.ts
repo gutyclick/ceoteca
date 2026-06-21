@@ -23,7 +23,7 @@ export const heroBadgeAvatars = ["M", "A", "J", "C"] as const;
 export const visualCards = [
   {
     title: "Riqueza",
-    subtitle: "Finanzas",
+    subtitle: "Ingresos y riqueza",
     icon: BarChart3,
     accent: "from-emerald-300 to-cyan-300",
     border: "border-cyan-200/50",
@@ -34,7 +34,7 @@ export const visualCards = [
   },
   {
     title: "Productividad",
-    subtitle: "Hábitos",
+    subtitle: "Foco",
     icon: Zap,
     accent: "from-violet-300 to-fuchsia-300",
     border: "border-violet-300/60",
@@ -55,8 +55,8 @@ export const visualCards = [
     featured: true,
   },
   {
-    title: "Negocios",
-    subtitle: "Estrategia",
+    title: "Estrategia",
+    subtitle: "Empresarial",
     icon: BarChart3,
     accent: "from-rose-300 to-orange-300",
     border: "border-rose-300/60",
@@ -92,7 +92,7 @@ export const chatBenefits = [
 ] as const;
 
 export const chatSteps = [
-  "Define el objetivo que quieres mejorar: dinero, foco, liderazgo, hábitos o negocio.",
+  "Define el objetivo que quieres mejorar: dinero, foco, liderazgo, comunicación o negocio.",
   "Recibe una ruta breve con ideas del catálogo que conectan con esa meta.",
   "Convierte una idea en un ejercicio concreto para aplicar hoy.",
 ] as const;
@@ -150,7 +150,7 @@ export const howItWorksSteps = [
   {
     title: "Elige un libro",
     description:
-      "Explora análisis editoriales en español sobre finanzas, hábitos, productividad, negocios, mentalidad y liderazgo.",
+      "Explora análisis editoriales en español sobre emprendimiento, ventas, finanzas, inversiones, liderazgo, productividad, comunicación y desarrollo personal.",
     icon: Compass,
   },
   {
@@ -171,7 +171,7 @@ export const previewBooks = [
   {
     title: "Hábitos Atómicos",
     author: "James Clear",
-    category: "Hábitos",
+    category: "Desarrollo personal",
     duration: "Guía breve",
     accent: "from-brand-blue via-brand-purple to-brand-pink",
     pattern: "orb",
@@ -179,7 +179,7 @@ export const previewBooks = [
   {
     title: "Padre Rico, Padre Pobre",
     author: "Robert Kiyosaki",
-    category: "Finanzas",
+    category: "Finanzas personales",
     duration: "Ideas clave",
     accent: "from-emerald-300 to-cyan-300",
     pattern: "steps",
@@ -220,13 +220,13 @@ export const comparisonRows = [
 export const audienceCards = [
   {
     name: "Emprendedores",
-    role: "Negocios y ventas",
+    role: "Emprendimiento y ventas",
     quote:
       "Encuentran ideas de libros de negocio y las convierten en acciones simples para vender, decidir y construir con más claridad.",
   },
   {
     name: "Profesionales",
-    role: "Productividad y finanzas",
+    role: "Productividad y finanzas personales",
     quote:
       "Usan Ceoteca para aprender con foco, comparar ideas y aplicar sistemas de productividad, dinero y liderazgo.",
   },

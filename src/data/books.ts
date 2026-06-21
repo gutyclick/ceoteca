@@ -82,12 +82,21 @@ const defaultActivities = [
 
 export const bookCategories: Array<"Todos" | BookCategory> = [
   "Todos",
-  "Finanzas",
-  "Hábitos",
-  "Productividad",
   "Emprendimiento",
-  "Psicología",
+  "Ventas",
+  "Marketing",
+  "Finanzas personales",
+  "Inversiones",
+  "Ingresos y riqueza",
+  "Desarrollo personal",
   "Liderazgo",
+  "Productividad",
+  "Psicología y comportamiento",
+  "Estrategia empresarial",
+  "Comunicación",
+  "Negociación",
+  "Innovación y tecnología",
+  "Biografías y casos de éxito",
 ];
 
 export const demoBooks: Book[] = [
@@ -96,7 +105,7 @@ export const demoBooks: Book[] = [
     slug: "hábitos-atomicos",
     title: "Hábitos Atómicos",
     author: "James Clear",
-    category: "Hábitos",
+    category: "Desarrollo personal",
     description:
       "Un análisis editorial demo sobre cómo diseñar sistemas simples para sostener pequeñas mejoras diarias.",
     readingTime: 12,
@@ -123,7 +132,7 @@ export const demoBooks: Book[] = [
     slug: "padre-rico-padre-pobre",
     title: "Padre Rico, Padre Pobre",
     author: "Robert Kiyosaki",
-    category: "Finanzas",
+    category: "Finanzas personales",
     description:
       "Ideas demo sobre mentalidad financiera, activos, pasivos y decisiones de dinero más conscientes.",
     readingTime: 14,
@@ -176,7 +185,7 @@ export const demoBooks: Book[] = [
     slug: "hombre-rico-babilonia",
     title: "El Hombre Más Rico de Babilonia",
     author: "George S. Clason",
-    category: "Finanzas",
+    category: "Ingresos y riqueza",
     description:
       "Principios demo de ahorro, disciplina y construcción gradual de patrimonio personal.",
     readingTime: 10,
@@ -202,7 +211,7 @@ export const demoBooks: Book[] = [
     slug: "pensar-rapido-pensar-despacio",
     title: "Pensar Rápido, Pensar Despacio",
     author: "Daniel Kahneman",
-    category: "Psicología",
+    category: "Psicología y comportamiento",
     description:
       "Un mapa demo para reconocer sesgos, intuición y decisiones que merecen más pausa.",
     readingTime: 15,
@@ -228,7 +237,7 @@ export const demoBooks: Book[] = [
     slug: "poder-del-ahora",
     title: "El Poder del Ahora",
     author: "Eckhart Tolle",
-    category: "Psicología",
+    category: "Desarrollo personal",
     description:
       "Reflexiones demo sobre presencia, atención y reducción de ruido mental en la vida diaria.",
     readingTime: 13,
@@ -253,7 +262,7 @@ export const demoBooks: Book[] = [
     slug: "como-ganar-amigos",
     title: "Cómo Ganar Amigos e Influir Sobre las Personas",
     author: "Dale Carnegie",
-    category: "Liderazgo",
+    category: "Comunicación",
     description:
       "Ideas demo sobre escucha, empatía y relaciones profesionales más cuidadosas.",
     readingTime: 12,
@@ -305,7 +314,7 @@ export const demoBooks: Book[] = [
     slug: "mindset",
     title: "Mindset",
     author: "Carol S. Dweck",
-    category: "Productividad",
+    category: "Desarrollo personal",
     description:
       "Contenido demo sobre mentalidad de crecimiento, aprendizaje y respuesta al error.",
     readingTime: 11,
@@ -330,7 +339,7 @@ export const demoBooks: Book[] = [
     slug: "inversor-inteligente",
     title: "El Inversor Inteligente",
     author: "Benjamin Graham",
-    category: "Finanzas",
+    category: "Inversiones",
     description:
       "Una vista demo sobre prudencia, margen de seguridad y disciplina al invertir.",
     readingTime: 15,

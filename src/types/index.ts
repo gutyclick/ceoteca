@@ -9,12 +9,21 @@ export type AppUser = {
 };
 
 export type BookCategory =
-  | "Finanzas"
-  | "Hábitos"
-  | "Productividad"
   | "Emprendimiento"
-  | "Psicología"
-  | "Liderazgo";
+  | "Ventas"
+  | "Marketing"
+  | "Finanzas personales"
+  | "Inversiones"
+  | "Ingresos y riqueza"
+  | "Desarrollo personal"
+  | "Liderazgo"
+  | "Productividad"
+  | "Psicología y comportamiento"
+  | "Estrategia empresarial"
+  | "Comunicación"
+  | "Negociación"
+  | "Innovación y tecnología"
+  | "Biografías y casos de éxito";
 
 export type BookDifficulty = "Inicial" | "Intermedio" | "Avanzado";
 

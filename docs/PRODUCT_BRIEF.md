@@ -131,10 +131,21 @@ Experiencia de catálogo estilo streaming:
 - Libro destacado.
 - Continúa aprendiendo.
 - Más populares.
-- Finanzas personales.
-- Hábitos y productividad.
 - Emprendimiento.
-- Psicología.
+- Ventas.
+- Marketing.
+- Finanzas personales.
+- Inversiones.
+- Ingresos y riqueza.
+- Desarrollo personal.
+- Liderazgo.
+- Productividad.
+- Psicología y comportamiento.
+- Estrategia empresarial.
+- Comunicación.
+- Negociación.
+- Innovación y tecnología.
+- Biografías y casos de éxito.
 - Recomendados.
 - Buscador por título, autor, categoría y etiquetas.
 

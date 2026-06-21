@@ -165,7 +165,7 @@ function createDemoProfileData(): ProfileData {
         completed_at: null,
         updated_at: now,
         bookTitle: "Padre Rico Padre Pobre",
-        bookCategory: "Finanzas",
+        bookCategory: "Finanzas personales",
         bookSlug: "padre-rico-padre-pobre",
       },
     ],

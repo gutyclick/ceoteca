@@ -7,7 +7,7 @@ export const siteConfig = {
   supportEmail: "soporte@ceoteca.com",
   productMetrics: {
     learningPaths: "15+",
-    categories: "7",
+    categories: "15",
     formats: "3",
     focus: "100%",
   },
