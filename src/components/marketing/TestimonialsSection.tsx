@@ -11,7 +11,7 @@ export function TestimonialsSection() {
       <SectionHeading
         eyebrow="Para quien es"
         title="Aprendizaje para personas que quieren aplicar."
-        description="Ceoteca esta pensada para convertir libros de ideas en decisiones, rutinas y proximos pasos concretos."
+        description="Ceoteca está pensada para convertir libros de ideas en decisiones, rutinas y próximos pasos concretos."
       />
       <div className="mt-12 grid gap-4 md:grid-cols-3">
         {audienceCards.map((testimonial) => (

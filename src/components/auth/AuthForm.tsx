@@ -136,7 +136,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
         message:
           error instanceof Error
             ? error.message
-            : "Google OAuth todavia no esta disponible.",
+            : "Google OAuth todavía no está disponible.",
       });
     }
   }
@@ -156,7 +156,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
             description={
               isRegister
                 ? "Crea tu cuenta y luego elige tu plan para activar el acceso."
-                : "Ingresa con email y contrasena para volver a tu home."
+                : "Ingresa con email y contraseña para volver a tu home."
             }
           />
         </div>
@@ -209,7 +209,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
             </label>
 
             <label className="grid gap-2 text-sm">
-              Contrasena
+              Contraseña
               <input
                 className="min-h-12 rounded-button border border-white/10 bg-white/[0.04] px-4 text-text-primary outline-none transition focus:border-brand-purple"
                 placeholder="Minimo 8 caracteres"
@@ -227,10 +227,10 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
               <>
                 <input type="hidden" value="free" {...register("plan")} />
                 <label className="grid gap-2 text-sm">
-                  Confirmar contrasena
+                  Confirmar contraseña
                   <input
                     className="min-h-12 rounded-button border border-white/10 bg-white/[0.04] px-4 text-text-primary outline-none transition focus:border-brand-purple"
-                    placeholder="Repite tu contrasena"
+                    placeholder="Repite tu contraseña"
                     type="password"
                     {...register("confirmPassword")}
                   />
@@ -282,7 +282,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
               {isSubmitting ? (
                 <Loader2 aria-hidden="true" className="animate-spin" size={18} />
               ) : null}
-              {isRegister ? "Crear cuenta" : "Iniciar sesion"}
+              {isRegister ? "Crear cuenta" : "Iniciar sesión"}
             </Button>
           </form>
 
@@ -292,7 +292,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
               className="font-medium text-brand-purple"
               href={isRegister ? "/login" : "/registro"}
             >
-              {isRegister ? "Inicia sesion" : "Registrate"}
+              {isRegister ? "Inicia sesión" : "Regístrate"}
             </Link>
           </p>
         </Card>

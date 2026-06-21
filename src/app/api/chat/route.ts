@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
     return jsonError(
       {
         code: "UNAUTHORIZED",
-        message: "Inicia sesion para usar el chat.",
+        message: "Inicia sesión para usar el chat.",
       },
       401,
     );

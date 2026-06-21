@@ -9,7 +9,7 @@ export function createServerSupabaseClient(accessToken?: string) {
     !clientEnv.NEXT_PUBLIC_SUPABASE_URL ||
     !clientEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY
   ) {
-    throw new Error("Supabase no esta configurado para produccion.");
+    throw new Error("Supabase no está configurado para producción.");
   }
 
   return createClient<Database>(
@@ -35,7 +35,7 @@ export function createServiceSupabaseClient() {
     !clientEnv.NEXT_PUBLIC_SUPABASE_URL ||
     !serverEnv.SUPABASE_SERVICE_ROLE_KEY
   ) {
-    throw new Error("Supabase service role no esta configurado para produccion.");
+    throw new Error("Supabase service role no está configurado para producción.");
   }
 
   return createClient<Database>(

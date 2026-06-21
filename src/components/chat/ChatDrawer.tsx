@@ -72,7 +72,7 @@ export function ChatDrawer({ bookSlug, bookTitle }: ChatDrawerProps) {
       const accessToken = sessionData.session?.access_token;
 
       if (!accessToken) {
-        throw new Error("Inicia sesion para usar el chat.");
+        throw new Error("Inicia sesión para usar el chat.");
       }
 
       const response = await fetch("/api/chat", {

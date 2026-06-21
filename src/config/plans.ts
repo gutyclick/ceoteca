@@ -166,7 +166,7 @@ export const pricingFaqs = [
   {
     question: "¿Los pagos ya están activos?",
     answer:
-      "No. La integración de pagos está pendiente y no se simula ningún cobro exitoso.",
+      "No. La integración de pagos está pendiente y no se simula ningún cobro éxitoso.",
   },
   {
     question: "¿Necesito tarjeta para empezar?",

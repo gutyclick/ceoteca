@@ -54,7 +54,7 @@ type ChatResponse = {
 };
 
 const disclaimer =
-  "Contenido educativo y editorial propio. Ceoteca no esta afiliada al autor ni a la editorial. Este analisis no reemplaza la obra original.";
+  "Contenido educativo y editorial propio. Ceoteca no está afiliada al autor ni a la editorial. Este análisis no reemplaza la obra original.";
 
 const tabs: Array<{ key: TabKey; label: string }> = [
   { key: "summary", label: "Resumen" },
@@ -158,7 +158,7 @@ function AudioPanel({ book, locked = false }: { book: Book; locked?: boolean }) 
     <Card className="relative overflow-hidden rounded-[16px] bg-white/[0.035] p-6">
       {locked ? (
         <LockedPremiumOverlay
-          description="El audio narrado esta incluido desde Pro."
+          description="El audio narrado está incluido desde Pro."
           title="Audio bloqueado"
         />
       ) : null}
@@ -226,10 +226,10 @@ function KeyPointRow({ point, index }: { point: KeyPoint; index: number }) {
           <span className="text-text-primary">Ejemplo:</span> {point.example}
         </p>
         <p>
-          <span className="text-text-primary">Accion:</span> {point.action}
+          <span className="text-text-primary">Acción:</span> {point.action}
         </p>
         <p>
-          <span className="text-text-primary">Limitacion:</span> {point.limitation}
+          <span className="text-text-primary">Limitación:</span> {point.limitation}
         </p>
       </div>
     </details>
@@ -286,7 +286,7 @@ function ChatPanel({
   const [messages, setMessages] = useState<ChatConversationMessage[]>([
     {
       role: "assistant",
-      content: `IA entrenada en ${book.title}. Preguntame por aplicacion, ejercicios, recomendaciones o rutas de lectura.`,
+      content: `IA entrenada en ${book.title}. Pregúntame por aplicación, ejercicios, recomendaciones o rutas de lectura.`,
     },
   ]);
   const [isLoading, setIsLoading] = useState(false);
@@ -323,7 +323,7 @@ function ChatPanel({
       const accessToken = sessionData.session?.access_token;
 
       if (!accessToken) {
-        throw new Error("Inicia sesion para usar el chat.");
+        throw new Error("Inicia sesión para usar el chat.");
       }
 
       const response = await fetch("/api/chat", {
@@ -363,9 +363,9 @@ function ChatPanel({
   }
 
   const promptChips = [
-    "Como crear mejores habitos?",
-    "Que hago cuando fallo?",
-    "Dame un plan de 7 dias",
+    "Cómo crear mejores hábitos?",
+    "Qué hago cuando fallo?",
+    "Dame un plan de 7 días",
   ];
 
   return (
@@ -375,7 +375,7 @@ function ChatPanel({
     >
       {locked ? (
         <LockedPremiumOverlay
-          description="El chat contextual con el libro esta incluido desde Pro."
+          description="El chat contextual con el libro está incluido desde Pro."
           title="Chat IA bloqueado"
         />
       ) : null}
@@ -538,7 +538,7 @@ export function BookExperience({ book }: BookExperienceProps) {
             {[
               [Heart, "Favorito"],
               [Share2, "Compartir"],
-              [MoreHorizontal, "Mas opciones"],
+              [MoreHorizontal, "Más opciones"],
             ].map(([Icon, label]) => (
               <button
                 aria-label={label as string}
@@ -698,7 +698,7 @@ export function BookExperience({ book }: BookExperienceProps) {
                 <section>
                   <h2 className="text-xl font-semibold">Chat IA</h2>
                   <p className="mt-3 text-sm leading-7 text-text-secondary">
-                    El chat contextual esta disponible en el panel del libro.
+                    El chat contextual está disponible en el panel del libro.
                     Usa el panel lateral del libro para abrir la conversacion
                     entrenada en este contenido.
                   </p>

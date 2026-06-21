@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
 
   if (!session) {
     return jsonError(
-      { code: "UNAUTHORIZED", message: "Inicia sesion para ver notificaciones." },
+      { code: "UNAUTHORIZED", message: "Inicia sesión para ver notificaciones." },
       401,
     );
   }
@@ -74,7 +74,7 @@ export async function PATCH(request: NextRequest) {
 
   if (!session) {
     return jsonError(
-      { code: "UNAUTHORIZED", message: "Inicia sesion para actualizar notificaciones." },
+      { code: "UNAUTHORIZED", message: "Inicia sesión para actualizar notificaciones." },
       401,
     );
   }
@@ -85,7 +85,7 @@ export async function PATCH(request: NextRequest) {
     payload = await request.json();
   } catch {
     return jsonError(
-      { code: "INVALID_INPUT", message: "El cuerpo de la solicitud no es valido." },
+      { code: "INVALID_INPUT", message: "El cuerpo de la solicitud no es válido." },
       400,
     );
   }

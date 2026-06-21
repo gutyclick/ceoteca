@@ -70,12 +70,12 @@ const settingsItems: SettingsItem[] = [
   {
     key: "security",
     title: "Seguridad",
-    description: "Contrasena, 2FA y privacidad de acceso",
+    description: "Contraseña, 2FA y privacidad de acceso",
     icon: ShieldCheck,
   },
   {
     key: "billing",
-    title: "Suscripcion y pagos",
+    title: "Suscripción y pagos",
     description: "Plan, pagos y comprobantes",
     icon: CreditCard,
   },
@@ -88,7 +88,7 @@ const settingsItems: SettingsItem[] = [
   {
     key: "privacy",
     title: "Datos y privacidad",
-    description: "Exportacion y control de datos",
+    description: "Exportación y control de datos",
     icon: Download,
     tone: "cyan",
   },
@@ -348,7 +348,7 @@ export function SettingsView() {
 
     try {
       if (!accountForm.email.includes("@")) {
-        throw new Error("Escribe un correo valido.");
+        throw new Error("Escribe un correo válido.");
       }
 
       if (!isDemo) {
@@ -358,7 +358,7 @@ export function SettingsView() {
         const currentEmail = userData.user?.email ?? "";
 
         if (!userId) {
-          throw new Error("Inicia sesion para guardar cambios.");
+          throw new Error("Inicia sesión para guardar cambios.");
         }
 
         const { error: profileUpdateError } = await supabase
@@ -384,13 +384,13 @@ export function SettingsView() {
           }
 
           setProfileMessage(
-            "Datos guardados. Te enviaremos una verificacion al nuevo correo para completar el cambio.",
+            "Datos guardados. Te enviaremos una verificación al nuevo correo para completar el cambio.",
           );
         } else {
           setProfileMessage("Perfil actualizado correctamente.");
         }
       } else {
-        setProfileMessage("Perfil actualizado para esta sesion.");
+        setProfileMessage("Perfil actualizado para esta sesión.");
       }
     } catch (caughtError) {
       setProfileError(
@@ -409,11 +409,11 @@ export function SettingsView() {
 
     try {
       if (passwordForm.password.length < 8) {
-        throw new Error("La nueva contrasena debe tener al menos 8 caracteres.");
+        throw new Error("La nueva contraseña debe tener al menos 8 caracteres.");
       }
 
       if (passwordForm.password !== passwordForm.confirmPassword) {
-        throw new Error("Las contrasenas no coinciden. Revisa ambos campos.");
+        throw new Error("Las contraseñas no coinciden. Revisa ambos campos.");
       }
 
       setIsSavingPassword(true);
@@ -430,12 +430,12 @@ export function SettingsView() {
       }
 
       setPasswordForm({ password: "", confirmPassword: "" });
-      setSecurityMessage("Tu contrasena fue actualizada correctamente.");
+      setSecurityMessage("Tu contraseña fue actualizada correctamente.");
     } catch (caughtError) {
       setSecurityError(
         caughtError instanceof Error
           ? caughtError.message
-          : "No pudimos actualizar la contrasena en este momento.",
+          : "No pudimos actualizar la contraseña en este momento.",
       );
     } finally {
       setIsSavingPassword(false);
@@ -449,7 +449,7 @@ export function SettingsView() {
 
     try {
       if (isDemo) {
-        throw new Error("La autenticacion en dos pasos requiere una cuenta activa.");
+        throw new Error("La autenticación en dos pasos requiere una cuenta activa.");
       }
 
       const supabase = createBrowserSupabaseClient();
@@ -509,12 +509,12 @@ export function SettingsView() {
 
       setMfaSetup(null);
       setMfaCode("");
-      setSecurityMessage("La autenticacion en dos pasos quedo activada.");
+      setSecurityMessage("La autenticación en dos pasos quedó activada.");
     } catch (caughtError) {
       setSecurityError(
         caughtError instanceof Error
           ? caughtError.message
-          : "No pudimos verificar el codigo 2FA.",
+          : "No pudimos verificar el código 2FA.",
       );
     } finally {
       setIsMfaLoading(false);
@@ -689,8 +689,8 @@ export function SettingsView() {
                       />
                     </Field>
                     <Field
-                      hint="Si actualizas tu correo, te enviaremos una verificacion para proteger la cuenta."
-                      label="Correo electronico"
+                      hint="Si actualizas tu correo, te enviaremos una verificación para proteger la cuenta."
+                      label="Correo electrónico"
                     >
                       <input
                         className="min-h-12 rounded-button border border-white/10 bg-white/[0.035] px-4 outline-none transition focus:border-brand-purple/60"
@@ -745,7 +745,7 @@ export function SettingsView() {
               {activeSection === "security" ? (
                 <section className="grid gap-6">
                   <div className="grid gap-4 md:grid-cols-2">
-                    <Field label="Nueva contrasena">
+                    <Field label="Nueva contraseña">
                       <input
                         className="min-h-12 rounded-button border border-white/10 bg-white/[0.035] px-4 outline-none transition focus:border-brand-purple/60"
                         onChange={(event) =>
@@ -758,7 +758,7 @@ export function SettingsView() {
                         value={passwordForm.password}
                       />
                     </Field>
-                    <Field label="Confirmar contrasena">
+                    <Field label="Confirmar contraseña">
                       <input
                         className="min-h-12 rounded-button border border-white/10 bg-white/[0.035] px-4 outline-none transition focus:border-brand-purple/60"
                         onChange={(event) =>
@@ -779,17 +779,17 @@ export function SettingsView() {
                     type="button"
                   >
                     <KeyRound aria-hidden="true" size={18} />
-                    Guardar nueva contrasena
+                    Guardar nueva contraseña
                   </button>
 
                   <div className="rounded-[14px] border border-white/10 bg-white/[0.025] p-4">
                     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                       <div>
                         <h3 className="text-lg font-semibold">
-                          Autenticacion en dos pasos
+                          Autenticación en dos pasos
                         </h3>
                         <p className="mt-2 text-sm leading-6 text-text-secondary">
-                          Refuerza el acceso a tu cuenta con un codigo temporal
+                          Refuerza el acceso a tu cuenta con un código temporal
                           desde tu app autenticadora.
                         </p>
                       </div>
@@ -808,19 +808,19 @@ export function SettingsView() {
                         <div className="rounded-card bg-white p-3">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
-                            alt="Codigo QR para activar 2FA"
+                            alt="Código QR para activar 2FA"
                             className="h-full w-full"
                             src={mfaSetup.qrCode}
                           />
                         </div>
                         <div className="grid gap-3">
                           <p className="text-sm leading-6 text-text-secondary">
-                            Escanea el codigo QR o guarda la clave de respaldo:
+                            Escanea el código QR o guarda la clave de respaldo:
                           </p>
                           <code className="rounded-card border border-white/10 bg-white/[0.035] p-3 text-sm text-brand-purple">
                             {mfaSetup.secret}
                           </code>
-                          <Field label="Codigo de 6 digitos">
+                          <Field label="Código de 6 dígitos">
                             <input
                               className="min-h-12 rounded-button border border-white/10 bg-white/[0.035] px-4 outline-none transition focus:border-brand-purple/60"
                               inputMode="numeric"
@@ -849,7 +849,7 @@ export function SettingsView() {
               {activeSection === "billing" ? (
                 <section className="grid gap-5">
                   <div className="rounded-card border border-brand-purple/35 bg-brand-purple/10 p-5">
-                    <p className="text-sm text-text-secondary">Tu suscripcion</p>
+                    <p className="text-sm text-text-secondary">Tu suscripción</p>
                     <p className="mt-2 text-2xl font-semibold">
                       {plans[accountForm.plan].name}
                     </p>
@@ -869,12 +869,12 @@ export function SettingsView() {
                       disabled
                       type="button"
                     >
-                      Gestion de metodo de pago
+                      Gestión de método de pago
                     </button>
                   </div>
                   <div className="rounded-card border border-dashed border-white/15 bg-white/[0.025] p-5 text-sm leading-6 text-text-secondary">
                     Tus facturas y comprobantes apareceran aqui cuando tengas
-                    movimientos de suscripcion.
+                    movimientos de suscripción.
                   </div>
                 </section>
               ) : null}
@@ -882,7 +882,7 @@ export function SettingsView() {
               {activeSection === "notifications" ? (
                 <section className="grid gap-3">
                   <Toggle
-                    description="Recibe avisos utiles para retomar libros pendientes."
+                    description="Recibe avisos ?tiles para retomar libros pendientes."
                     enabled={notifications.reminders}
                     label="Recordatorios de aprendizaje"
                     onChange={() =>
@@ -935,8 +935,8 @@ export function SettingsView() {
                           Eliminar cuenta
                         </h3>
                         <p className="mt-2 text-sm leading-6 text-text-secondary">
-                          Para proteger tu informacion, la eliminacion de cuenta
-                          requiere una verificacion adicional con soporte.
+                          Para proteger tu información, la eliminación de cuenta
+                          requiere una verificación adicional con soporte.
                         </p>
                       </div>
                     </div>
@@ -970,7 +970,7 @@ export function SettingsView() {
               className="flex flex-wrap gap-x-5 gap-y-2"
             >
               <Link className="transition hover:text-text-primary" href="/terminos">
-                Terminos
+                Términos
               </Link>
               <Link
                 className="transition hover:text-text-primary"

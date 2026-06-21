@@ -40,7 +40,7 @@ export function LandingHero() {
           <span className="block text-gradient-brand">En 15 minutos.</span>
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-pretty text-lg leading-8 text-text-secondary sm:text-xl">
-          Analisis editoriales en espanol, ejercicios practicos, audio y una IA
+          Análisis editoriales en español, ejercicios prácticos, audio y una IA
           enfocada en ayudarte a aplicar lo que aprendes.
         </p>
       </div>

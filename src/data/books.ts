@@ -92,8 +92,8 @@ export const bookCategories: Array<"Todos" | BookCategory> = [
 
 export const demoBooks: Book[] = [
   {
-    id: "habitos-atomicos",
-    slug: "habitos-atomicos",
+    id: "hábitos-atomicos",
+    slug: "hábitos-atomicos",
     title: "Hábitos Atómicos",
     author: "James Clear",
     category: "Hábitos",
@@ -111,7 +111,7 @@ export const demoBooks: Book[] = [
     isPublished: true,
     isDemoContent: true,
     progress: 38,
-    purchaseUrl: "https://www.google.com/search?q=Habitos+Atomicos+James+Clear",
+    purchaseUrl: "https://www.google.com/search?q=Hábitos+Atómicos+James+Clear",
     analysis: defaultAnalysis,
     keyPoints: defaultKeyPoints,
     activities: defaultActivities,
@@ -258,7 +258,7 @@ export const demoBooks: Book[] = [
       "Ideas demo sobre escucha, empatía y relaciones profesionales más cuidadosas.",
     readingTime: 12,
     difficulty: "Inicial",
-    tags: ["comunicación", "relaciones", "influencia"],
+    tags: ["comúnicación", "relaciones", "influencia"],
     cover: {
       variant: "people",
       gradient: "from-cyan-300 to-blue-600",

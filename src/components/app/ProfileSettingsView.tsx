@@ -136,9 +136,9 @@ function createDemoProfileData(): ProfileData {
         started_at: now,
         completed_at: null,
         updated_at: now,
-        bookTitle: "Habitos Atomicos",
+        bookTitle: "Hábitos Atómicos",
         bookCategory: "Productividad",
-        bookSlug: "habitos-atomicos",
+        bookSlug: "hábitos-atomicos",
       },
       {
         id: "progress-2",
@@ -303,7 +303,7 @@ function StreakCard({ activeDays }: { activeDays: number }) {
         </span>
         <div>
           <p className="text-5xl font-semibold">{activeDays}</p>
-          <p className="mt-1 text-lg">dias con actividad</p>
+          <p className="mt-1 text-lg">días con actividad</p>
         </div>
       </div>
       <div className="mt-6 grid grid-cols-7 gap-3">
@@ -429,7 +429,7 @@ function MonthlyProgressCard({
         <div>
           <p className="font-semibold">Vas por buen camino</p>
           <p className="mt-2 text-sm leading-6 text-text-secondary">
-            Has avanzado mas que el {relativeLevel}% estimado de usuarios este mes.
+            Has avanzado más que el {relativeLevel}% estimado de usuarios este mes.
           </p>
         </div>
       </div>
@@ -463,14 +463,14 @@ function RecentActivityPanel({ progress }: { progress: ProgressItem[] }) {
                 </span>
               </span>
               <span className="text-sm text-text-secondary">
-                {index === 0 ? "Hoy" : index === 1 ? "Ayer" : `Hace ${index + 1} dias`}
+                {index === 0 ? "Hoy" : index === 1 ? "Ayer" : `Hace ${index + 1} días`}
               </span>
               <ChevronRight aria-hidden="true" className="text-text-secondary" size={17} />
             </Link>
           ))
         ) : (
           <div className="rounded-card border border-dashed border-white/15 bg-white/[0.025] p-5 text-sm leading-6 text-text-secondary">
-            Aun no hay actividad. Empieza un libro desde la biblioteca.
+            Aún no hay actividad. Empieza un libro desde la biblioteca.
           </div>
         )}
       </div>
@@ -783,7 +783,7 @@ export function ProfileSettingsView() {
             <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-brand-purple/20 text-brand-purple">
               <Lock aria-hidden="true" size={28} />
             </span>
-            <h1 className="mt-6 text-3xl font-semibold">Inicia sesion</h1>
+            <h1 className="mt-6 text-3xl font-semibold">Inicia sesión</h1>
             <p className="mt-3 text-sm leading-7 text-text-secondary">
               Tu perfil y progreso pertenecen a tu cuenta privada.
             </p>
@@ -907,7 +907,7 @@ export function ProfileSettingsView() {
             value={`${data.progress.length}`}
           />
           <ProfileStatCard
-            detail="Sigue asi, tu puedes"
+            detail="Sigue as?, t? puedes"
             icon={LibraryBig}
             label="Libros completados"
             tone="border-emerald-300/20 text-emerald-300"
@@ -924,7 +924,7 @@ export function ProfileSettingsView() {
             detail={
               chatLimit === null
                 ? "Uso razonable incluido"
-                : `${chatLimit} disponibles segun tu plan`
+                : `${chatLimit} disponibles según tu plan`
             }
             icon={Bot}
             label="Preguntas a la IA este mes"
@@ -958,7 +958,7 @@ export function ProfileSettingsView() {
               className="flex flex-wrap gap-x-5 gap-y-2"
             >
               <Link className="transition hover:text-text-primary" href="/terminos">
-                Terminos
+                Términos
               </Link>
               <Link
                 className="transition hover:text-text-primary"

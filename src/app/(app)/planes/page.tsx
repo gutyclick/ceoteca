@@ -42,13 +42,13 @@ export default async function PlansPage({ searchParams }: PlansPageProps) {
         <section className="ceoteca-container ceoteca-section">
           <div className="mx-auto max-w-3xl">
             <p className="text-sm font-medium uppercase tracking-[0.24em] text-brand-purple">
-              Suscripcion
+              Suscripción
             </p>
             <h1 className="mt-4 text-balance text-5xl font-semibold leading-tight">
-              Tu cuenta esta lista. Falta activar el pago.
+              Tu cuenta está lista. Falta activar el pago.
             </h1>
             <p className="mt-5 text-lg leading-8 text-text-secondary">
-              Elegiste {selectedPlan.name}, pero la pasarela todavia no esta
+              Elegiste {selectedPlan.name}, pero la pasarela todavía no está
               integrada. No se realizo ningun cobro.
             </p>
 
@@ -93,11 +93,11 @@ export default async function PlansPage({ searchParams }: PlansPageProps) {
             Onboarding
           </p>
           <h1 className="mt-4 text-balance text-5xl font-semibold leading-tight">
-            Elige como quieres empezar.
+            Elige cómo quieres empezar.
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-text-secondary">
             El plan Gratis activa el acceso de inmediato. Los planes de pago te
-            llevaran a la compra de suscripcion cuando la pasarela este lista.
+            llevarán a la compra de suscripción cuando la pasarela esté lista.
           </p>
         </div>
 

@@ -222,7 +222,7 @@ export function DashboardSidebar({ active }: DashboardSidebarProps) {
               type="button"
             >
               <LogOut aria-hidden="true" size={17} />
-              {isSigningOut ? "Cerrando..." : "Cerrar sesion"}
+              {isSigningOut ? "Cerrando..." : "Cerrar sesión"}
             </button>
           </div>
         ) : null}

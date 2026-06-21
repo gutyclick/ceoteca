@@ -32,7 +32,7 @@ export class SupabaseAuthProvider implements AuthProvider {
     });
 
     if (error || !data.user) {
-      throw new Error(error?.message ?? "No pudimos iniciar sesion.");
+      throw new Error(error?.message ?? "No pudimos iniciar sesión.");
     }
 
     return {
@@ -47,7 +47,7 @@ export class SupabaseAuthProvider implements AuthProvider {
         isDemo: false,
       },
       redirectTo: "/home",
-      message: "Sesion iniciada.",
+      message: "Sesión iniciada.",
     };
   }
 
@@ -108,7 +108,7 @@ export class SupabaseAuthProvider implements AuthProvider {
         isDemo: false,
       },
       redirectTo,
-      message: "Redireccion a Google preparada.",
+      message: "Redirección a Google preparada.",
     };
   }
 }

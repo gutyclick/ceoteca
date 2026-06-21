@@ -34,7 +34,7 @@ export const visualCards = [
   },
   {
     title: "Productividad",
-    subtitle: "Habitos",
+    subtitle: "Hábitos",
     icon: Zap,
     accent: "from-violet-300 to-fuchsia-300",
     border: "border-violet-300/60",
@@ -44,7 +44,7 @@ export const visualCards = [
     featured: false,
   },
   {
-    title: "Habitos Atomicos",
+    title: "Hábitos Atómicos",
     subtitle: "James Clear",
     icon: Brain,
     accent: "from-brand-blue via-brand-purple to-brand-pink",
@@ -87,13 +87,13 @@ export const featuredBookFacts = [
 
 export const chatBenefits = [
   "Respuestas basadas en contenido editorial propio",
-  "Recomendaciones segun tus objetivos",
-  "Aplicacion practica sin salir del libro",
+  "Recomendaciones según tus objetivos",
+  "Aplicación práctica sin salir del libro",
 ] as const;
 
 export const chatSteps = [
-  "Define el objetivo que quieres mejorar: dinero, foco, liderazgo, habitos o negocio.",
-  "Recibe una ruta breve con ideas del catalogo que conectan con esa meta.",
+  "Define el objetivo que quieres mejorar: dinero, foco, liderazgo, hábitos o negocio.",
+  "Recibe una ruta breve con ideas del catálogo que conectan con esa meta.",
   "Convierte la lectura en un ejercicio concreto para aplicar hoy.",
 ] as const;
 
@@ -143,20 +143,20 @@ export const heroActions = {
 
 export const aiQuestion = {
   icon: MessageCircle,
-  text: "Quiero mejorar mi enfoque y organizar mejor mi semana. Que libros deberia empezar y como los aplico?",
+  text: "Quiero mejorar mi enfoque y organizar mejor mi semana. Qué libros debería empezar y cómo los aplico?",
 } as const;
 
 export const howItWorksSteps = [
   {
     title: "Elige un libro",
     description:
-      "Explora analisis editoriales en espanol sobre finanzas, habitos, productividad, negocios, mentalidad y liderazgo.",
+      "Explora análisis editoriales en español sobre finanzas, hábitos, productividad, negocios, mentalidad y liderazgo.",
     icon: Compass,
   },
   {
     title: "Aprende en 15 minutos",
     description:
-      "Lee una experiencia clara con ideas principales, contexto, puntos clave y ejercicios practicos.",
+      "Lee una experiencia clara con ideas principales, contexto, puntos clave y ejercicios prácticos.",
     icon: Zap,
   },
   {
@@ -169,9 +169,9 @@ export const howItWorksSteps = [
 
 export const previewBooks = [
   {
-    title: "Habitos Atomicos",
+    title: "Hábitos Atómicos",
     author: "James Clear",
-    category: "Habitos",
+    category: "Hábitos",
     duration: "15 min",
     accent: "from-brand-blue via-brand-purple to-brand-pink",
     pattern: "orb",
@@ -197,11 +197,11 @@ export const previewBooks = [
 export const comparisonRows = [
   {
     feature: "Lectura guiada de 15 minutos",
-    ceoteca: "Analisis editorial accionable",
+    ceoteca: "Análisis editorial accionable",
     traditional: "Lectura completa sin guia",
   },
   {
-    feature: "Aplicacion practica",
+    feature: "Aplicación práctica",
     ceoteca: "Ejercicios y seguimiento de progreso",
     traditional: "Depende del lector",
   },
@@ -212,7 +212,7 @@ export const comparisonRows = [
   },
   {
     feature: "Audio",
-    ceoteca: "Resumenes narrados segun plan",
+    ceoteca: "Resúmenes narrados según plan",
     traditional: "No siempre incluido",
   },
 ] as const;
@@ -222,7 +222,7 @@ export const audienceCards = [
     name: "Emprendedores",
     role: "Negocios y ventas",
     quote:
-      "Encuentran ideas de libros de negocio y las convierten en acciones simples para vender, decidir y construir con mas claridad.",
+      "Encuentran ideas de libros de negocio y las convierten en acciones simples para vender, decidir y construir con más claridad.",
   },
   {
     name: "Profesionales",
@@ -234,7 +234,7 @@ export const audienceCards = [
     name: "Lectores curiosos",
     role: "Crecimiento personal",
     quote:
-      "Descubren que libros profundizar despues y construyen el habito de aprender sin depender de sesiones largas.",
+      "Descubren que libros profundizar después y construyen el hábito de aprender sin depender de sesiones largas.",
   },
 ] as const;
 
@@ -247,25 +247,25 @@ export const landingFaqs = [
   {
     question: "El contenido usa textos copiados de los libros?",
     answer:
-      "No. Los analisis son textos propios de Ceoteca. No reproducimos capitulos, portadas oficiales ni citas inventadas.",
+      "No. Los análisis son textos propios de Ceoteca. No reproducimos capítulos, portadas oficiales ni citas inventadas.",
   },
   {
-    question: "Que puede hacer la IA de Ceoteca?",
+    question: "Qué puede hacer la IA de Ceoteca?",
     answer:
-      "Puede recomendar libros del catalogo, conectar ideas entre temas, ayudarte a aplicar un concepto, sugerir ejercicios y responder dentro del contexto autorizado de cada analisis.",
+      "Puede recomendar libros del catálogo, conectar ideas entre temas, ayudarte a aplicar un concepto, sugerir ejercicios y responder dentro del contexto autorizado de cada análisis.",
   },
   {
     question: "Puedo empezar gratis?",
     answer:
-      "Si. Puedes crear una cuenta gratis para explorar Ceoteca. Los planes superiores desbloquean mas acceso, audio, actividades avanzadas y chat contextual segun disponibilidad.",
+      "Sí. Puedes crear una cuenta gratis para explorar Ceoteca. Los planes superiores desbloquean más acceso, audio, actividades avanzadas y chat contextual según disponibilidad.",
   },
 ] as const;
 
 export const finalCta = {
   eyebrow: "Tu biblioteca accionable",
-  title: "Construye el habito de aprender y aplicar.",
+  title: "Construye el hábito de aprender y aplicar.",
   description:
-    "Empieza con una experiencia breve, descubre ideas utiles y usa Ceoteca para mejorar tus decisiones cada semana.",
+    "Empieza con una experiencia breve, descubre ideas ?tiles y usa Ceoteca para mejorar tus decisiones cada semana.",
   primary: {
     href: "/registro",
     label: "Crear cuenta gratis",

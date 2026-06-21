@@ -12,7 +12,7 @@ export function BookPreviewSection() {
       <SectionHeading
         eyebrow="Biblioteca"
         title="Libros convertidos en experiencias accionables."
-        description="Cada analisis usa contenido editorial propio, portadas conceptuales y ejercicios disenados para aplicar."
+        description="Cada análisis usa contenido editorial propio, portadas conceptuales y ejercicios diseñados para aplicar."
       />
       <div className="mt-12 grid gap-5 md:grid-cols-3">
         {previewBooks.map((book) => (

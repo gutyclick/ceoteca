@@ -155,7 +155,7 @@ function getRecentLabel(index: number) {
     return "Ayer";
   }
 
-  return `Hace ${index + 1} dÃ­as`;
+  return `Hace ${index + 1} días`;
 }
 
 function getGradient(index: number) {
@@ -324,7 +324,7 @@ export function HomeView({ books }: HomeViewProps) {
         <section className="ceoteca-container ceoteca-section">
           <h1 className="text-3xl font-semibold">Biblioteca en preparacion</h1>
           <p className="mt-3 text-text-secondary">
-            Aun no hay libros publicados en Supabase.
+            Aún no hay libros publicados en Supabase.
           </p>
         </section>
       </main>
@@ -432,7 +432,7 @@ export function HomeView({ books }: HomeViewProps) {
               </span>
               <div>
                 <p className="text-sm font-medium uppercase tracking-[0.2em] text-brand-purple">
-                  Oferta unica para usuarios nuevos
+                  Oferta única para usuarios nuevos
                 </p>
                 <h2 className="mt-2 text-2xl font-semibold">
                   15% de descuento en tu primer mes
@@ -530,7 +530,7 @@ export function HomeView({ books }: HomeViewProps) {
               />
               <div>
                 <span className="inline-flex rounded-full bg-brand-purple/20 px-4 py-1 text-sm text-brand-purple">
-                  Recomendacion CEOTECA
+                  Recomendación CEOTECA
                 </span>
                 <h3 className="mt-5 text-2xl font-semibold">
                   {accountData.progress.length > 0
@@ -761,7 +761,7 @@ export function HomeView({ books }: HomeViewProps) {
               className="flex flex-wrap gap-x-5 gap-y-2"
             >
               <Link className="transition hover:text-text-primary" href="/terminos">
-                Terminos
+                Términos
               </Link>
               <Link className="transition hover:text-text-primary" href="/privacidad">
                 Privacidad

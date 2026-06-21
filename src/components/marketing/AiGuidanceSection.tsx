@@ -22,9 +22,9 @@ export function AiGuidanceSection() {
               <span className="block text-gradient-brand">y aplica.</span>
             </h2>
             <p className="mt-5 max-w-md text-pretty leading-7 text-text-secondary">
-              La IA de Ceoteca esta pensada para trabajar con el contenido de la
+              La IA de Ceoteca está pensada para trabajar con el contenido de la
               biblioteca: recomienda libros, aterriza ideas y te ayuda a decidir
-              que hacer despues.
+              qué hacer después.
             </p>
             <ul className="mt-7 space-y-3">
               {chatBenefits.map((benefit) => (
@@ -60,7 +60,7 @@ export function AiGuidanceSection() {
                 </span>
                 <p className="text-sm leading-6 text-text-secondary">
                   Basado en tus objetivos, Ceoteca puede recomendarte una ruta
-                  de lectura y aplicacion:
+                  de lectura y aplicación:
                 </p>
               </div>
               <ol className="space-y-4">
@@ -74,8 +74,8 @@ export function AiGuidanceSection() {
                 ))}
               </ol>
               <p className="mt-5 text-sm leading-6 text-text-secondary">
-                Tambien puedes pedir una rutina de 7 dias, una comparacion entre
-                libros o una recomendacion segun tu situacion.
+                También puedes pedir una rutina de 7 días, una comparación entre
+                libros o una recomendación según tu situación.
               </p>
             </div>
 
