@@ -25,6 +25,7 @@ import type { LucideIcon } from "lucide-react";
 
 import { DashboardSidebar } from "@/components/app/DashboardSidebar";
 import { NotificationBell } from "@/components/app/NotificationBell";
+import { FloatingSiteChat } from "@/components/chat/FloatingSiteChat";
 import { Card } from "@/components/ui/Card";
 import type { PlanKey } from "@/config/plans";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
@@ -84,13 +85,6 @@ function getRemainingMinutes(book: Book, progress: number) {
 }
 
 const categoryIcons: LucideIcon[] = [DollarSign, Zap, Rocket, Brain, Target];
-
-const finalSuggestions = [
-  "\u00bfC\u00f3mo invertir con poco dinero?",
-  "\u00bfC\u00f3mo ser m\u00e1s productivo?",
-  "\u00bfC\u00f3mo construir mejores h\u00e1bitos?",
-  "\u00bfC\u00f3mo liderar mejor?",
-] as const;
 
 const collectionCards: CollectionCard[] = [
   { title: "Construye riqueza", icon: DollarSign, category: "Finanzas" },
@@ -616,49 +610,6 @@ export function HomeView({ books }: HomeViewProps) {
           </div>
         </section>
 
-        <section className="mt-7" id="ia">
-          <h2 className="flex items-center gap-2 text-[22px] font-semibold">
-            Habla con el conocimiento
-            <span className="rounded-full bg-brand-purple/20 px-2.5 py-1 text-xs text-brand-purple">
-              IA
-            </span>
-          </h2>
-          <Card className="pulse-glow mt-3 rounded-[14px] border-brand-purple/50 bg-white/[0.035] p-5">
-            <div className="grid gap-5 lg:grid-cols-[92px_1fr_54px] lg:items-center">
-              <span className="grid h-20 w-20 place-items-center rounded-[1.4rem] border border-brand-purple/60 bg-brand-purple/15 text-brand-purple shadow-[0_0_40px_rgba(124,58,237,0.55)]">
-                <Bot aria-hidden="true" size={36} />
-              </span>
-              <div>
-                <h2 className="text-2xl font-semibold">
-                  ¿Qué quieres aprender hoy?
-                </h2>
-                <p className="mt-2 text-sm text-text-secondary">
-                  Pide recomendaciones, rutas de lectura o formas de aplicar
-                  una idea a tu situación.
-                </p>
-              </div>
-              <button
-                aria-label="Abrir chat con IA"
-                className="grid h-14 w-14 place-items-center rounded-button bg-brand-gradient text-white shadow-[0_0_28px_rgba(124,58,237,0.5)] transition hover:brightness-110"
-                type="button"
-              >
-                <ArrowRight aria-hidden="true" size={22} />
-              </button>
-            </div>
-            <div className="mt-5 grid gap-3 border-t border-white/10 pt-4 md:grid-cols-4">
-              {finalSuggestions.map((suggestion) => (
-                <button
-                  className="rounded-full border border-white/10 bg-white/[0.045] px-4 py-3 text-sm text-text-secondary transition hover:border-brand-purple/50 hover:text-white"
-                  key={suggestion}
-                  type="button"
-                >
-                  {suggestion}
-                </button>
-              ))}
-            </div>
-          </Card>
-        </section>
-
         <section className="mt-7">
           <HeaderControls title="Colecciones populares" />
           <div className="mt-4 grid gap-5 md:grid-cols-2 lg:grid-cols-5">
@@ -776,6 +727,7 @@ export function HomeView({ books }: HomeViewProps) {
           </div>
         </footer>
       </section>
+      <FloatingSiteChat plan={accountData.plan} />
     </main>
   );
 }

@@ -1,4 +1,9 @@
-import type { AIProvider, BookChatInput, BookChatResult } from "@/lib/openai/types";
+import type {
+  AIProvider,
+  BookChatInput,
+  BookChatResult,
+  SiteChatInput,
+} from "@/lib/openai/types";
 
 export class MockAIProvider implements AIProvider {
   async answerBookQuestion(input: BookChatInput): Promise<BookChatResult> {
@@ -28,6 +33,36 @@ export class MockAIProvider implements AIProvider {
 
     return {
       message: `Basado en el análisis demo de ${input.book.title}, empieza por "${firstPoint.title.toLowerCase()}". ${firstPoint.action} Si lo aplicas hoy, mantén la acción pequeña y revisa qué fricción aparece antes de aumentar dificultad.`,
+    };
+  }
+
+  async answerSiteQuestion(input: SiteChatInput): Promise<BookChatResult> {
+    const normalizedMessage = input.message.toLowerCase();
+    const books = input.books.slice(0, 4);
+    const matchingBook =
+      input.books.find((book) =>
+        [book.title, book.author, book.category, ...book.tags]
+          .join(" ")
+          .toLowerCase()
+          .split(/\s+/)
+          .some((word) => word.length > 3 && normalizedMessage.includes(word)),
+      ) ?? books[0];
+
+    if (!matchingBook) {
+      return {
+        message:
+          "Puedo ayudarte con recomendaciones de Ceoteca, hábitos de lectura, productividad, mentalidad y desarrollo personal.",
+      };
+    }
+
+    const alternatives = books
+      .filter((book) => book.id !== matchingBook.id)
+      .slice(0, 2)
+      .map((book) => book.title)
+      .join(" y ");
+
+    return {
+      message: `Te recomiendo empezar por ${matchingBook.title}, porque conecta con ${matchingBook.category.toLowerCase()}. Úsalo como complemento: revisa sus ideas clave, elige un ejercicio y aplícalo durante 7 días. ${alternatives ? `También podrías explorar ${alternatives}. ` : ""}Si quieres comprar el libro completo, busca una edición legal en librerías reconocidas o en la tienda oficial de tu país.`,
     };
   }
 }

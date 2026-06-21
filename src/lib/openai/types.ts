@@ -7,10 +7,17 @@ export type BookChatInput = {
   conversation: ChatConversationMessage[];
 };
 
+export type SiteChatInput = {
+  books: Book[];
+  message: string;
+  conversation: ChatConversationMessage[];
+};
+
 export type BookChatResult = {
   message: string;
 };
 
 export interface AIProvider {
   answerBookQuestion(input: BookChatInput): Promise<BookChatResult>;
+  answerSiteQuestion(input: SiteChatInput): Promise<BookChatResult>;
 }

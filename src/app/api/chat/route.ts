@@ -126,11 +126,25 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const book = await createBookRepository().getBySlug(parsed.data.bookId);
+  const bookRepository = createBookRepository();
+  const books =
+    parsed.data.context === "site"
+      ? (await bookRepository.list()).filter((item) => item.isPublished)
+      : [];
+  const book =
+    parsed.data.context === "site"
+      ? books[0]
+      : await bookRepository.getBySlug(parsed.data.bookId ?? "");
 
   if (!book || !book.isPublished) {
     return jsonError(
-      { code: "BOOK_NOT_FOUND", message: "No encontramos este libro." },
+      {
+        code: "BOOK_NOT_FOUND",
+        message:
+          parsed.data.context === "site"
+            ? "No hay análisis publicados para responder en este momento."
+            : "No encontramos este libro.",
+      },
       404,
     );
   }
@@ -161,11 +175,18 @@ export async function POST(request: NextRequest) {
 
   try {
     const provider = createAIProvider();
-    const result = await provider.answerBookQuestion({
-      book,
-      message: parsed.data.message,
-      conversation: parsed.data.conversation,
-    });
+    const result =
+      parsed.data.context === "site"
+        ? await provider.answerSiteQuestion({
+            books,
+            message: parsed.data.message,
+            conversation: parsed.data.conversation,
+          })
+        : await provider.answerBookQuestion({
+            book,
+            message: parsed.data.message,
+            conversation: parsed.data.conversation,
+          });
 
     const nextCount = await chatRepository.incrementUsage(session.user.id, book.id);
     await chatRepository.persistMessages({
