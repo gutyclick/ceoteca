@@ -206,8 +206,41 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { apiKey, bucket, model, voice } = getAudioConfig();
+  const bucket = serverEnv.STORAGE_BUCKET || "audio-assets";
   const serviceSupabase = createServiceSupabaseClient();
+  const uploadedAudioResponse = await serviceSupabase
+    .from("audio_assets")
+    .select("*")
+    .eq("book_id", book.id)
+    .eq("status", "ready")
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (uploadedAudioResponse.error) {
+    return jsonError(
+      {
+        code: "AUDIO_LOOKUP_FAILED",
+        message: "No pudimos consultar el audio de este libro.",
+      },
+      500,
+    );
+  }
+
+  if (uploadedAudioResponse.data) {
+    const signedUrl = await createSignedUrl(
+      bucket,
+      uploadedAudioResponse.data.storage_path,
+    );
+
+    return jsonData({
+      audioUrl: signedUrl,
+      durationSeconds: uploadedAudioResponse.data.duration_seconds,
+      cached: true,
+    });
+  }
+
+  const { apiKey, model, voice } = getAudioConfig();
   const existingResponse = await serviceSupabase
     .from("audio_assets")
     .select("*")
