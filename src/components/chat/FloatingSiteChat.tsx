@@ -40,6 +40,21 @@ type ChatResponse = {
   };
 };
 
+type ChatHistoryResponse = {
+  data?: {
+    messages: ChatConversationMessage[];
+    remainingQuestions: number | null;
+    usage: {
+      questionCount: number;
+      limit: number | null;
+    };
+  };
+  error?: {
+    code: string;
+    message: string;
+  };
+};
+
 const siteSuggestions = [
   "Recomiéndame análisis para mejorar mi enfoque.",
   "¿Cómo creo una rutina de lectura sostenible?",
@@ -61,21 +76,29 @@ function getNextSuggestionSet(currentIndex: number) {
 }
 
 export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<ChatConversationMessage[]>([
-    {
+  const introMessage = useMemo<ChatConversationMessage>(
+    () => ({
       role: "assistant",
       content:
         "Hola. Soy CEO, tu IA de Ceoteca. Puedo recomendarte análisis del catálogo, ayudarte con productividad, mentalidad, desarrollo personal, hábitos de lectura y formas prácticas de aplicar ideas.",
-    },
+    }),
+    [],
+  );
+  const [isOpen, setIsOpen] = useState(false);
+  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState<ChatConversationMessage[]>([
+    introMessage,
   ]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+  const [hasLoadedHistory, setHasLoadedHistory] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [remainingQuestions, setRemainingQuestions] = useState<number | null>(null);
   const [suggestionStartIndex, setSuggestionStartIndex] = useState(0);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
-  const bottomRef = useRef<HTMLDivElement | null>(null);
+  const scrollAreaRef = useRef<HTMLDivElement | null>(null);
+  const latestAssistantRef = useRef<HTMLDivElement | null>(null);
+  const shouldFocusLatestAssistantRef = useRef(false);
   const hasChatAccess = canAccessFeature(plan, "chat");
   const visibleSuggestions = getNextSuggestionSet(suggestionStartIndex);
   const planQuestionLimit = plans[plan].chatMonthlyLimit;
@@ -92,10 +115,84 @@ export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
   );
 
   useEffect(() => {
-    if (isOpen) {
-      bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    if (!isOpen || !hasChatAccess || hasLoadedHistory) {
+      return;
     }
-  }, [isOpen, messages, isLoading]);
+
+    let isMounted = true;
+
+    async function loadHistory() {
+      setIsHistoryLoading(true);
+      setError(null);
+
+      try {
+        const supabase = createBrowserSupabaseClient();
+        const { data: sessionData } = await supabase.auth.getSession();
+        const accessToken = sessionData.session?.access_token;
+
+        if (!accessToken) {
+          throw new Error("Inicia sesión para ver tu historial.");
+        }
+
+        const response = await fetch("/api/chat/history?context=site", {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+        const payload = (await response.json()) as ChatHistoryResponse;
+
+        if (!response.ok || payload.error) {
+          throw new Error(payload.error?.message ?? "No pudimos cargar tu historial.");
+        }
+
+        if (isMounted) {
+          const historyMessages = payload.data?.messages ?? [];
+          setMessages(historyMessages.length > 0 ? historyMessages : [introMessage]);
+          setRemainingQuestions(payload.data?.remainingQuestions ?? null);
+          setHasLoadedHistory(true);
+          window.setTimeout(() => {
+            const scrollArea = scrollAreaRef.current;
+
+            if (scrollArea) {
+              scrollArea.scrollTop = scrollArea.scrollHeight;
+            }
+            inputRef.current?.focus();
+          }, 80);
+        }
+      } catch (caughtError) {
+        if (isMounted) {
+          setError(
+            caughtError instanceof Error
+              ? caughtError.message
+              : "Ocurrió un error inesperado.",
+          );
+          setHasLoadedHistory(true);
+        }
+      } finally {
+        if (isMounted) {
+          setIsHistoryLoading(false);
+        }
+      }
+    }
+
+    void loadHistory();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [hasChatAccess, hasLoadedHistory, introMessage, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || !shouldFocusLatestAssistantRef.current) {
+      return;
+    }
+
+    latestAssistantRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+    shouldFocusLatestAssistantRef.current = false;
+  }, [isOpen, messages]);
 
   async function sendMessage(message: string) {
     const trimmed = message.trim();
@@ -136,14 +233,13 @@ export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
         throw new Error(payload.error?.message ?? "No pudimos enviar tu pregunta.");
       }
 
-      const responseData = payload.data;
-
-      if (responseData) {
+      if (payload.data) {
+        shouldFocusLatestAssistantRef.current = true;
         setMessages((current) => [
           ...current,
-          { role: "assistant", content: responseData.message },
+          { role: "assistant", content: payload.data?.message ?? "" },
         ]);
-        setRemainingQuestions(responseData.remainingQuestions);
+        setRemainingQuestions(payload.data.remainingQuestions);
       }
     } catch (caughtError) {
       setError(
@@ -162,37 +258,38 @@ export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
       {isOpen ? (
         <Card className="flex h-[min(760px,calc(100svh-112px))] w-full max-w-[520px] flex-col overflow-hidden rounded-[24px] border-brand-purple/30 bg-[#090a12]/95 p-0 shadow-[0_24px_90px_rgba(0,0,0,0.58)] backdrop-blur-xl sm:w-[520px]">
           <header className="relative shrink-0 border-b border-white/10 bg-white/[0.025] p-4 pr-14 sm:p-5 sm:pr-14">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex min-w-0 gap-3">
-                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-brand-purple/40 bg-brand-purple/20 text-brand-purple shadow-[0_0_32px_rgba(168,85,247,0.35)]">
-                  <Bot aria-hidden="true" size={24} />
-                </span>
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-base font-semibold text-white">CEO</p>
-                    <span className="rounded-full border border-success/25 bg-success/10 px-2 py-0.5 text-[11px] font-medium text-success">
-                      En línea
-                    </span>
-                  </div>
-                  <p className="mt-1 max-w-[340px] text-xs leading-5 text-text-secondary">
-                    IA de Ceoteca para recomendaciones, lectura, productividad y aplicación.
-                  </p>
+            <div className="flex min-w-0 gap-3">
+              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-brand-purple/40 bg-brand-purple/20 text-brand-purple shadow-[0_0_32px_rgba(168,85,247,0.35)]">
+                <Bot aria-hidden="true" size={24} />
+              </span>
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-base font-semibold text-white">CEO</p>
+                  <span className="rounded-full border border-success/25 bg-success/10 px-2 py-0.5 text-[11px] font-medium text-success">
+                    En línea
+                  </span>
                 </div>
+                <p className="mt-1 max-w-[340px] text-xs leading-5 text-text-secondary">
+                  IA de Ceoteca para recomendaciones, lectura, productividad y aplicación.
+                </p>
               </div>
-              <button
-                aria-label="Cerrar chat"
-                className="absolute right-3 top-3 z-10 grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.08] text-white shadow-[0_10px_30px_rgba(0,0,0,0.25)] transition hover:border-brand-purple/50 hover:bg-white/[0.14]"
-                onClick={() => setIsOpen(false)}
-                type="button"
-              >
-                <X aria-hidden="true" size={19} />
-              </button>
             </div>
+            <button
+              aria-label="Cerrar chat"
+              className="absolute right-3 top-3 z-10 grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.08] text-white shadow-[0_10px_30px_rgba(0,0,0,0.25)] transition hover:border-brand-purple/50 hover:bg-white/[0.14]"
+              onClick={() => setIsOpen(false)}
+              type="button"
+            >
+              <X aria-hidden="true" size={19} />
+            </button>
           </header>
 
           {hasChatAccess ? (
             <>
-              <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5">
+              <div
+                className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5"
+                ref={scrollAreaRef}
+              >
                 {shouldShowQuestionLimit ? (
                   <p className="mb-4 inline-flex max-w-full items-center gap-2 rounded-full border border-white/10 bg-white/[0.045] px-3 py-1.5 text-xs text-text-secondary">
                     <Sparkles aria-hidden="true" className="shrink-0 text-brand-purple" size={14} />
@@ -203,13 +300,26 @@ export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
                 ) : null}
 
                 <div className="space-y-4">
+                  {isHistoryLoading ? (
+                    <div className="flex justify-center">
+                      <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-xs text-text-secondary">
+                        <Loader2 aria-hidden="true" className="animate-spin" size={14} />
+                        Cargando historial...
+                      </div>
+                    </div>
+                  ) : null}
                   {messages.map((message, index) => (
                     <div
                       className={cn(
-                        "flex",
+                        "flex scroll-mt-4",
                         message.role === "user" ? "justify-end" : "justify-start",
                       )}
                       key={`${message.role}-${index}`}
+                      ref={
+                        message.role === "assistant" && index === messages.length - 1
+                          ? latestAssistantRef
+                          : undefined
+                      }
                     >
                       <div
                         className={cn(
@@ -237,7 +347,6 @@ export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
                       </div>
                     </div>
                   ) : null}
-                  <div ref={bottomRef} />
                 </div>
               </div>
 

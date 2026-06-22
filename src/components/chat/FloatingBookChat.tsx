@@ -42,6 +42,21 @@ type ChatResponse = {
   };
 };
 
+type ChatHistoryResponse = {
+  data?: {
+    messages: ChatConversationMessage[];
+    remainingQuestions: number | null;
+    usage: {
+      questionCount: number;
+      limit: number | null;
+    };
+  };
+  error?: {
+    code: string;
+    message: string;
+  };
+};
+
 const bookSuggestions = [
   "¿Cómo aplico esto esta semana?",
   "Dame un plan de 7 días.",
@@ -63,20 +78,28 @@ function getNextSuggestionSet(currentIndex: number) {
 }
 
 export function FloatingBookChat({ book, plan }: FloatingBookChatProps) {
+  const introMessage = useMemo<ChatConversationMessage>(
+    () => ({
+      role: "assistant",
+      content: `Hola. Soy CEO y estoy usando el contexto de **${book.title}** para ayudarte a convertir este análisis en decisiones, ejercicios y próximos pasos concretos.`,
+    }),
+    [book.title],
+  );
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatConversationMessage[]>([
-    {
-      role: "assistant",
-      content: `Hola. Soy CEO y estoy usando el contexto de **${book.title}** para ayudarte a convertir este análisis en decisiones, ejercicios y próximos pasos concretos.`,
-    },
+    introMessage,
   ]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+  const [hasLoadedHistory, setHasLoadedHistory] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [remainingQuestions, setRemainingQuestions] = useState<number | null>(null);
   const [suggestionStartIndex, setSuggestionStartIndex] = useState(0);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
-  const bottomRef = useRef<HTMLDivElement | null>(null);
+  const scrollAreaRef = useRef<HTMLDivElement | null>(null);
+  const latestAssistantRef = useRef<HTMLDivElement | null>(null);
+  const shouldFocusLatestAssistantRef = useRef(false);
   const hasChatAccess = canAccessFeature(plan, "chat");
   const visibleSuggestions = getNextSuggestionSet(suggestionStartIndex);
   const planQuestionLimit = plans[plan].chatMonthlyLimit;
@@ -93,11 +116,94 @@ export function FloatingBookChat({ book, plan }: FloatingBookChatProps) {
   );
 
   useEffect(() => {
-    if (isOpen) {
-      bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-      window.setTimeout(() => inputRef.current?.focus(), 120);
+    setMessages([introMessage]);
+    setHasLoadedHistory(false);
+    setRemainingQuestions(null);
+    setError(null);
+  }, [book.slug, introMessage]);
+
+  useEffect(() => {
+    if (!isOpen || !hasChatAccess || hasLoadedHistory) {
+      return;
     }
-  }, [isOpen, messages, isLoading]);
+
+    let isMounted = true;
+
+    async function loadHistory() {
+      setIsHistoryLoading(true);
+      setError(null);
+
+      try {
+        const supabase = createBrowserSupabaseClient();
+        const { data: sessionData } = await supabase.auth.getSession();
+        const accessToken = sessionData.session?.access_token;
+
+        if (!accessToken) {
+          throw new Error("Inicia sesión para ver tu historial.");
+        }
+
+        const response = await fetch(
+          `/api/chat/history?context=book&bookId=${encodeURIComponent(book.slug)}`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          },
+        );
+        const payload = (await response.json()) as ChatHistoryResponse;
+
+        if (!response.ok || payload.error) {
+          throw new Error(payload.error?.message ?? "No pudimos cargar tu historial.");
+        }
+
+        if (isMounted) {
+          const historyMessages = payload.data?.messages ?? [];
+          setMessages(historyMessages.length > 0 ? historyMessages : [introMessage]);
+          setRemainingQuestions(payload.data?.remainingQuestions ?? null);
+          setHasLoadedHistory(true);
+          window.setTimeout(() => {
+            const scrollArea = scrollAreaRef.current;
+
+            if (scrollArea) {
+              scrollArea.scrollTop = scrollArea.scrollHeight;
+            }
+            inputRef.current?.focus();
+          }, 80);
+        }
+      } catch (caughtError) {
+        if (isMounted) {
+          setError(
+            caughtError instanceof Error
+              ? caughtError.message
+              : "Ocurrió un error inesperado.",
+          );
+          setHasLoadedHistory(true);
+        }
+      } finally {
+        if (isMounted) {
+          setIsHistoryLoading(false);
+        }
+      }
+    }
+
+    void loadHistory();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [book.slug, hasChatAccess, hasLoadedHistory, introMessage, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || !shouldFocusLatestAssistantRef.current) {
+      return;
+    }
+
+    latestAssistantRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+    shouldFocusLatestAssistantRef.current = false;
+  }, [isOpen, messages]);
 
   async function sendMessage(message: string) {
     const trimmed = message.trim();
@@ -140,6 +246,7 @@ export function FloatingBookChat({ book, plan }: FloatingBookChatProps) {
       }
 
       if (payload.data) {
+        shouldFocusLatestAssistantRef.current = true;
         setMessages((current) => [
           ...current,
           { role: "assistant", content: payload.data?.message ?? "" },
@@ -191,7 +298,10 @@ export function FloatingBookChat({ book, plan }: FloatingBookChatProps) {
 
           {hasChatAccess ? (
             <>
-              <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5">
+              <div
+                className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5"
+                ref={scrollAreaRef}
+              >
                 {shouldShowQuestionLimit ? (
                   <p className="mb-4 inline-flex max-w-full items-center gap-2 rounded-full border border-white/10 bg-white/[0.045] px-3 py-1.5 text-xs text-text-secondary">
                     <Sparkles aria-hidden="true" className="shrink-0 text-brand-purple" size={14} />
@@ -202,13 +312,26 @@ export function FloatingBookChat({ book, plan }: FloatingBookChatProps) {
                 ) : null}
 
                 <div className="space-y-4">
+                  {isHistoryLoading ? (
+                    <div className="flex justify-center">
+                      <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-xs text-text-secondary">
+                        <Loader2 aria-hidden="true" className="animate-spin" size={14} />
+                        Cargando historial...
+                      </div>
+                    </div>
+                  ) : null}
                   {messages.map((message, index) => (
                     <div
                       className={cn(
-                        "flex",
+                        "flex scroll-mt-4",
                         message.role === "user" ? "justify-end" : "justify-start",
                       )}
                       key={`${message.role}-${index}`}
+                      ref={
+                        message.role === "assistant" && index === messages.length - 1
+                          ? latestAssistantRef
+                          : undefined
+                      }
                     >
                       <div
                         className={cn(
@@ -236,7 +359,6 @@ export function FloatingBookChat({ book, plan }: FloatingBookChatProps) {
                       </div>
                     </div>
                   ) : null}
-                  <div ref={bottomRef} />
                 </div>
               </div>
 
