@@ -8,7 +8,6 @@ import {
   Bot,
   BookOpen,
   CheckCircle2,
-  ChevronDown,
   Clock3,
   ExternalLink,
   Headphones,
@@ -19,7 +18,7 @@ import {
   Play,
   Share2,
   Sparkles,
-  Star,
+  Target,
 } from "lucide-react";
 
 import { DashboardSidebar } from "@/components/app/DashboardSidebar";
@@ -35,20 +34,105 @@ type BookExperienceProps = {
   book: Book;
 };
 
-type TabKey = "summary" | "keyPoints" | "activities" | "audio" | "chat";
-
 const disclaimer =
   "Contenido educativo y editorial propio. Ceoteca no está afiliada al autor ni a la editorial. Este análisis no reemplaza la obra original.";
 
-const tabs: Array<{ key: TabKey; label: string }> = [
-  { key: "summary", label: "Resumen" },
-  { key: "keyPoints", label: "Ideas clave" },
-  { key: "activities", label: "Ejercicios" },
-  { key: "audio", label: "Audio" },
-  { key: "chat", label: "CEO" },
+const articleNav = [
+  { href: "#intro", label: "Intro" },
+  { href: "#tipos", label: "Tipos" },
+  { href: "#sistema", label: "24 pasos" },
+  { href: "#claves", label: "Claves" },
+  { href: "#framework", label: "Framework" },
+  { href: "#plantilla", label: "Plantilla" },
+] as const;
+
+const disciplinedPhases = [
+  {
+    label: "¿Quién es tu cliente?",
+    range: "Pasos 1-5",
+    color: "border-brand-purple/35 bg-brand-purple/10",
+    steps: [
+      "Segmentación de mercado",
+      "Seleccionar un mercado de entrada",
+      "Construir el perfil del usuario final",
+      "Calcular el TAM del mercado de entrada",
+      "Definir un Persona real",
+    ],
+  },
+  {
+    label: "¿Qué puedes hacer por él?",
+    range: "Pasos 6-9",
+    color: "border-brand-blue/35 bg-brand-blue/10",
+    steps: [
+      "Caso de uso de ciclo completo",
+      "Especificación de alto nivel del producto",
+      "Cuantificar la propuesta de valor",
+      "Identificar los próximos 10 clientes",
+    ],
+  },
+  {
+    label: "¿Cómo adquieres clientes?",
+    range: "Pasos 10-12",
+    color: "border-cyan-300/30 bg-cyan-300/10",
+    steps: [
+      "Unidad de decisión",
+      "Proceso para adquirir un cliente pagador",
+      "Mapa del proceso de ventas",
+    ],
+  },
+  {
+    label: "¿Es rentable?",
+    range: "Pasos 13-17",
+    color: "border-amber-300/30 bg-amber-300/10",
+    steps: [
+      "Calcular el Lifetime Value",
+      "Calcular el costo de adquisición",
+      "Diseñar el modelo de negocio",
+      "Establecer precios",
+      "Calcular mercados de seguimiento",
+    ],
+  },
+  {
+    label: "¿Qué construyes?",
+    range: "Pasos 18-20",
+    color: "border-fuchsia-300/30 bg-fuchsia-300/10",
+    steps: [
+      "Definir tu ventaja central",
+      "Graficar posición competitiva",
+      "Definir el producto mínimo de negocio viable",
+    ],
+  },
+  {
+    label: "¿Funciona en el mundo real?",
+    range: "Pasos 21-24",
+    color: "border-emerald-300/30 bg-emerald-300/10",
+    steps: [
+      "Identificar suposiciones clave",
+      "Probar suposiciones clave",
+      "Demostrar aceptación del mercado",
+      "Desarrollar el plan de producto",
+    ],
+  },
 ];
 
-const keyPointIcons = ["◎", "★", "ϟ", "✓", "◇", "↗", "◌"] as const;
+const implementationSteps = [
+  {
+    title: "Semana 1-2: claridad de mercado",
+    text: "Dedica dos semanas a entender el segmento y hablar con clientes potenciales reales. No vendas todavía: escucha, compara patrones y define un Persona que puedas reconocer.",
+  },
+  {
+    title: "Semana 3-4: valor cuantificado",
+    text: "Convierte el problema en números: tiempo ahorrado, dinero recuperado, riesgo reducido o ingresos nuevos. Si no puedes cuantificarlo, la propuesta aún está borrosa.",
+  },
+  {
+    title: "Mes 2: finanzas y producto",
+    text: "Diseña la unidad económica, el proceso comercial y el producto mínimo por el que alguien estaría dispuesto a pagar. No solo un prototipo: una prueba de negocio.",
+  },
+  {
+    title: "Mes 3+: validación en campo",
+    text: "Prueba supuestos con comportamiento real: clientes pagando, usando, volviendo o recomendando. Cada ciclo debe mejorar tus respuestas anteriores.",
+  },
+];
 
 function getProgress(book: Book) {
   return book.progress ?? 0;
@@ -58,15 +142,9 @@ function getRemainingMinutes(book: Book) {
   return Math.max(Math.ceil(book.readingTime * (1 - getProgress(book) / 100)), 3);
 }
 
-function getSummary(book: Book) {
-  const analysisText = book.analysis.map((section) => section.content).join(" ");
-
-  return analysisText.trim().length > 0 ? analysisText : book.description;
-}
-
 function MiniCover({ book }: { book: Book }) {
   return (
-    <div className="relative h-[300px] w-full max-w-[190px] overflow-hidden rounded-md border border-white/20 bg-gradient-to-br from-indigo-400 via-violet-600 to-fuchsia-600 p-5 shadow-[0_24px_70px_rgba(0,0,0,0.45)]">
+    <div className="relative h-[320px] w-full max-w-[210px] overflow-hidden rounded-md border border-white/20 bg-gradient-to-br from-indigo-400 via-violet-600 to-fuchsia-600 p-5 shadow-[0_24px_70px_rgba(0,0,0,0.45)]">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_18%,rgba(255,255,255,0.26),transparent_26%),linear-gradient(160deg,rgba(0,0,0,0.05),rgba(0,0,0,0.42))]" />
       <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full border border-white/25" />
       <div className="relative z-10 flex h-full flex-col justify-between text-white">
@@ -89,20 +167,19 @@ function MiniCover({ book }: { book: Book }) {
   );
 }
 
-function BookStat({
-  icon: Icon,
+function HeroMetric({
   label,
   value,
 }: {
-  icon: typeof Clock3;
   label: string;
   value: string;
 }) {
   return (
-    <div className="border-r border-white/10 px-3 text-center last:border-r-0">
-      <Icon aria-hidden="true" className="mx-auto text-brand-purple" size={21} />
-      <p className="mt-2 text-sm font-semibold">{value}</p>
-      <p className="mt-1 text-xs text-text-secondary">{label}</p>
+    <div className="rounded-card border border-white/10 bg-white/[0.035] px-4 py-3">
+      <p className="text-[11px] uppercase tracking-[0.18em] text-text-muted">
+        {label}
+      </p>
+      <p className="mt-1 text-sm font-semibold text-white">{value}</p>
     </div>
   );
 }
@@ -219,60 +296,64 @@ function AudioPanel({ book, locked = false }: { book: Book; locked?: boolean }) 
     : `${book.readingTime} min`;
 
   return (
-    <Card className="relative overflow-hidden rounded-[16px] bg-white/[0.035] p-6">
+    <Card className="relative overflow-hidden rounded-[16px] bg-white/[0.04] p-5">
       {locked ? (
         <LockedPremiumOverlay
           description="El audio narrado está incluido desde Pro."
           title="Audio bloqueado"
         />
       ) : null}
-      <div className={cn(locked && "select-none blur-sm")}>
-        <h2 className="text-xl font-semibold">Escucha el análisis</h2>
-        <div className="mt-6 flex items-center gap-5">
-          <button
-            aria-label={isPlaying ? "Pausar audio" : "Reproducir audio"}
-            className="grid h-16 w-16 shrink-0 place-items-center rounded-full bg-brand-purple/70 text-white shadow-[0_0_38px_rgba(124,58,237,0.42)] transition hover:bg-brand-purple"
-            disabled={isLoadingAudio}
-            onClick={() => void toggleAudio()}
-            type="button"
-          >
-            {isLoadingAudio ? (
-              <Loader2 aria-hidden="true" className="animate-spin" size={25} />
-            ) : isPlaying ? (
-              <span className="h-6 w-6 rounded-sm bg-current" />
-            ) : (
-              <Play aria-hidden="true" fill="currentColor" size={25} />
-            )}
-          </button>
-          <div className="flex min-w-0 flex-1 items-center gap-1">
-            {Array.from({ length: 30 }).map((_, index) => (
+      <div className={cn("grid gap-4 md:grid-cols-[auto_1fr_auto] md:items-center", locked && "select-none blur-sm")}>
+        <button
+          aria-label={isPlaying ? "Pausar audio" : "Reproducir audio"}
+          className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-brand-purple/75 text-white shadow-[0_0_38px_rgba(124,58,237,0.42)] transition hover:bg-brand-purple"
+          disabled={isLoadingAudio}
+          onClick={() => void toggleAudio()}
+          type="button"
+        >
+          {isLoadingAudio ? (
+            <Loader2 aria-hidden="true" className="animate-spin" size={22} />
+          ) : isPlaying ? (
+            <span className="h-5 w-5 rounded-sm bg-current" />
+          ) : (
+            <Play aria-hidden="true" fill="currentColor" size={23} />
+          )}
+        </button>
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="font-semibold text-white">Escucha el análisis</h2>
+            <span className="rounded-full border border-white/10 bg-white/[0.05] px-2 py-1 text-xs text-text-secondary">
+              {durationLabel}
+            </span>
+          </div>
+          <div className="mt-3 flex items-center gap-1">
+            {Array.from({ length: 34 }).map((_, index) => (
               <span
                 className={cn(
                   "w-1 rounded-full bg-brand-purple transition-opacity",
                   !isPlaying && "opacity-45",
                 )}
                 key={index}
-                style={{ height: 10 + ((index * 7) % 34) }}
+                style={{ height: 8 + ((index * 9) % 28) }}
               />
             ))}
           </div>
-          <p className="text-sm text-text-secondary">{durationLabel}</p>
+          {audioError ? (
+            <div className="mt-3 rounded-card border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
+              {audioError}
+            </div>
+          ) : (
+            <p className="mt-2 text-xs leading-5 text-text-secondary">
+              Audio editorial generado desde el análisis autorizado de Ceoteca.
+            </p>
+          )}
         </div>
-        <p className="mt-6 text-sm text-text-secondary">
-          Audio editorial narrado por IA. Se genera desde el análisis autorizado
-          de Ceoteca y queda disponible para próximas reproducciones.
-        </p>
-        {audioError ? (
-          <div className="mt-4 rounded-card border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
-            {audioError}
-          </div>
-        ) : null}
         <button
-          className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-button border border-white/10 bg-white/[0.04] px-4 text-sm text-text-secondary transition hover:text-white"
+          className="inline-flex min-h-10 items-center justify-center gap-2 rounded-button border border-white/10 bg-white/[0.04] px-4 text-sm text-text-secondary transition hover:text-white"
           type="button"
         >
           Cambiar voz
-          <Headphones aria-hidden="true" size={17} />
+          <Headphones aria-hidden="true" size={16} />
         </button>
         {audioUrl ? (
           <audio
@@ -290,90 +371,315 @@ function AudioPanel({ book, locked = false }: { book: Book; locked?: boolean }) 
   );
 }
 
-function KeyPointRow({ point, index }: { point: KeyPoint; index: number }) {
+function ArticleSection({
+  id,
+  eyebrow,
+  title,
+  children,
+}: {
+  id: string;
+  eyebrow: string;
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
-    <details className="group border-b border-white/10 px-4 py-4 last:border-b-0">
-      <summary className="flex cursor-pointer list-none items-center gap-4">
-        <span className="grid h-11 w-11 place-items-center rounded-full bg-white/[0.06] text-xl text-brand-purple">
-          {keyPointIcons[index % keyPointIcons.length]}
-        </span>
-        <span className="grid h-9 w-9 place-items-center rounded-full bg-brand-purple/20 text-sm font-semibold text-brand-purple">
-          {point.number}
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block font-semibold">{point.title}</span>
-          <span className="mt-1 block text-sm text-text-secondary">
-            {point.explanation}
-          </span>
-        </span>
-        <ChevronDown
-          aria-hidden="true"
-          className="text-text-secondary transition group-open:rotate-180"
-          size={18}
-        />
-      </summary>
-      <div className="mt-4 grid gap-3 text-sm leading-7 text-text-secondary md:ml-[112px]">
-        <p>
-          <span className="text-text-primary">Ejemplo:</span> {point.example}
-        </p>
-        <p>
-          <span className="text-text-primary">Acción:</span> {point.action}
-        </p>
-        <p>
-          <span className="text-text-primary">Limitación:</span> {point.limitation}
-        </p>
+    <section className="scroll-mt-28 py-10" id={id}>
+      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand-purple">
+        {eyebrow}
+      </p>
+      <h2 className="mt-3 text-balance text-3xl font-semibold text-white md:text-4xl">
+        {title}
+      </h2>
+      <div className="mt-6 space-y-5 text-base leading-8 text-text-secondary">
+        {children}
       </div>
-    </details>
+    </section>
   );
 }
 
-function ActivityCard({ activity }: { activity: BookActivity }) {
+function Callout({
+  title,
+  children,
+  tone = "purple",
+}: {
+  title: string;
+  children: React.ReactNode;
+  tone?: "purple" | "blue" | "green" | "warning";
+}) {
+  const styles = {
+    purple: "border-brand-purple/35 bg-brand-purple/10",
+    blue: "border-brand-blue/35 bg-brand-blue/10",
+    green: "border-emerald-300/30 bg-emerald-300/10",
+    warning: "border-amber-300/30 bg-amber-300/10",
+  };
+
   return (
-    <Card className="rounded-[16px] bg-white/[0.035] p-6">
-      <div className="grid gap-5 md:grid-cols-[92px_1fr_210px] md:items-center">
-        <span className="grid h-24 w-24 place-items-center rounded-full border border-brand-purple/50 bg-brand-purple/20 text-brand-purple shadow-[0_0_35px_rgba(124,58,237,0.28)]">
-          <BookOpen aria-hidden="true" size={42} />
+    <div className={cn("rounded-[18px] border p-5", styles[tone])}>
+      <p className="text-sm font-semibold text-white">{title}</p>
+      <div className="mt-2 text-sm leading-7 text-text-secondary">{children}</div>
+    </div>
+  );
+}
+
+function KeyPointArticleCard({ point }: { point: KeyPoint }) {
+  return (
+    <div className="rounded-[18px] border border-white/10 bg-white/[0.035] p-5">
+      <div className="flex items-start gap-4">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-brand-purple/20 text-sm font-semibold text-brand-purple">
+          {point.number}
         </span>
         <div>
-          <p className="text-sm uppercase tracking-[0.18em] text-brand-purple">
-            Ejercicio práctico
+          <h3 className="text-lg font-semibold text-white">{point.title}</h3>
+          <p className="mt-2 text-sm leading-7 text-text-secondary">
+            {point.explanation}
           </p>
-          <h3 className="mt-3 text-xl font-semibold">{activity.title}</h3>
+          <div className="mt-4 grid gap-3 text-sm leading-7 text-text-secondary">
+            <p>
+              <span className="text-white">Ejemplo:</span> {point.example}
+            </p>
+            <p>
+              <span className="text-white">Acción:</span> {point.action}
+            </p>
+            <p>
+              <span className="text-white">Limitación:</span> {point.limitation}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ActivityArticleCard({ activity }: { activity: BookActivity }) {
+  return (
+    <div className="rounded-[18px] border border-white/10 bg-white/[0.035] p-5">
+      <div className="flex flex-col gap-5 md:flex-row md:items-start">
+        <span className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl border border-brand-purple/40 bg-brand-purple/20 text-brand-purple">
+          <BookOpen aria-hidden="true" size={30} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h3 className="text-xl font-semibold text-white">{activity.title}</h3>
           <p className="mt-3 text-sm leading-7 text-text-secondary">
             {activity.prompt}
           </p>
-          <button
-            className="mt-5 min-h-11 rounded-button bg-brand-purple/70 px-5 text-sm font-medium text-white transition hover:bg-brand-purple"
-            type="button"
-          >
-            Comenzar ejercicio
-          </button>
-        </div>
-        <div className="rounded-card border border-white/10 bg-white/[0.035] p-4">
-          <p className="text-sm font-medium">Guía rápida</p>
-          <ul className="mt-3 space-y-2 text-sm text-text-secondary">
-            {(activity.options ?? ["Responder en 2 minutos", "Guardar reflexión", "Aplicar hoy"]).map(
-              (option) => (
-                <li key={option}>• {option}</li>
-              ),
-            )}
-          </ul>
+          {activity.options ? (
+            <ul className="mt-4 grid gap-2 text-sm text-text-secondary sm:grid-cols-2">
+              {activity.options.map((option) => (
+                <li className="flex gap-2" key={option}>
+                  <CheckCircle2
+                    aria-hidden="true"
+                    className="mt-0.5 shrink-0 text-success"
+                    size={16}
+                  />
+                  {option}
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </div>
       </div>
-    </Card>
+    </div>
   );
 }
 
-function BookAiContextCard({ locked = false }: { locked?: boolean }) {
+function DisciplinedArticle({ book }: { book: Book }) {
   return (
-    <Card className="relative overflow-hidden rounded-[16px] bg-white/[0.035] p-6">
-      {locked ? (
-        <LockedPremiumOverlay
-          description="CEO con contexto del libro está incluido desde Pro."
-          title="CEO bloqueado"
-        />
-      ) : null}
-      <div className={cn(locked && "select-none blur-sm")}>
+    <>
+      <ArticleSection
+        eyebrow="① Punto de partida"
+        id="intro"
+        title="¿Por qué este libro importa?"
+      >
+        <p>{book.analysis[0]?.content}</p>
+        <Callout title="Tesis del análisis" tone="purple">
+          El emprendimiento no se trata solo de tener una idea brillante. El
+          valor aparece cuando esa idea se convierte en un proceso disciplinado:
+          cliente correcto, problema claro, valor medible y validación real.
+        </Callout>
+        <Callout title="Fórmula central" tone="blue">
+          <p className="text-center text-2xl font-semibold text-white">
+            Innovación = Invención × Comercialización
+          </p>
+          <p className="mt-2 text-center">
+            Si cualquiera de los dos factores es cero, el resultado práctico
+            también se acerca a cero.
+          </p>
+        </Callout>
+        <p>{book.analysis[1]?.content}</p>
+      </ArticleSection>
+
+      <ArticleSection
+        eyebrow="② Mapa conceptual"
+        id="tipos"
+        title="No todo emprendimiento es igual"
+      >
+        <p>{book.analysis[2]?.content}</p>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="rounded-[18px] border border-emerald-300/25 bg-emerald-300/10 p-5">
+            <h3 className="text-lg font-semibold text-white">
+              SME: pequeña empresa
+            </h3>
+            <ul className="mt-4 space-y-2 text-sm">
+              <li>Mercado local o regional.</li>
+              <li>Crecimiento más lineal.</li>
+              <li>Menos dependencia de capital externo.</li>
+              <li>Independencia y control como meta frecuente.</li>
+            </ul>
+          </div>
+          <div className="rounded-[18px] border border-brand-purple/35 bg-brand-purple/10 p-5">
+            <h3 className="text-lg font-semibold text-white">
+              IDE: empresa impulsada por innovación
+            </h3>
+            <ul className="mt-4 space-y-2 text-sm">
+              <li>Mercado amplio desde etapas tempranas.</li>
+              <li>Crecimiento con potencial exponencial.</li>
+              <li>Equipo diverso y búsqueda de escala.</li>
+              <li>Ventaja competitiva difícil de copiar.</li>
+            </ul>
+          </div>
+        </div>
+        <Callout title="Pregunta útil" tone="warning">
+          ¿Estás construyendo para independencia, para escala o para una mezcla
+          que todavía no has definido? La respuesta cambia producto, equipo,
+          ventas y financiamiento.
+        </Callout>
+      </ArticleSection>
+
+      <ArticleSection
+        eyebrow="③ El sistema"
+        id="sistema"
+        title="Los 24 pasos agrupados por fase"
+      >
+        <p>{book.analysis[3]?.content}</p>
+        <div className="grid gap-4 md:grid-cols-2">
+          {disciplinedPhases.map((phase, phaseIndex) => (
+            <div
+              className={cn("rounded-[18px] border p-5", phase.color)}
+              key={phase.label}
+            >
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
+                {phase.range}
+              </p>
+              <h3 className="mt-2 text-lg font-semibold text-white">
+                {phase.label}
+              </h3>
+              <ol className="mt-4 space-y-2 text-sm">
+                {phase.steps.map((step, stepIndex) => (
+                  <li className="flex gap-3" key={step}>
+                    <span className="text-brand-purple">
+                      {String(phaseIndex * 4 + stepIndex + 1).padStart(2, "0")}
+                    </span>
+                    {step}
+                  </li>
+                ))}
+              </ol>
+            </div>
+          ))}
+        </div>
+      </ArticleSection>
+
+      <ArticleSection
+        eyebrow="④ Análisis Ceoteca"
+        id="claves"
+        title="Los conceptos que más importan"
+      >
+        <p>
+          Estos son los puntos que convierten el libro en una herramienta de
+          trabajo. No son ideas para memorizar: son decisiones que debes probar
+          con clientes, datos y aprendizaje real.
+        </p>
+        <div className="grid gap-4">
+          {book.keyPoints.map((point) => (
+            <KeyPointArticleCard key={point.number} point={point} />
+          ))}
+        </div>
+      </ArticleSection>
+
+      <ArticleSection
+        eyebrow="⑤ Framework Ceoteca"
+        id="framework"
+        title="Cómo aplicar este libro"
+      >
+        <p>{book.analysis[4]?.content}</p>
+        <div className="grid gap-4 md:grid-cols-2">
+          {implementationSteps.map((step) => (
+            <div
+              className="rounded-[18px] border border-white/10 bg-white/[0.035] p-5"
+              key={step.title}
+            >
+              <h3 className="font-semibold text-white">{step.title}</h3>
+              <p className="mt-3 text-sm leading-7 text-text-secondary">
+                {step.text}
+              </p>
+            </div>
+          ))}
+        </div>
+      </ArticleSection>
+
+      <ArticleSection
+        eyebrow="⑥ Plantilla propia Ceoteca"
+        id="plantilla"
+        title="Canvas de Startup Disciplinado"
+      >
+        <p>
+          Completa esta plantilla para convertir el análisis en un documento de
+          claridad. La meta no es llenar casillas por cumplir: es descubrir qué
+          parte de tu negocio todavía depende de suposiciones.
+        </p>
+        <div className="grid gap-4">
+          {book.activities.map((activity) => (
+            <ActivityArticleCard activity={activity} key={activity.title} />
+          ))}
+        </div>
+        <Callout title="Compromiso de acción" tone="green">
+          Elige una acción concreta para las próximas 48 horas: una entrevista,
+          una estimación de valor, una prueba de precio o la validación del
+          supuesto más riesgoso.
+        </Callout>
+      </ArticleSection>
+    </>
+  );
+}
+
+function GenericArticle({ book }: { book: Book }) {
+  return (
+    <>
+      <ArticleSection eyebrow="① Punto de partida" id="intro" title="Idea central">
+        {book.analysis.map((section) => (
+          <div key={section.title}>
+            <h3 className="text-lg font-semibold text-white">{section.title}</h3>
+            <p className="mt-2">{section.content}</p>
+          </div>
+        ))}
+      </ArticleSection>
+      <ArticleSection eyebrow="② Ideas clave" id="claves" title="Qué debes recordar">
+        <div className="grid gap-4">
+          {book.keyPoints.map((point) => (
+            <KeyPointArticleCard key={point.number} point={point} />
+          ))}
+        </div>
+      </ArticleSection>
+      <ArticleSection eyebrow="③ Ejercicios" id="plantilla" title="Convierte ideas en acción">
+        <div className="grid gap-4">
+          {book.activities.map((activity) => (
+            <ActivityArticleCard activity={activity} key={activity.title} />
+          ))}
+        </div>
+      </ArticleSection>
+    </>
+  );
+}
+
+function Sidebar({
+  book,
+  canUseChat,
+}: {
+  book: Book;
+  canUseChat: boolean;
+}) {
+  return (
+    <aside className="space-y-5 lg:sticky lg:top-6 lg:self-start">
+      <Card className="rounded-[16px] bg-white/[0.035] p-6">
         <div className="flex items-start gap-4">
           <span className="grid h-12 w-12 place-items-center rounded-2xl border border-brand-purple/40 bg-brand-purple/20 text-brand-purple">
             <Bot aria-hidden="true" size={24} />
@@ -382,22 +688,62 @@ function BookAiContextCard({ locked = false }: { locked?: boolean }) {
             <h2 className="text-xl font-semibold">CEO contextual</h2>
             <p className="mt-2 text-sm leading-7 text-text-secondary">
               Usa el botón flotante para preguntar por aplicación práctica,
-              ejercicios, límites de la idea y próximos pasos de este análisis.
+              ejercicios y próximos pasos de este análisis.
             </p>
+            {!canUseChat ? (
+              <Link
+                className="mt-4 inline-flex rounded-button bg-brand-gradient px-4 py-2 text-sm font-medium text-white"
+                href="/planes"
+              >
+                Mejorar plan
+              </Link>
+            ) : null}
           </div>
         </div>
-      </div>
-    </Card>
+      </Card>
+      <Card className="rounded-[16px] bg-white/[0.035] p-6">
+        <h2 className="text-xl font-semibold">Puntos clave</h2>
+        <div className="mt-5 grid gap-3 text-sm text-text-secondary">
+          {book.keyPoints.slice(0, 6).map((point) => (
+            <a className="flex items-center gap-3 transition hover:text-white" href="#claves" key={point.number}>
+              <CheckCircle2 aria-hidden="true" className="text-success" size={17} />
+              {point.title}
+            </a>
+          ))}
+        </div>
+      </Card>
+      <Card className="rounded-[16px] bg-white/[0.035] p-6">
+        <h2 className="text-xl font-semibold">Aviso editorial</h2>
+        <p className="mt-3 text-sm leading-7 text-text-secondary">{disclaimer}</p>
+      </Card>
+      {book.purchaseUrl ? (
+        <Card className="rounded-[16px] bg-white/[0.035] p-6">
+          <h2 className="text-xl font-semibold">Libro original</h2>
+          <p className="mt-2 text-sm leading-6 text-text-secondary">
+            Profundiza en la obra completa y apoya al autor mediante canales
+            legales.
+          </p>
+          <Link
+            className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-button border border-white/10 bg-white/[0.04] px-4 text-sm transition hover:text-brand-purple"
+            href={book.purchaseUrl}
+            target="_blank"
+          >
+            Comprar original
+            <ExternalLink aria-hidden="true" size={15} />
+          </Link>
+        </Card>
+      ) : null}
+    </aside>
   );
 }
 
 export function BookExperience({ book }: BookExperienceProps) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<TabKey>("summary");
   const [currentPlan, setCurrentPlan] = useState<PlanKey>("free");
   const progress = getProgress(book);
   const canUseAudio = canAccessFeature(currentPlan, "audio");
   const canUseChat = canAccessFeature(currentPlan, "chat");
+  const isDisciplined = book.slug === "disciplined-entrepreneurship";
 
   useEffect(() => {
     let isMounted = true;
@@ -439,7 +785,7 @@ export function BookExperience({ book }: BookExperienceProps) {
       <DashboardSidebar active="home" />
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_18%_8%,rgba(124,58,237,0.18),transparent_28%),radial-gradient(circle_at_76%_18%,rgba(79,99,255,0.12),transparent_30%),linear-gradient(180deg,#02030a_0%,#050612_52%,#04040a_100%)]" />
 
-      <section className="mx-auto w-full max-w-[1220px] px-5 pt-7 md:px-8">
+      <section className="mx-auto w-full max-w-[1240px] px-5 pt-7 md:px-8">
         <header className="flex items-center justify-between">
           <button
             aria-label="Volver"
@@ -449,7 +795,7 @@ export function BookExperience({ book }: BookExperienceProps) {
           >
             <ArrowLeft aria-hidden="true" size={22} />
           </button>
-          <div className="flex gap-4">
+          <div className="flex gap-3">
             {[
               [Heart, "Favorito"],
               [Share2, "Compartir"],
@@ -467,48 +813,26 @@ export function BookExperience({ book }: BookExperienceProps) {
           </div>
         </header>
 
-        <section className="mt-5 grid gap-8 lg:grid-cols-[1fr_420px]">
-          <div className="grid gap-8 md:grid-cols-[210px_1fr] md:items-center">
+        <div className="mt-5 rounded-[24px] border border-white/10 bg-white/[0.025] p-4 shadow-[0_24px_90px_rgba(0,0,0,0.36)] md:p-7">
+          <div className="grid gap-8 lg:grid-cols-[230px_1fr] lg:items-center">
             <MiniCover book={book} />
             <div>
               <p className="text-sm font-medium uppercase tracking-[0.22em] text-brand-purple">
-                Análisis Ceoteca
+                Análisis Ceoteca · Libro #001
               </p>
-              <h1 className="mt-3 text-balance text-4xl font-semibold md:text-5xl">
+              <h1 className="mt-4 text-balance text-5xl font-black leading-none text-white md:text-7xl">
                 {book.title}
               </h1>
-              <p className="mt-4 text-lg text-text-primary">{book.description}</p>
-              <p className="mt-4 text-text-secondary">{book.author}</p>
-
-              <div className="mt-8 grid max-w-xl grid-cols-5 overflow-hidden rounded-card border border-white/10 bg-white/[0.025] py-4">
-                <BookStat
-                  icon={Clock3}
-                  label="Tiempo de lectura"
-                  value={`${book.readingTime} min`}
-                />
-                <BookStat
-                  icon={Star}
-                  label="Ideas clave"
-                  value={`${book.keyPoints.length}`}
-                />
-                <BookStat
-                  icon={BookOpen}
-                  label="Ejercicios"
-                  value={`${book.activities.length}`}
-                />
-                <BookStat
-                  icon={Headphones}
-                  label={canUseAudio ? "Audio incluido" : "Audio bloqueado"}
-                  value="Audio"
-                />
-                <BookStat
-                  icon={Bot}
-                  label={canUseChat ? "CEO incluido" : "CEO bloqueado"}
-                  value="CEO"
-                />
+              <p className="mt-5 max-w-3xl text-xl leading-8 text-text-primary">
+                {book.description}
+              </p>
+              <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <HeroMetric label="Autor" value={book.author} />
+                <HeroMetric label="Categoría" value={book.category} />
+                <HeroMetric label="Dificultad" value={book.difficulty} />
+                <HeroMetric label="Lectura" value={`${book.readingTime} min`} />
               </div>
-
-              <div className="mt-7 max-w-xl">
+              <div className="mt-5 max-w-3xl">
                 <div className="mb-2 flex items-center justify-between gap-4 text-sm">
                   <span className="text-text-secondary">Progreso de lectura</span>
                   <span>{progress}%</span>
@@ -523,184 +847,69 @@ export function BookExperience({ book }: BookExperienceProps) {
                   />
                 </div>
               </div>
-            </div>
-          </div>
-
-          <AudioPanel book={book} locked={!canUseAudio} />
-        </section>
-
-        <section className="mt-10 grid gap-8 lg:grid-cols-[1fr_420px]">
-          <div className="space-y-5">
-            <div className="grid grid-cols-5 overflow-hidden rounded-[16px] border border-white/10 bg-white/[0.035]">
-              {tabs.map((tab) => (
-                <button
-                  className={cn(
-                    "min-h-16 border-b-2 border-transparent px-2 text-sm text-text-secondary transition hover:text-white",
-                    activeTab === tab.key &&
-                      "border-brand-purple text-text-primary shadow-[inset_0_-20px_35px_rgba(124,58,237,0.08)]",
-                  )}
-                  key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
-                  type="button"
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
-            <Card className="rounded-[16px] bg-white/[0.035] p-6">
-              {activeTab === "summary" ? (
-                <section>
-                  <h2 className="flex items-center gap-3 text-xl font-semibold">
-                    <BookOpen aria-hidden="true" className="text-brand-purple" size={22} />
-                    Resumen editorial
-                  </h2>
-                  <div className="mt-5 space-y-4 text-sm leading-8 text-text-secondary">
-                    {getSummary(book)
-                      .split(".")
-                      .filter(Boolean)
-                      .slice(0, 5)
-                      .map((sentence) => (
-                        <p key={sentence}>{sentence.trim()}.</p>
-                      ))}
-                  </div>
-
-                  {book.analysis[0] ? (
-                    <div className="mt-7 rounded-card border border-brand-purple/30 bg-brand-purple/5 p-5">
-                      <p className="text-brand-purple">Principio fundamental</p>
-                      <p className="mt-4 text-lg font-semibold">
-                        {book.analysis[0].title}
-                      </p>
-                      <p className="mt-3 text-sm leading-7 text-text-secondary">
-                        {book.analysis[0].content}
-                      </p>
-                    </div>
-                  ) : null}
-                </section>
-              ) : null}
-
-              {activeTab === "keyPoints" ? (
-                <section>
-                  <h2 className="text-xl font-semibold">
-                    Las {book.keyPoints.length} ideas clave
-                  </h2>
-                  <div className="mt-5 overflow-hidden rounded-card border border-white/10 bg-white/[0.025]">
-                    {book.keyPoints.map((point, index) => (
-                      <KeyPointRow index={index} key={point.number} point={point} />
-                    ))}
-                  </div>
-                </section>
-              ) : null}
-
-              {activeTab === "activities" ? (
-                <section className="grid gap-5">
-                  {book.activities.map((activity) => (
-                    <ActivityCard activity={activity} key={activity.title} />
-                  ))}
-                </section>
-              ) : null}
-
-              {activeTab === "audio" ? (
+              <div className="mt-5 max-w-3xl">
                 <AudioPanel book={book} locked={!canUseAudio} />
-              ) : null}
-
-              {activeTab === "chat" ? (
-                <section>
-                  <h2 className="text-xl font-semibold">CEO para este análisis</h2>
-                  <p className="mt-3 text-sm leading-7 text-text-secondary">
-                    Usa el botón flotante de CEO en la esquina inferior derecha.
-                    En esta página, CEO recibe el contexto autorizado de este
-                    análisis para responder dudas, sugerir ejercicios y ayudarte
-                    a aplicar las ideas sin sustituir el libro original.
-                  </p>
-                </section>
-              ) : null}
-            </Card>
-
-            {activeTab === "summary" ? (
-              <section className="space-y-5">
-                <h2 className="text-xl font-semibold">
-                  Las {book.keyPoints.length} ideas clave
-                </h2>
-                <div className="overflow-hidden rounded-card border border-white/10 bg-white/[0.025]">
-                  {book.keyPoints.map((point, index) => (
-                    <KeyPointRow index={index} key={point.number} point={point} />
-                  ))}
-                </div>
-                {book.activities[0] ? (
-                  <ActivityCard activity={book.activities[0]} />
-                ) : null}
-                {book.purchaseUrl ? (
-                  <Card className="overflow-hidden rounded-[16px] bg-white/[0.035] p-6">
-                    <div className="grid gap-5 md:grid-cols-[86px_1fr_160px] md:items-center">
-                      <span className="grid h-20 w-20 place-items-center rounded-full border border-brand-purple/50 bg-brand-purple/20 text-brand-purple">
-                        <BookOpen aria-hidden="true" size={38} />
-                      </span>
-                      <div>
-                        <h2 className="text-xl font-semibold">
-                          Compra el libro original
-                        </h2>
-                        <p className="mt-2 text-sm leading-6 text-text-secondary">
-                          Apoya al autor y profundiza en la obra completa.
-                        </p>
-                        <Link
-                          className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-button border border-white/10 bg-white/[0.04] px-4 text-sm transition hover:text-brand-purple"
-                          href={book.purchaseUrl}
-                          target="_blank"
-                        >
-                          Ver compra
-                          <ExternalLink aria-hidden="true" size={15} />
-                        </Link>
-                      </div>
-                    </div>
-                  </Card>
-                ) : null}
-              </section>
-            ) : null}
-          </div>
-
-          <aside className="space-y-5">
-            <BookAiContextCard locked={!canUseChat} />
-
-            <Card className="rounded-[16px] bg-white/[0.035] p-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold">Puntos clave del libro</h2>
-                <button
-                  className="text-sm text-brand-purple"
-                  onClick={() => setActiveTab("keyPoints")}
-                  type="button"
-                >
-                  Ver todos
-                </button>
               </div>
-              <div className="mt-5 grid gap-3 text-sm text-text-secondary">
-                {book.keyPoints.slice(0, 5).map((point) => (
-                  <p className="flex items-center gap-3" key={point.number}>
-                    <CheckCircle2
+            </div>
+          </div>
+        </div>
+
+        <nav className="sticky top-0 z-20 mt-6 overflow-x-auto rounded-[18px] border border-white/10 bg-[#070812]/90 px-3 py-3 backdrop-blur-xl">
+          <div className="flex min-w-max items-center gap-2">
+            {articleNav.map((item) => (
+              <a
+                className="rounded-full px-4 py-2 text-sm text-text-secondary transition hover:bg-white/[0.06] hover:text-white"
+                href={item.href}
+                key={item.href}
+              >
+                {item.label}
+              </a>
+            ))}
+            <span className="ml-auto hidden items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-text-secondary lg:inline-flex">
+              <Clock3 aria-hidden="true" size={15} />
+              ~{book.readingTime} min
+            </span>
+          </div>
+        </nav>
+
+        <section className="mt-4 grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
+          <article className="min-w-0 rounded-[24px] border border-white/10 bg-white/[0.025] px-5 py-2 md:px-8">
+            {isDisciplined ? <DisciplinedArticle book={book} /> : <GenericArticle book={book} />}
+
+            <section className="border-t border-white/10 py-10">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand-purple">
+                Para llevar
+              </p>
+              <h2 className="mt-3 text-3xl font-semibold text-white">
+                Las ideas que no olvides
+              </h2>
+              <div className="mt-6 grid gap-4 md:grid-cols-2">
+                {book.keyPoints.slice(0, 4).map((point) => (
+                  <div
+                    className="rounded-[18px] border border-white/10 bg-white/[0.035] p-5"
+                    key={point.number}
+                  >
+                    <Target
                       aria-hidden="true"
-                      className="text-success"
-                      size={17}
+                      className="text-brand-purple"
+                      size={22}
                     />
-                    {point.title}
-                  </p>
+                    <h3 className="mt-3 font-semibold text-white">
+                      {point.title}
+                    </h3>
+                    <p className="mt-2 text-sm leading-7 text-text-secondary">
+                      {point.action}
+                    </p>
+                  </div>
                 ))}
               </div>
-            </Card>
-
-            <Card className="rounded-[16px] bg-white/[0.035] p-6">
-              <h2 className="text-xl font-semibold">Conclusión editorial</h2>
-              <p className="mt-4 text-sm leading-7 text-text-secondary">
+              <Callout title="Análisis final Ceoteca" tone="purple">
                 {book.conclusion}
-              </p>
-            </Card>
+              </Callout>
+            </section>
+          </article>
 
-            <Card className="rounded-[16px] bg-white/[0.035] p-6">
-              <h2 className="text-xl font-semibold">Aviso editorial</h2>
-              <p className="mt-3 text-sm leading-7 text-text-secondary">
-                {disclaimer}
-              </p>
-            </Card>
-          </aside>
+          <Sidebar book={book} canUseChat={canUseChat} />
         </section>
       </section>
 
