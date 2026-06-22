@@ -980,6 +980,7 @@ export function BookExperience({ book }: BookExperienceProps) {
   const router = useRouter();
   const [currentPlan, setCurrentPlan] = useState<PlanKey>("free");
   const [readingProgress, setReadingProgress] = useState(0);
+  const [activeSection, setActiveSection] = useState<string>(articleNav[0].href);
   const canUseAudio = canAccessFeature(currentPlan, "audio");
   const canUseChat = canAccessFeature(currentPlan, "chat");
   const isDisciplined = book.slug === "disciplined-entrepreneurship";
@@ -1025,8 +1026,17 @@ export function BookExperience({ book }: BookExperienceProps) {
       const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
       const nextProgress =
         maxScroll > 0 ? Math.min(100, Math.max(0, (scrollTop / maxScroll) * 100)) : 0;
+      const currentSection =
+        [...articleNav]
+          .reverse()
+          .find((item) => {
+            const section = document.getElementById(item.href.slice(1));
+
+            return section ? section.offsetTop - 170 <= scrollTop : false;
+          })?.href ?? articleNav[0].href;
 
       setReadingProgress(Math.round(nextProgress));
+      setActiveSection(currentSection);
     }
 
     updateReadingProgress();
@@ -1125,11 +1135,15 @@ export function BookExperience({ book }: BookExperienceProps) {
           </div>
         </div>
 
-        <nav className="sticky top-0 z-20 mt-6 overflow-x-auto rounded-[18px] border border-white/10 bg-[#070812]/90 px-3 py-3 backdrop-blur-xl">
+        <nav className="sticky top-4 z-20 mt-6 overflow-x-auto rounded-[22px] border border-white/10 bg-[#070812]/88 px-3 py-3 shadow-[0_18px_60px_rgba(0,0,0,0.36)] backdrop-blur-xl transition-all duration-300">
           <div className="flex min-w-max items-center gap-2">
             {articleNav.map((item) => (
               <a
-                className="rounded-full px-4 py-2 text-sm text-text-secondary transition hover:bg-white/[0.06] hover:text-white"
+                className={cn(
+                  "rounded-full px-4 py-2 text-sm text-text-secondary transition hover:bg-white/[0.06] hover:text-white",
+                  activeSection === item.href &&
+                    "bg-white/[0.08] font-semibold text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]",
+                )}
                 href={item.href}
                 key={item.href}
               >
