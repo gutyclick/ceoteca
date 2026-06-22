@@ -3,10 +3,10 @@
 import Link from "next/link";
 import {
   Bot,
-  ChevronRight,
   Lock,
   Loader2,
   MessageCircle,
+  RefreshCw,
   Send,
   Sparkles,
   X,
@@ -45,7 +45,20 @@ const siteSuggestions = [
   "¿Cómo creo una rutina de lectura sostenible?",
   "Quiero mejorar mis finanzas personales.",
   "Dame una ruta de 7 días para mejores hábitos.",
+  "¿Qué análisis me ayuda a vender mejor?",
+  "Quiero mejorar mi comunicación.",
+  "¿Qué leo si quiero invertir con más criterio?",
+  "Ayúdame a salir del bloqueo mental.",
+  "Dame una ruta para liderar mejor.",
 ] as const;
+
+function getNextSuggestionSet(currentIndex: number) {
+  return Array.from({ length: 3 }, (_, index) => {
+    const suggestionIndex = (currentIndex + index) % siteSuggestions.length;
+
+    return siteSuggestions[suggestionIndex];
+  });
+}
 
 function renderInlineText(value: string) {
   const parts = value.split(/(\*\*[^*]+\*\*)/g);
@@ -134,10 +147,13 @@ export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [usage, setUsage] = useState<string>("Lista para orientarte.");
+  const [remainingQuestions, setRemainingQuestions] = useState<number | null>(null);
+  const [hasUsageLoaded, setHasUsageLoaded] = useState(false);
+  const [suggestionStartIndex, setSuggestionStartIndex] = useState(0);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const hasChatAccess = canAccessFeature(plan, "chat");
+  const visibleSuggestions = getNextSuggestionSet(suggestionStartIndex);
 
   const conversation = useMemo(
     () =>
@@ -199,11 +215,8 @@ export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
           ...current,
           { role: "assistant", content: responseData.message },
         ]);
-        setUsage(
-          responseData.usage.limit === null
-            ? `${responseData.usage.questionCount} preguntas este mes`
-            : `${responseData.remainingQuestions} preguntas restantes este mes`,
-        );
+        setRemainingQuestions(responseData.remainingQuestions);
+        setHasUsageLoaded(responseData.usage.limit !== null);
       }
     } catch (caughtError) {
       setError(
@@ -221,7 +234,7 @@ export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
     <div className="fixed inset-x-3 bottom-4 z-40 flex flex-col items-end gap-3 sm:inset-x-auto sm:right-6">
       {isOpen ? (
         <Card className="flex h-[min(760px,calc(100svh-112px))] w-full max-w-[520px] flex-col overflow-hidden rounded-[24px] border-brand-purple/30 bg-[#090a12]/95 p-0 shadow-[0_24px_90px_rgba(0,0,0,0.58)] backdrop-blur-xl sm:w-[520px]">
-          <header className="shrink-0 border-b border-white/10 bg-white/[0.025] p-4 sm:p-5">
+          <header className="relative shrink-0 border-b border-white/10 bg-white/[0.025] p-4 pr-14 sm:p-5 sm:pr-14">
             <div className="flex items-start justify-between gap-4">
               <div className="flex min-w-0 gap-3">
                 <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-brand-purple/40 bg-brand-purple/20 text-brand-purple shadow-[0_0_32px_rgba(168,85,247,0.35)]">
@@ -241,7 +254,7 @@ export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
               </div>
               <Button
                 aria-label="Cerrar chat"
-                className="h-9 w-9 shrink-0 px-0"
+                className="absolute right-3 top-3 h-9 w-9 px-0"
                 onClick={() => setIsOpen(false)}
                 type="button"
                 variant="ghost"
@@ -254,10 +267,14 @@ export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
           {hasChatAccess ? (
             <>
               <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5">
-                <p className="mb-4 inline-flex max-w-full items-center gap-2 rounded-full border border-white/10 bg-white/[0.045] px-3 py-1.5 text-xs text-text-secondary">
-                  <Sparkles aria-hidden="true" className="shrink-0 text-brand-purple" size={14} />
-                  <span className="truncate">{usage}</span>
-                </p>
+                {hasUsageLoaded && remainingQuestions !== null ? (
+                  <p className="mb-4 inline-flex max-w-full items-center gap-2 rounded-full border border-white/10 bg-white/[0.045] px-3 py-1.5 text-xs text-text-secondary">
+                    <Sparkles aria-hidden="true" className="shrink-0 text-brand-purple" size={14} />
+                    <span className="truncate">
+                      {remainingQuestions} preguntas restantes este mes
+                    </span>
+                  </p>
+                ) : null}
 
                 <div className="space-y-4">
                   {messages.map((message, index) => (
@@ -299,22 +316,31 @@ export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
               </div>
 
               <footer className="shrink-0 border-t border-white/10 bg-[#090a12]/98 p-3 sm:p-4">
-                <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  {siteSuggestions.map((suggestion) => (
+                <div className="mb-3 flex items-center gap-2">
+                  <div className="flex min-w-0 flex-1 gap-2 overflow-x-auto pb-1">
+                  {visibleSuggestions.map((suggestion) => (
                     <button
-                      className="group flex min-h-10 items-center justify-between gap-2 rounded-full border border-white/10 bg-white/[0.045] px-3 py-2 text-left text-xs leading-5 text-text-secondary transition hover:border-brand-purple/50 hover:text-white"
+                      className="min-h-9 max-w-[220px] shrink-0 rounded-full border border-white/10 bg-white/[0.045] px-3 py-2 text-left text-xs leading-5 text-text-secondary transition hover:border-brand-purple/50 hover:text-white"
                       key={suggestion}
                       onClick={() => void sendMessage(suggestion)}
                       type="button"
                     >
-                      <span className="line-clamp-1 min-w-0">{suggestion}</span>
-                      <ChevronRight
-                        aria-hidden="true"
-                        className="shrink-0 opacity-60 transition group-hover:translate-x-0.5 group-hover:opacity-100"
-                        size={14}
-                      />
+                      <span className="block truncate">{suggestion}</span>
                     </button>
                   ))}
+                  </div>
+                  <button
+                    aria-label="Ver otras preguntas sugeridas"
+                    className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-white/10 bg-white/[0.055] text-text-secondary transition hover:border-brand-purple/50 hover:text-white"
+                    onClick={() =>
+                      setSuggestionStartIndex(
+                        (current) => (current + 3) % siteSuggestions.length,
+                      )
+                    }
+                    type="button"
+                  >
+                    <RefreshCw aria-hidden="true" size={15} />
+                  </button>
                 </div>
                 {error ? (
                   <div className="mb-3 rounded-card border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
@@ -343,14 +369,14 @@ export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
                     rows={1}
                     value={input}
                   />
-                  <Button
+                  <button
                     aria-label="Enviar pregunta"
-                    className="h-11 w-11 rounded-[14px] px-0"
+                    className="grid h-11 w-11 place-items-center rounded-[14px] bg-brand-gradient text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-45"
                     disabled={isLoading || input.trim().length === 0}
                     type="submit"
                   >
-                    <Send aria-hidden="true" size={18} />
-                  </Button>
+                    <Send aria-hidden="true" className="translate-x-px" size={18} />
+                  </button>
                 </form>
               </footer>
             </>
