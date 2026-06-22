@@ -8,9 +8,9 @@ import {
   Bot,
   BookOpen,
   CheckCircle2,
+  ChevronDown,
   Clock3,
   ExternalLink,
-  Headphones,
   Heart,
   Lock,
   Loader2,
@@ -303,7 +303,7 @@ function AudioPanel({ book, locked = false }: { book: Book; locked?: boolean }) 
           title="Audio bloqueado"
         />
       ) : null}
-      <div className={cn("grid gap-4 md:grid-cols-[auto_1fr_auto] md:items-center", locked && "select-none blur-sm")}>
+      <div className={cn("grid gap-4 md:grid-cols-[auto_1fr] md:items-center", locked && "select-none blur-sm")}>
         <button
           aria-label={isPlaying ? "Pausar audio" : "Reproducir audio"}
           className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-brand-purple/75 text-white shadow-[0_0_38px_rgba(124,58,237,0.42)] transition hover:bg-brand-purple"
@@ -348,13 +348,6 @@ function AudioPanel({ book, locked = false }: { book: Book; locked?: boolean }) 
             </p>
           )}
         </div>
-        <button
-          className="inline-flex min-h-10 items-center justify-center gap-2 rounded-button border border-white/10 bg-white/[0.04] px-4 text-sm text-text-secondary transition hover:text-white"
-          type="button"
-        >
-          Cambiar voz
-          <Headphones aria-hidden="true" size={16} />
-        </button>
         {audioUrl ? (
           <audio
             onEnded={() => setIsPlaying(false)}
@@ -421,6 +414,157 @@ function Callout({
   );
 }
 
+function ReflectionBox({
+  id,
+  label,
+  placeholder,
+}: {
+  id: string;
+  label: string;
+  placeholder: string;
+}) {
+  const storageKey = `ceoteca:reflection:${id}`;
+  const [value, setValue] = useState("");
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    setValue(window.localStorage.getItem(storageKey) ?? "");
+  }, [storageKey]);
+
+  function updateValue(nextValue: string) {
+    setValue(nextValue);
+    window.localStorage.setItem(storageKey, nextValue);
+    setSaved(true);
+    window.setTimeout(() => setSaved(false), 1200);
+  }
+
+  return (
+    <div className="rounded-[20px] border border-white/10 bg-white/[0.045] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.18)]">
+      <div className="flex items-center justify-between gap-3">
+        <p className="flex items-center gap-2 text-sm font-semibold text-white">
+          <span aria-hidden="true">✍️</span>
+          {label}
+        </p>
+        <span className={cn("text-xs text-success opacity-0 transition", saved && "opacity-100")}>
+          Guardado
+        </span>
+      </div>
+      <textarea
+        className="mt-4 min-h-28 w-full resize-y rounded-[16px] border border-white/10 bg-[#070812]/80 p-4 text-sm leading-7 text-white outline-none transition placeholder:text-text-muted focus:border-brand-purple/70 focus:ring-2 focus:ring-brand-purple/25"
+        onChange={(event) => updateValue(event.target.value)}
+        placeholder={placeholder}
+        value={value}
+      />
+    </div>
+  );
+}
+
+function QuizBox() {
+  const [selected, setSelected] = useState<string | null>(null);
+  const correct = "C";
+  const options = [
+    ["A", "Tener una tecnología patentada"],
+    ["B", "Conseguir inversores desde el día uno"],
+    ["C", "Buscar mercados amplios con una ventaja basada en innovación"],
+    ["D", "Contratar un equipo grande rápidamente"],
+  ];
+
+  return (
+    <div className="rounded-[22px] border border-brand-purple/35 bg-brand-purple/10 p-5">
+      <p className="text-sm font-semibold text-white">🎯 Test rápido</p>
+      <h3 className="mt-2 text-xl font-semibold text-white">
+        ¿Qué define mejor a un emprendimiento impulsado por innovación?
+      </h3>
+      <div className="mt-5 grid gap-3">
+        {options.map(([key, label]) => {
+          const isSelected = selected === key;
+          const isCorrect = key === correct;
+
+          return (
+            <button
+              className={cn(
+                "rounded-[16px] border border-white/10 bg-white/[0.045] p-4 text-left text-sm text-text-secondary transition hover:border-brand-purple/50 hover:text-white",
+                isSelected &&
+                  (isCorrect
+                    ? "border-success/50 bg-success/10 text-white"
+                    : "border-danger/50 bg-danger/10 text-white"),
+              )}
+              key={key}
+              onClick={() => setSelected(key)}
+              type="button"
+            >
+              <span className="font-semibold text-white">{key}.</span> {label}
+            </button>
+          );
+        })}
+      </div>
+      {selected ? (
+        <p className="mt-4 rounded-[14px] border border-white/10 bg-[#070812]/80 p-4 text-sm leading-7 text-text-secondary">
+          {selected === correct
+            ? "Correcto. El foco no es solo inventar, sino construir una ventaja que pueda escalar en un mercado amplio."
+            : "Casi. La respuesta más completa es la C: mercado amplio, ventaja innovadora y potencial de escala."}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function AccordionPanel({
+  title,
+  eyebrow,
+  children,
+  defaultOpen = false,
+}: {
+  title: string;
+  eyebrow?: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}) {
+  return (
+    <details
+      className="group rounded-[18px] border border-white/10 bg-white/[0.035] p-5 transition hover:border-brand-purple/35"
+      open={defaultOpen}
+    >
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
+        <span>
+          {eyebrow ? (
+            <span className="block text-xs font-semibold uppercase tracking-[0.18em] text-brand-purple">
+              {eyebrow}
+            </span>
+          ) : null}
+          <span className="mt-1 block text-lg font-semibold text-white">{title}</span>
+        </span>
+        <ChevronDown
+          aria-hidden="true"
+          className="shrink-0 text-text-secondary transition group-open:rotate-180 group-hover:text-white"
+          size={20}
+        />
+      </summary>
+      <div className="mt-4 border-t border-white/10 pt-4 text-sm leading-7 text-text-secondary">
+        {children}
+      </div>
+    </details>
+  );
+}
+
+function CanvasField({
+  label,
+  placeholder,
+}: {
+  label: string;
+  placeholder: string;
+}) {
+  return (
+    <label className="grid gap-2">
+      <span className="text-sm font-semibold text-white">{label}</span>
+      <textarea
+        className="min-h-20 resize-y rounded-[16px] border border-white/10 bg-[#070812]/80 p-4 text-sm leading-6 text-white outline-none transition placeholder:text-text-muted focus:border-brand-purple/70 focus:ring-2 focus:ring-brand-purple/25"
+        placeholder={placeholder}
+      />
+    </label>
+  );
+}
+
 function KeyPointArticleCard({ point }: { point: KeyPoint }) {
   return (
     <div className="rounded-[18px] border border-white/10 bg-white/[0.035] p-5">
@@ -451,6 +595,8 @@ function KeyPointArticleCard({ point }: { point: KeyPoint }) {
 }
 
 function ActivityArticleCard({ activity }: { activity: BookActivity }) {
+  const reflectionId = activity.title.toLowerCase().replace(/\s+/g, "-");
+
   return (
     <div className="rounded-[18px] border border-white/10 bg-white/[0.035] p-5">
       <div className="flex flex-col gap-5 md:flex-row md:items-start">
@@ -476,6 +622,13 @@ function ActivityArticleCard({ activity }: { activity: BookActivity }) {
               ))}
             </ul>
           ) : null}
+          <div className="mt-5">
+            <ReflectionBox
+              id={`activity:${reflectionId}`}
+              label="Tus respuestas"
+              placeholder="Escribe aquí tu reflexión, decisiones o próximos pasos..."
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -486,7 +639,7 @@ function DisciplinedArticle({ book }: { book: Book }) {
   return (
     <>
       <ArticleSection
-        eyebrow="① Punto de partida"
+        eyebrow="Punto de partida"
         id="intro"
         title="¿Por qué este libro importa?"
       >
@@ -506,10 +659,15 @@ function DisciplinedArticle({ book }: { book: Book }) {
           </p>
         </Callout>
         <p>{book.analysis[1]?.content}</p>
+        <ReflectionBox
+          id={`${book.slug}:formula`}
+          label="Tu reflexión"
+          placeholder="¿Qué te parece la fórmula Innovación = Invención × Comercialización? ¿Tu idea necesita más invención, mejor comercialización o ambas?"
+        />
       </ArticleSection>
 
       <ArticleSection
-        eyebrow="② Mapa conceptual"
+        eyebrow="Mapa conceptual"
         id="tipos"
         title="No todo emprendimiento es igual"
       >
@@ -543,27 +701,24 @@ function DisciplinedArticle({ book }: { book: Book }) {
           que todavía no has definido? La respuesta cambia producto, equipo,
           ventas y financiamiento.
         </Callout>
+        <QuizBox />
       </ArticleSection>
 
       <ArticleSection
-        eyebrow="③ El sistema"
+        eyebrow="El sistema"
         id="sistema"
         title="Los 24 pasos agrupados por fase"
       >
         <p>{book.analysis[3]?.content}</p>
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4">
           {disciplinedPhases.map((phase, phaseIndex) => (
-            <div
-              className={cn("rounded-[18px] border p-5", phase.color)}
+            <AccordionPanel
+              defaultOpen={phaseIndex === 0}
+              eyebrow={phase.range}
               key={phase.label}
+              title={phase.label}
             >
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
-                {phase.range}
-              </p>
-              <h3 className="mt-2 text-lg font-semibold text-white">
-                {phase.label}
-              </h3>
-              <ol className="mt-4 space-y-2 text-sm">
+              <ol className={cn("space-y-2 rounded-[14px] border p-4", phase.color)}>
                 {phase.steps.map((step, stepIndex) => (
                   <li className="flex gap-3" key={step}>
                     <span className="text-brand-purple">
@@ -573,13 +728,18 @@ function DisciplinedArticle({ book }: { book: Book }) {
                   </li>
                 ))}
               </ol>
-            </div>
+            </AccordionPanel>
           ))}
         </div>
+        <ReflectionBox
+          id={`${book.slug}:steps`}
+          label="Tu reflexión sobre los 24 pasos"
+          placeholder="¿En qué paso está tu idea ahora mismo? ¿Qué paso se siente más difícil de responder con evidencia real?"
+        />
       </ArticleSection>
 
       <ArticleSection
-        eyebrow="④ Análisis Ceoteca"
+        eyebrow="Análisis Ceoteca"
         id="claves"
         title="Los conceptos que más importan"
       >
@@ -593,31 +753,31 @@ function DisciplinedArticle({ book }: { book: Book }) {
             <KeyPointArticleCard key={point.number} point={point} />
           ))}
         </div>
+        <ActivityArticleCard activity={book.activities[0]} />
       </ArticleSection>
 
       <ArticleSection
-        eyebrow="⑤ Framework Ceoteca"
+        eyebrow="Framework de aplicación"
         id="framework"
         title="Cómo aplicar este libro"
       >
         <p>{book.analysis[4]?.content}</p>
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4">
           {implementationSteps.map((step) => (
-            <div
-              className="rounded-[18px] border border-white/10 bg-white/[0.035] p-5"
-              key={step.title}
-            >
-              <h3 className="font-semibold text-white">{step.title}</h3>
-              <p className="mt-3 text-sm leading-7 text-text-secondary">
-                {step.text}
-              </p>
-            </div>
+            <AccordionPanel key={step.title} title={step.title}>
+              <p>{step.text}</p>
+            </AccordionPanel>
           ))}
         </div>
+        <ReflectionBox
+          id={`${book.slug}:framework`}
+          label="¿Qué parte del framework te genera más dudas?"
+          placeholder="Escribe preguntas, barreras o decisiones que todavía no tienes claras para aplicar este sistema."
+        />
       </ArticleSection>
 
       <ArticleSection
-        eyebrow="⑥ Plantilla propia Ceoteca"
+        eyebrow="Herramienta práctica"
         id="plantilla"
         title="Canvas de Startup Disciplinado"
       >
@@ -626,6 +786,28 @@ function DisciplinedArticle({ book }: { book: Book }) {
           claridad. La meta no es llenar casillas por cumplir: es descubrir qué
           parte de tu negocio todavía depende de suposiciones.
         </p>
+        <div className="grid gap-4 rounded-[22px] border border-white/10 bg-white/[0.035] p-5">
+          <CanvasField
+            label="Nombre del proyecto"
+            placeholder="¿Cómo se llama tu startup o idea?"
+          />
+          <CanvasField
+            label="Beachhead market"
+            placeholder="Ejemplo: gerentes de logística de pymes manufactureras en Panamá con 50-200 empleados."
+          />
+          <CanvasField
+            label="Mi Persona"
+            placeholder="Nombre real, cargo, empresa, mayor preocupación laboral y forma actual de resolver el problema."
+          />
+          <CanvasField
+            label="Propuesta de valor cuantificada"
+            placeholder="Ejemplo: ahorra 8 horas por semana, reduce errores 30% o recupera $400 mensuales por usuario."
+          />
+          <CanvasField
+            label="Supuesto más riesgoso"
+            placeholder="¿Qué tendría que ser falso para que la idea pierda sentido?"
+          />
+        </div>
         <div className="grid gap-4">
           {book.activities.map((activity) => (
             <ActivityArticleCard activity={activity} key={activity.title} />
@@ -636,6 +818,11 @@ function DisciplinedArticle({ book }: { book: Book }) {
           una estimación de valor, una prueba de precio o la validación del
           supuesto más riesgoso.
         </Callout>
+        <ReflectionBox
+          id={`${book.slug}:commitment`}
+          label="Compromiso de acción"
+          placeholder="El próximo paso concreto que tomaré en las próximas 48 horas es..."
+        />
       </ArticleSection>
     </>
   );
@@ -740,7 +927,7 @@ function Sidebar({
 export function BookExperience({ book }: BookExperienceProps) {
   const router = useRouter();
   const [currentPlan, setCurrentPlan] = useState<PlanKey>("free");
-  const progress = getProgress(book);
+  const [readingProgress, setReadingProgress] = useState(0);
   const canUseAudio = canAccessFeature(currentPlan, "audio");
   const canUseChat = canAccessFeature(currentPlan, "chat");
   const isDisciplined = book.slug === "disciplined-entrepreneurship";
@@ -780,9 +967,35 @@ export function BookExperience({ book }: BookExperienceProps) {
     };
   }, []);
 
+  useEffect(() => {
+    function updateReadingProgress() {
+      const scrollTop = window.scrollY;
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      const nextProgress =
+        maxScroll > 0 ? Math.min(100, Math.max(0, (scrollTop / maxScroll) * 100)) : 0;
+
+      setReadingProgress(Math.round(nextProgress));
+    }
+
+    updateReadingProgress();
+    window.addEventListener("scroll", updateReadingProgress, { passive: true });
+    window.addEventListener("resize", updateReadingProgress);
+
+    return () => {
+      window.removeEventListener("scroll", updateReadingProgress);
+      window.removeEventListener("resize", updateReadingProgress);
+    };
+  }, []);
+
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#03040b] pb-16 pl-[var(--dashboard-sidebar-offset,84px)] text-text-primary transition-[padding] duration-300 ease-out">
       <DashboardSidebar active="home" />
+      <div className="fixed left-[var(--dashboard-sidebar-offset,84px)] right-0 top-0 z-50 h-1 bg-white/5">
+        <div
+          className="h-full rounded-r-full bg-gradient-to-r from-brand-purple via-brand-blue to-brand-pink transition-[width] duration-300"
+          style={{ width: `${readingProgress}%` }}
+        />
+      </div>
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_18%_8%,rgba(124,58,237,0.18),transparent_28%),radial-gradient(circle_at_76%_18%,rgba(79,99,255,0.12),transparent_30%),linear-gradient(180deg,#02030a_0%,#050612_52%,#04040a_100%)]" />
 
       <section className="mx-auto w-full max-w-[1240px] px-5 pt-7 md:px-8">
@@ -834,8 +1047,8 @@ export function BookExperience({ book }: BookExperienceProps) {
               </div>
               <div className="mt-5 max-w-3xl">
                 <div className="mb-2 flex items-center justify-between gap-4 text-sm">
-                  <span className="text-text-secondary">Progreso de lectura</span>
-                  <span>{progress}%</span>
+                  <span className="text-text-secondary">Lectura en pantalla</span>
+                  <span>{readingProgress}%</span>
                   <span className="text-text-secondary">
                     {getRemainingMinutes(book)} min restantes
                   </span>
@@ -843,7 +1056,7 @@ export function BookExperience({ book }: BookExperienceProps) {
                 <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
                   <div
                     className="h-full rounded-full bg-gradient-to-r from-brand-purple to-brand-blue"
-                    style={{ width: `${progress}%` }}
+                    style={{ width: `${readingProgress}%` }}
                   />
                 </div>
               </div>
@@ -868,6 +1081,9 @@ export function BookExperience({ book }: BookExperienceProps) {
             <span className="ml-auto hidden items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-text-secondary lg:inline-flex">
               <Clock3 aria-hidden="true" size={15} />
               ~{book.readingTime} min
+            </span>
+            <span className="hidden rounded-full border border-brand-purple/30 bg-brand-purple/10 px-4 py-2 text-sm text-white lg:inline-flex">
+              {readingProgress}% leído
             </span>
           </div>
         </nav>
