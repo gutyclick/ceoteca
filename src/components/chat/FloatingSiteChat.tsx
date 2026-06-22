@@ -146,15 +146,16 @@ export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [remainingQuestions, setRemainingQuestions] = useState<number | null>(
-    plans[plan].chatMonthlyLimit,
-  );
+  const [remainingQuestions, setRemainingQuestions] = useState<number | null>(null);
   const [suggestionStartIndex, setSuggestionStartIndex] = useState(0);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const hasChatAccess = canAccessFeature(plan, "chat");
   const visibleSuggestions = getNextSuggestionSet(suggestionStartIndex);
-  const shouldShowQuestionLimit = hasChatAccess && remainingQuestions !== null;
+  const planQuestionLimit = plans[plan].chatMonthlyLimit;
+  const displayedRemainingQuestions = remainingQuestions ?? planQuestionLimit;
+  const shouldShowQuestionLimit =
+    hasChatAccess && displayedRemainingQuestions !== null;
 
   const conversation = useMemo(
     () =>
@@ -270,7 +271,7 @@ export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
                   <p className="mb-4 inline-flex max-w-full items-center gap-2 rounded-full border border-white/10 bg-white/[0.045] px-3 py-1.5 text-xs text-text-secondary">
                     <Sparkles aria-hidden="true" className="shrink-0 text-brand-purple" size={14} />
                     <span className="truncate">
-                      {remainingQuestions} preguntas restantes este mes
+                      {displayedRemainingQuestions} preguntas restantes este mes
                     </span>
                   </p>
                 ) : null}
@@ -315,25 +316,27 @@ export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
               </div>
 
               <footer className="shrink-0 border-t border-white/10 bg-[#090a12]/98 p-3 sm:p-4">
-                <div className="mb-3 flex items-center gap-2">
-                  <div className="flex min-w-0 flex-1 gap-2 overflow-x-auto pb-1">
-                  {visibleSuggestions.map((suggestion) => (
-                    <button
-                      className="min-h-9 max-w-[260px] shrink-0 rounded-full border border-white/10 bg-white/[0.045] px-3 py-2 text-left text-xs leading-5 text-text-secondary transition hover:border-brand-purple/50 hover:text-white"
-                      key={suggestion}
-                      onClick={() => {
-                        setInput(suggestion);
-                        inputRef.current?.focus();
-                      }}
-                      type="button"
-                    >
-                      <span className="block whitespace-nowrap">{suggestion}</span>
-                    </button>
-                  ))}
+                <div className="mb-3 grid grid-cols-[1fr_36px] items-stretch gap-2">
+                  <div className="grid min-w-0 gap-2 sm:grid-cols-3">
+                    {visibleSuggestions.map((suggestion) => (
+                      <button
+                        className="min-h-10 min-w-0 rounded-full border border-white/10 bg-white/[0.045] px-3 py-2 text-left text-xs leading-5 text-text-secondary transition hover:border-brand-purple/50 hover:text-white"
+                        key={suggestion}
+                        onClick={() => {
+                          setInput(suggestion);
+                          inputRef.current?.focus();
+                        }}
+                        type="button"
+                      >
+                        <span className="block whitespace-normal text-balance">
+                          {suggestion}
+                        </span>
+                      </button>
+                    ))}
                   </div>
                   <button
                     aria-label="Ver otras preguntas sugeridas"
-                    className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-white/10 bg-white/[0.055] text-text-secondary transition hover:border-brand-purple/50 hover:text-white"
+                    className="grid h-full min-h-10 w-9 shrink-0 place-items-center rounded-full border border-white/10 bg-white/[0.055] text-text-secondary transition hover:border-brand-purple/50 hover:text-white"
                     onClick={() =>
                       setSuggestionStartIndex(
                         (current) => (current + 3) % siteSuggestions.length,
