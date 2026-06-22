@@ -20,8 +20,10 @@ import { canAccessFeature } from "@/lib/permissions";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import type { ChatConversationMessage } from "@/lib/validation/chat";
 import { cn } from "@/lib/utils/cn";
+import type { Book } from "@/types";
 
-type FloatingSiteChatProps = {
+type FloatingBookChatProps = {
+  book: Book;
   plan: PlanKey;
 };
 
@@ -40,34 +42,33 @@ type ChatResponse = {
   };
 };
 
-const siteSuggestions = [
-  "Recomiéndame análisis para mejorar mi enfoque.",
-  "¿Cómo creo una rutina de lectura sostenible?",
-  "Quiero mejorar mis finanzas personales.",
-  "Dame una ruta de 7 días para mejores hábitos.",
-  "¿Qué análisis me ayuda a vender mejor?",
-  "Quiero mejorar mi comunicación.",
-  "¿Qué leo si quiero invertir con más criterio?",
-  "Ayúdame a salir del bloqueo mental.",
-  "Dame una ruta para liderar mejor.",
+const bookSuggestions = [
+  "¿Cómo aplico esto esta semana?",
+  "Dame un plan de 7 días.",
+  "¿Cuál es el primer paso práctico?",
+  "¿Qué error debo evitar?",
+  "¿Cómo adapto esto a mi caso?",
+  "¿Qué debo validar primero?",
+  "¿Qué ejercicio me conviene hacer?",
+  "Explícamelo con un ejemplo simple.",
+  "¿Qué debería recordar mañana?",
 ] as const;
 
 function getNextSuggestionSet(currentIndex: number) {
   return Array.from({ length: 3 }, (_, index) => {
-    const suggestionIndex = (currentIndex + index) % siteSuggestions.length;
+    const suggestionIndex = (currentIndex + index) % bookSuggestions.length;
 
-    return siteSuggestions[suggestionIndex];
+    return bookSuggestions[suggestionIndex];
   });
 }
 
-export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
+export function FloatingBookChat({ book, plan }: FloatingBookChatProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatConversationMessage[]>([
     {
       role: "assistant",
-      content:
-        "Hola. Soy CEO, tu IA de Ceoteca. Puedo recomendarte análisis del catálogo, ayudarte con productividad, mentalidad, desarrollo personal, hábitos de lectura y formas prácticas de aplicar ideas.",
+      content: `Hola. Soy CEO y estoy usando el contexto de **${book.title}** para ayudarte a convertir este análisis en decisiones, ejercicios y próximos pasos concretos.`,
     },
   ]);
   const [isLoading, setIsLoading] = useState(false);
@@ -94,6 +95,7 @@ export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
   useEffect(() => {
     if (isOpen) {
       bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+      window.setTimeout(() => inputRef.current?.focus(), 120);
     }
   }, [isOpen, messages, isLoading]);
 
@@ -125,7 +127,8 @@ export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          context: "site",
+          context: "book",
+          bookId: book.slug,
           message: trimmed,
           conversation,
         }),
@@ -136,14 +139,12 @@ export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
         throw new Error(payload.error?.message ?? "No pudimos enviar tu pregunta.");
       }
 
-      const responseData = payload.data;
-
-      if (responseData) {
+      if (payload.data) {
         setMessages((current) => [
           ...current,
-          { role: "assistant", content: responseData.message },
+          { role: "assistant", content: payload.data?.message ?? "" },
         ]);
-        setRemainingQuestions(responseData.remainingQuestions);
+        setRemainingQuestions(payload.data.remainingQuestions);
       }
     } catch (caughtError) {
       setError(
@@ -162,32 +163,30 @@ export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
       {isOpen ? (
         <Card className="flex h-[min(760px,calc(100svh-112px))] w-full max-w-[520px] flex-col overflow-hidden rounded-[24px] border-brand-purple/30 bg-[#090a12]/95 p-0 shadow-[0_24px_90px_rgba(0,0,0,0.58)] backdrop-blur-xl sm:w-[520px]">
           <header className="relative shrink-0 border-b border-white/10 bg-white/[0.025] p-4 pr-14 sm:p-5 sm:pr-14">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex min-w-0 gap-3">
-                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-brand-purple/40 bg-brand-purple/20 text-brand-purple shadow-[0_0_32px_rgba(168,85,247,0.35)]">
-                  <Bot aria-hidden="true" size={24} />
-                </span>
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-base font-semibold text-white">CEO</p>
-                    <span className="rounded-full border border-success/25 bg-success/10 px-2 py-0.5 text-[11px] font-medium text-success">
-                      En línea
-                    </span>
-                  </div>
-                  <p className="mt-1 max-w-[340px] text-xs leading-5 text-text-secondary">
-                    IA de Ceoteca para recomendaciones, lectura, productividad y aplicación.
-                  </p>
+            <div className="flex min-w-0 gap-3">
+              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-brand-purple/40 bg-brand-purple/20 text-brand-purple shadow-[0_0_32px_rgba(168,85,247,0.35)]">
+                <Bot aria-hidden="true" size={24} />
+              </span>
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-base font-semibold text-white">CEO</p>
+                  <span className="rounded-full border border-success/25 bg-success/10 px-2 py-0.5 text-[11px] font-medium text-success">
+                    Contexto del libro
+                  </span>
                 </div>
+                <p className="mt-1 line-clamp-2 text-xs leading-5 text-text-secondary">
+                  Pregunta sobre aplicación, ejercicios y próximos pasos de {book.title}.
+                </p>
               </div>
-              <button
-                aria-label="Cerrar chat"
-                className="absolute right-3 top-3 z-10 grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.08] text-white shadow-[0_10px_30px_rgba(0,0,0,0.25)] transition hover:border-brand-purple/50 hover:bg-white/[0.14]"
-                onClick={() => setIsOpen(false)}
-                type="button"
-              >
-                <X aria-hidden="true" size={19} />
-              </button>
             </div>
+            <button
+              aria-label="Cerrar chat"
+              className="absolute right-3 top-3 z-10 grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.08] text-white shadow-[0_10px_30px_rgba(0,0,0,0.25)] transition hover:border-brand-purple/50 hover:bg-white/[0.14]"
+              onClick={() => setIsOpen(false)}
+              type="button"
+            >
+              <X aria-hidden="true" size={19} />
+            </button>
           </header>
 
           {hasChatAccess ? (
@@ -265,7 +264,7 @@ export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
                     className="grid h-full min-h-10 w-9 shrink-0 place-items-center rounded-full border border-white/10 bg-white/[0.055] text-text-secondary transition hover:border-brand-purple/50 hover:text-white"
                     onClick={() =>
                       setSuggestionStartIndex(
-                        (current) => (current + 3) % siteSuggestions.length,
+                        (current) => (current + 3) % bookSuggestions.length,
                       )
                     }
                     type="button"
@@ -295,7 +294,7 @@ export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
                         void sendMessage(input);
                       }
                     }}
-                    placeholder="Pregúntale a CEO..."
+                    placeholder="Pregúntale a CEO sobre este análisis..."
                     ref={inputRef}
                     rows={1}
                     value={input}
@@ -318,11 +317,11 @@ export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
                   <Lock aria-hidden="true" size={22} />
                 </span>
                 <h2 className="mt-4 text-xl font-semibold text-white">
-                  CEO está incluido desde Pro
+                  CEO para libros está incluido desde Pro
                 </h2>
                 <p className="mt-2 text-sm leading-6 text-text-secondary">
-                  Activa recomendaciones personalizadas, rutas de lectura,
-                  preguntas sobre análisis y apoyo para aplicar ideas a tu día.
+                  Activa preguntas contextuales sobre cada análisis, ejercicios
+                  guiados y ayuda para aplicar ideas a tu situación.
                 </p>
                 <Link
                   className="mt-5 inline-flex min-h-11 items-center justify-center rounded-button bg-brand-gradient px-5 text-sm font-medium text-white transition hover:brightness-110"
@@ -337,7 +336,7 @@ export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
       ) : null}
 
       <button
-        aria-label={isOpen ? "Cerrar CEO" : "Abrir CEO"}
+        aria-label={isOpen ? "Cerrar CEO" : "Abrir CEO del libro"}
         className="group relative grid h-16 w-16 place-items-center self-end rounded-full border border-brand-purple/50 bg-brand-gradient text-white shadow-[0_18px_55px_rgba(124,58,237,0.45)] transition duration-300 hover:-translate-y-1 hover:brightness-110"
         onClick={() => setIsOpen((current) => !current)}
         type="button"

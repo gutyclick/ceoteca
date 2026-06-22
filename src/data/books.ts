@@ -80,6 +80,151 @@ const defaultActivities = [
   },
 ];
 
+const disciplinedEntrepreneurshipAnalysis = [
+  {
+    title: "El emprendimiento como proceso aprendible",
+    content:
+      "Disciplined Entrepreneurship parte de una idea poderosa: emprender no depende solo de intuición o carisma. Puede enseñarse como una serie de habilidades observables: elegir un mercado, entender al cliente, cuantificar valor, diseñar adquisición, validar supuestos y construir un producto que pueda convertirse en negocio.",
+  },
+  {
+    title: "Innovación exige invención y comercialización",
+    content:
+      "El análisis resume la fórmula central del libro: una invención sin comercialización no crea impacto, y una buena comercialización sin una propuesta diferencial tampoco sostiene una ventaja. Para Ceoteca, el aprendizaje práctico está en dejar de preguntar solo qué queremos construir y empezar a preguntar quién pagaría, por qué, cuánto valor recibe y cómo llegamos a esa persona.",
+  },
+  {
+    title: "No todo emprendimiento funciona igual",
+    content:
+      "El libro distingue entre pequeñas y medianas empresas enfocadas en independencia, mercados locales y crecimiento lineal, y empresas impulsadas por innovación que buscan escala, mercados amplios, capital externo y ventajas difíciles de copiar. Confundir ambos caminos puede llevar a decisiones equivocadas de producto, financiamiento, equipo y crecimiento.",
+  },
+  {
+    title: "Los 24 pasos como sistema iterativo",
+    content:
+      "Los pasos se agrupan en seis preguntas: quién es el cliente, qué puedes hacer por él, cómo lo adquieres, si el negocio es rentable, qué debes construir y cómo pruebas que funciona en el mercado real. Aunque la secuencia importa, el proceso no es rígido: cada aprendizaje puede obligarte a volver y mejorar una respuesta anterior.",
+  },
+  {
+    title: "Aplicación Ceoteca",
+    content:
+      "Este análisis convierte el framework en acciones concretas: definir un beachhead market, elegir un Persona real, cuantificar el valor, mapear ventas, estimar LTV y COCA, declarar la ventaja central, diseñar el MVBP y probar el supuesto más riesgoso antes de escalar.",
+  },
+];
+
+const disciplinedEntrepreneurshipKeyPoints = [
+  {
+    number: 1,
+    title: "Elige un mercado de entrada",
+    explanation:
+      "Intentar servir a todos desde el inicio diluye el mensaje, el producto y los canales. El beachhead market es el primer segmento donde puedes concentrarte hasta aprender, vender y dominar una necesidad específica.",
+    example:
+      "En vez de vender software de logística a cualquier empresa, empiezas con gerentes de logística de pymes manufactureras de una región concreta.",
+    action:
+      "Define un segmento con dolor similar, canal de venta identificable y clientes que puedan recomendarte entre sí.",
+    limitation:
+      "Un mercado pequeño ayuda a enfocar, pero debe ser suficiente para validar un negocio real y abrir mercados posteriores.",
+  },
+  {
+    number: 2,
+    title: "Convierte el cliente ideal en una persona real",
+    explanation:
+      "Un perfil genérico permite discusiones interminables. Un Persona real obliga a observar comportamientos concretos, prioridades, restricciones y decisiones de compra verificables.",
+    example:
+      "No basta con decir 'directores financieros'. Mejor: una persona específica, con cargo, empresa, problema actual, presupuesto y forma real de resolverlo hoy.",
+    action:
+      "Elige una persona que puedas entrevistar esta semana y documenta su trabajo, dolor principal, solución actual y costo del problema.",
+    limitation:
+      "Un solo Persona no representa todo el mercado; sirve como punto de partida para validar patrones con más clientes.",
+  },
+  {
+    number: 3,
+    title: "Cuantifica la propuesta de valor",
+    explanation:
+      "Una propuesta de valor débil usa palabras como rápido, fácil o mejor. Una propuesta fuerte traduce el beneficio a dinero, tiempo, riesgo reducido o ingresos nuevos.",
+    example:
+      "Ahorrar 8 horas semanales por empleado comunica mejor el valor que decir 'mejora la productividad del equipo'.",
+    action:
+      "Escribe cuánto gana, ahorra o evita perder tu cliente si tu solución funciona.",
+    limitation:
+      "La cuantificación inicial será una hipótesis; debe confirmarse con clientes y datos reales.",
+  },
+  {
+    number: 4,
+    title: "Diseña adquisición y ventas temprano",
+    explanation:
+      "El producto no vive separado del proceso comercial. Necesitas saber quién decide, quién influye, cómo se compra, cuánto tarda la decisión y qué objeciones aparecen.",
+    example:
+      "En B2B, el usuario puede amar el producto, pero compras, finanzas o dirección pueden bloquear la adopción.",
+    action:
+      "Mapa la unidad de decisión: usuario final, comprador económico, influenciadores, aprobadores y bloqueadores.",
+    limitation:
+      "El mapa de ventas cambia cuando sales al mercado; úsalo como hipótesis viva, no como documento fijo.",
+  },
+  {
+    number: 5,
+    title: "Valida la economía del cliente",
+    explanation:
+      "Un negocio necesita que el valor de vida del cliente sea superior al costo de adquirirlo. Si cada venta cuesta más de lo que deja, el problema no es solo de marketing: es estructural.",
+    example:
+      "Una suscripción de bajo precio puede parecer atractiva, pero si requiere ventas consultivas largas, el costo comercial puede destruir el margen.",
+    action:
+      "Estima LTV, COCA, precio, margen y tiempo de recuperación antes de comprometerte con un modelo.",
+    limitation:
+      "Las cifras tempranas son aproximadas; su valor está en revelar supuestos críticos para probar.",
+  },
+  {
+    number: 6,
+    title: "Prueba que el mercado lo acepta",
+    explanation:
+      "La validación más fuerte no es una encuesta positiva, sino comportamiento real: clientes que pagan, usan el producto, vuelven o recomiendan.",
+    example:
+      "Una carta de intención, una preventa o un piloto pagado dice más que cien comentarios de 'me parece interesante'.",
+    action:
+      "Define el supuesto más riesgoso y diseña una prueba que produzca evidencia observable en los próximos 7 días.",
+    limitation:
+      "No toda industria permite transacciones rápidas; aun así, busca señales más fuertes que opiniones.",
+  },
+];
+
+const disciplinedEntrepreneurshipActivities = [
+  {
+    title: "Test del Persona en 5 minutos",
+    prompt:
+      "Piensa en tu idea actual y escribe el nombre real de una persona que podría ser tu cliente. Describe su cargo, empresa, preocupación principal, solución actual y costo del problema en tiempo o dinero.",
+    type: "reflection" as const,
+    options: [
+      "Nombre real del cliente",
+      "Cargo y contexto laboral",
+      "Problema que no lo deja avanzar",
+      "Solución actual",
+      "Costo actual del problema",
+    ],
+  },
+  {
+    title: "Canvas de Startup Disciplinado",
+    prompt:
+      "Completa una hoja con tu proyecto, beachhead market, Persona, problema central, propuesta de valor cuantificada, modelo de negocio, LTV, COCA, ventaja central, MVBP y supuesto más riesgoso.",
+    type: "checklist" as const,
+    options: [
+      "Mercado de entrada",
+      "Persona real",
+      "Valor en números",
+      "Modelo de negocio",
+      "Supuesto más riesgoso",
+    ],
+  },
+  {
+    title: "Ruta de validación de 7 días",
+    prompt:
+      "Durante una semana, valida una sola hipótesis: habla con clientes, documenta patrones, ajusta la propuesta de valor y decide si avanzas, cambias de segmento o replanteas el problema.",
+    type: "scenario" as const,
+    options: [
+      "Día 1: hipótesis",
+      "Días 2-4: entrevistas",
+      "Día 5: patrones",
+      "Día 6: ajuste",
+      "Día 7: decisión",
+    ],
+  },
+];
+
 export const bookCategories: Array<"Todos" | BookCategory> = [
   "Todos",
   "Emprendimiento",
@@ -100,6 +245,41 @@ export const bookCategories: Array<"Todos" | BookCategory> = [
 ];
 
 export const demoBooks: Book[] = [
+  {
+    id: "disciplined-entrepreneurship",
+    slug: "disciplined-entrepreneurship",
+    title: "Disciplined Entrepreneurship",
+    author: "Bill Aulet",
+    category: "Emprendimiento",
+    description:
+      "La metodología del MIT para convertir una idea de startup en un proceso disciplinado de mercado, cliente, valor, producto y validación.",
+    readingTime: 10,
+    difficulty: "Intermedio",
+    tags: [
+      "startup",
+      "validación",
+      "cliente",
+      "innovación",
+      "modelo de negocio",
+      "MIT",
+    ],
+    cover: {
+      variant: "growth",
+      gradient: "from-indigo-400 via-brand-purple to-brand-pink",
+      accent: "text-brand-purple",
+    },
+    isFeatured: true,
+    isPublished: true,
+    isDemoContent: false,
+    progress: 0,
+    purchaseUrl:
+      "https://www.wiley.com/en-us/Disciplined+Entrepreneurship%3A+24+Steps+to+a+Successful+Startup-p-9781118692288",
+    analysis: disciplinedEntrepreneurshipAnalysis,
+    keyPoints: disciplinedEntrepreneurshipKeyPoints,
+    activities: disciplinedEntrepreneurshipActivities,
+    conclusion:
+      "Conclusión editorial: Disciplined Entrepreneurship es más útil para emprendedores que ya tienen una idea o tecnología y necesitan convertirla en un sistema de validación. Su fortaleza está en la especificidad; su riesgo es sentirse rígido si se usa como checklist ciego. El mejor uso es iterativo: avanzar con disciplina, aprender del mercado y volver a ajustar las respuestas críticas.",
+  },
   {
     id: "hábitos-atomicos",
     slug: "hábitos-atomicos",

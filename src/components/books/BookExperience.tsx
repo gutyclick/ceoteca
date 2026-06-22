@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -17,19 +17,18 @@ import {
   Loader2,
   MoreHorizontal,
   Play,
-  Send,
   Share2,
   Sparkles,
   Star,
 } from "lucide-react";
 
 import { DashboardSidebar } from "@/components/app/DashboardSidebar";
+import { FloatingBookChat } from "@/components/chat/FloatingBookChat";
 import { Card } from "@/components/ui/Card";
 import type { PlanKey } from "@/config/plans";
 import { canAccessFeature } from "@/lib/permissions";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
-import type { ChatConversationMessage } from "@/lib/validation/chat";
 import type { Book, BookActivity, KeyPoint } from "@/types";
 
 type BookExperienceProps = {
@@ -37,21 +36,6 @@ type BookExperienceProps = {
 };
 
 type TabKey = "summary" | "keyPoints" | "activities" | "audio" | "chat";
-
-type ChatResponse = {
-  data?: {
-    message: string;
-    remainingQuestions: number | null;
-    usage: {
-      questionCount: number;
-      limit: number | null;
-    };
-  };
-  error?: {
-    code: string;
-    message: string;
-  };
-};
 
 const disclaimer =
   "Contenido educativo y editorial propio. Ceoteca no está afiliada al autor ni a la editorial. Este análisis no reemplaza la obra original.";
@@ -61,13 +45,13 @@ const tabs: Array<{ key: TabKey; label: string }> = [
   { key: "keyPoints", label: "Ideas clave" },
   { key: "activities", label: "Ejercicios" },
   { key: "audio", label: "Audio" },
-  { key: "chat", label: "Chat IA" },
+  { key: "chat", label: "CEO" },
 ];
 
-const keyPointIcons = ["👁", "⭐", "⚡", "🙂", "🔒", "🎯", "🧠"] as const;
+const keyPointIcons = ["◎", "★", "ϟ", "✓", "◇", "↗", "◌"] as const;
 
 function getProgress(book: Book) {
-  return book.progress ?? 73;
+  return book.progress ?? 0;
 }
 
 function getRemainingMinutes(book: Book) {
@@ -77,19 +61,15 @@ function getRemainingMinutes(book: Book) {
 function getSummary(book: Book) {
   const analysisText = book.analysis.map((section) => section.content).join(" ");
 
-  if (analysisText.trim().length > 0) {
-    return analysisText;
-  }
-
-  return book.description;
+  return analysisText.trim().length > 0 ? analysisText : book.description;
 }
 
 function MiniCover({ book }: { book: Book }) {
   return (
-    <div className="relative h-[300px] w-full max-w-[190px] overflow-hidden rounded-md border border-white/20 bg-gradient-to-br from-yellow-300 via-amber-500 to-orange-700 p-5 shadow-[0_24px_70px_rgba(0,0,0,0.45)]">
-      <div className="absolute inset-0 bg-black/10" />
+    <div className="relative h-[300px] w-full max-w-[190px] overflow-hidden rounded-md border border-white/20 bg-gradient-to-br from-indigo-400 via-violet-600 to-fuchsia-600 p-5 shadow-[0_24px_70px_rgba(0,0,0,0.45)]">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_18%,rgba(255,255,255,0.26),transparent_26%),linear-gradient(160deg,rgba(0,0,0,0.05),rgba(0,0,0,0.42))]" />
       <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full border border-white/25" />
-      <div className="relative z-10 flex h-full flex-col justify-between text-black">
+      <div className="relative z-10 flex h-full flex-col justify-between text-white">
         <div>
           <p className="text-[11px] font-black uppercase tracking-[0.2em]">
             Ceoteca
@@ -98,7 +78,7 @@ function MiniCover({ book }: { book: Book }) {
             {book.title}
           </h2>
         </div>
-        <div className="mx-auto grid h-20 w-20 place-items-center rounded-full border-2 border-black/40 bg-black/10">
+        <div className="mx-auto grid h-20 w-20 place-items-center rounded-full border-2 border-white/35 bg-white/10">
           <Sparkles aria-hidden="true" size={38} />
         </div>
         <p className="text-center text-sm font-black uppercase tracking-[0.16em]">
@@ -119,7 +99,7 @@ function BookStat({
   value: string;
 }) {
   return (
-    <div className="border-r border-white/10 px-4 text-center last:border-r-0">
+    <div className="border-r border-white/10 px-3 text-center last:border-r-0">
       <Icon aria-hidden="true" className="mx-auto text-brand-purple" size={21} />
       <p className="mt-2 text-sm font-semibold">{value}</p>
       <p className="mt-1 text-xs text-text-secondary">{label}</p>
@@ -247,41 +227,41 @@ function AudioPanel({ book, locked = false }: { book: Book; locked?: boolean }) 
         />
       ) : null}
       <div className={cn(locked && "select-none blur-sm")}>
-        <h2 className="text-xl font-semibold">Escucha el resumen</h2>
-      <div className="mt-6 flex items-center gap-5">
-        <button
-          aria-label={isPlaying ? "Pausar audio" : "Reproducir audio"}
-          className="grid h-16 w-16 shrink-0 place-items-center rounded-full bg-brand-purple/70 text-white shadow-[0_0_38px_rgba(124,58,237,0.42)] transition hover:bg-brand-purple"
-          disabled={isLoadingAudio}
-          onClick={() => void toggleAudio()}
-          type="button"
-        >
-          {isLoadingAudio ? (
-            <Loader2 aria-hidden="true" className="animate-spin" size={25} />
-          ) : isPlaying ? (
-            <span className="h-6 w-6 rounded-sm bg-current" />
-          ) : (
-            <Play aria-hidden="true" fill="currentColor" size={25} />
-          )}
-        </button>
-        <div className="flex min-w-0 flex-1 items-center gap-1">
-          {Array.from({ length: 30 }).map((_, index) => (
-            <span
-              className={cn(
-                "w-1 rounded-full bg-brand-purple transition-opacity",
-                !isPlaying && "opacity-45",
-              )}
-              key={index}
-              style={{ height: 10 + ((index * 7) % 34) }}
-            />
-          ))}
+        <h2 className="text-xl font-semibold">Escucha el análisis</h2>
+        <div className="mt-6 flex items-center gap-5">
+          <button
+            aria-label={isPlaying ? "Pausar audio" : "Reproducir audio"}
+            className="grid h-16 w-16 shrink-0 place-items-center rounded-full bg-brand-purple/70 text-white shadow-[0_0_38px_rgba(124,58,237,0.42)] transition hover:bg-brand-purple"
+            disabled={isLoadingAudio}
+            onClick={() => void toggleAudio()}
+            type="button"
+          >
+            {isLoadingAudio ? (
+              <Loader2 aria-hidden="true" className="animate-spin" size={25} />
+            ) : isPlaying ? (
+              <span className="h-6 w-6 rounded-sm bg-current" />
+            ) : (
+              <Play aria-hidden="true" fill="currentColor" size={25} />
+            )}
+          </button>
+          <div className="flex min-w-0 flex-1 items-center gap-1">
+            {Array.from({ length: 30 }).map((_, index) => (
+              <span
+                className={cn(
+                  "w-1 rounded-full bg-brand-purple transition-opacity",
+                  !isPlaying && "opacity-45",
+                )}
+                key={index}
+                style={{ height: 10 + ((index * 7) % 34) }}
+              />
+            ))}
+          </div>
+          <p className="text-sm text-text-secondary">{durationLabel}</p>
         </div>
-        <p className="text-sm text-text-secondary">{durationLabel}</p>
-      </div>
-      <p className="mt-6 text-sm text-text-secondary">
-        Audio editorial narrado por IA. Se genera una sola vez y queda guardado
-        para próximas reproducciones.
-      </p>
+        <p className="mt-6 text-sm text-text-secondary">
+          Audio editorial narrado por IA. Se genera desde el análisis autorizado
+          de Ceoteca y queda disponible para próximas reproducciones.
+        </p>
         {audioError ? (
           <div className="mt-4 rounded-card border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
             {audioError}
@@ -314,7 +294,7 @@ function KeyPointRow({ point, index }: { point: KeyPoint; index: number }) {
   return (
     <details className="group border-b border-white/10 px-4 py-4 last:border-b-0">
       <summary className="flex cursor-pointer list-none items-center gap-4">
-        <span className="grid h-11 w-11 place-items-center rounded-full bg-white/[0.06] text-xl">
+        <span className="grid h-11 w-11 place-items-center rounded-full bg-white/[0.06] text-xl text-brand-purple">
           {keyPointIcons[index % keyPointIcons.length]}
         </span>
         <span className="grid h-9 w-9 place-items-center rounded-full bg-brand-purple/20 text-sm font-semibold text-brand-purple">
@@ -332,7 +312,7 @@ function KeyPointRow({ point, index }: { point: KeyPoint; index: number }) {
           size={18}
         />
       </summary>
-      <div className="ml-[112px] mt-4 grid gap-3 text-sm leading-7 text-text-secondary">
+      <div className="mt-4 grid gap-3 text-sm leading-7 text-text-secondary md:ml-[112px]">
         <p>
           <span className="text-text-primary">Ejemplo:</span> {point.example}
         </p>
@@ -356,7 +336,7 @@ function ActivityCard({ activity }: { activity: BookActivity }) {
         </span>
         <div>
           <p className="text-sm uppercase tracking-[0.18em] text-brand-purple">
-            Ejercicio practico
+            Ejercicio práctico
           </p>
           <h3 className="mt-3 text-xl font-semibold">{activity.title}</h3>
           <p className="mt-3 text-sm leading-7 text-text-secondary">
@@ -370,9 +350,9 @@ function ActivityCard({ activity }: { activity: BookActivity }) {
           </button>
         </div>
         <div className="rounded-card border border-white/10 bg-white/[0.035] p-4">
-          <p className="text-sm font-medium">Opciones</p>
+          <p className="text-sm font-medium">Guía rápida</p>
           <ul className="mt-3 space-y-2 text-sm text-text-secondary">
-            {(activity.options ?? ["Responder en 2 minutos", "Guardar reflexion", "Aplicar hoy"]).map(
+            {(activity.options ?? ["Responder en 2 minutos", "Guardar reflexión", "Aplicar hoy"]).map(
               (option) => (
                 <li key={option}>• {option}</li>
               ),
@@ -384,194 +364,28 @@ function ActivityCard({ activity }: { activity: BookActivity }) {
   );
 }
 
-function ChatPanel({
-  book,
-  inputRef,
-  locked = false,
-}: {
-  book: Book;
-  inputRef: React.RefObject<HTMLTextAreaElement | null>;
-  locked?: boolean;
-}) {
-  const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<ChatConversationMessage[]>([
-    {
-      role: "assistant",
-      content: `IA entrenada en ${book.title}. Pregúntame por aplicación, ejercicios, recomendaciones o rutas de lectura.`,
-    },
-  ]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const conversation = useMemo(
-    () =>
-      messages.filter(
-        (message) => message.role === "user" || message.role === "assistant",
-      ),
-    [messages],
-  );
-
-  async function sendMessage(message: string) {
-    if (locked) {
-      setError("Mejora tu plan para usar el chat con IA.");
-      return;
-    }
-
-    const trimmed = message.trim();
-
-    if (!trimmed || isLoading) {
-      return;
-    }
-
-    setError(null);
-    setInput("");
-    setMessages((current) => [...current, { role: "user", content: trimmed }]);
-    setIsLoading(true);
-
-    try {
-      const supabase = createBrowserSupabaseClient();
-      const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData.session?.access_token;
-
-      if (!accessToken) {
-        throw new Error("Inicia sesión para usar el chat.");
-      }
-
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          bookId: book.slug,
-          message: trimmed,
-          conversation,
-        }),
-      });
-      const payload = (await response.json()) as ChatResponse;
-
-      if (!response.ok || payload.error) {
-        throw new Error(payload.error?.message ?? "No pudimos responder ahora.");
-      }
-
-      if (payload.data) {
-        setMessages((current) => [
-          ...current,
-          { role: "assistant", content: payload.data?.message ?? "" },
-        ]);
-      }
-    } catch (caughtError) {
-      setError(
-        caughtError instanceof Error
-          ? caughtError.message
-          : "Ocurrio un error inesperado.",
-      );
-    } finally {
-      setIsLoading(false);
-      inputRef.current?.focus();
-    }
-  }
-
-  const promptChips = [
-    "Cómo crear mejores hábitos?",
-    "Qué hago cuando fallo?",
-    "Dame un plan de 7 días",
-  ];
-
+function BookAiContextCard({ locked = false }: { locked?: boolean }) {
   return (
-    <Card
-      className="relative overflow-hidden rounded-[16px] bg-white/[0.035] p-5 lg:sticky lg:top-6"
-      id="chat-libro"
-    >
+    <Card className="relative overflow-hidden rounded-[16px] bg-white/[0.035] p-6">
       {locked ? (
         <LockedPremiumOverlay
-          description="El chat contextual con el libro está incluido desde Pro."
-          title="Chat IA bloqueado"
+          description="CEO con contexto del libro está incluido desde Pro."
+          title="CEO bloqueado"
         />
       ) : null}
       <div className={cn(locked && "select-none blur-sm")}>
-      <h2 className="text-xl font-semibold">Chat con el libro</h2>
-      <p className="mt-2 flex items-center gap-2 text-sm text-text-secondary">
-        <span className="h-2 w-2 rounded-full bg-success" />
-        IA entrenada en este libro
-      </p>
-
-      <div className="mt-5 max-h-[520px] space-y-4 overflow-y-auto pr-1">
-        {messages.map((message, index) => (
-          <div
-            className={cn(
-              "flex",
-              message.role === "user" ? "justify-end" : "justify-start",
-            )}
-            key={`${message.role}-${index}`}
-          >
-            <div
-              className={cn(
-                "max-w-[88%] rounded-[1.1rem] px-4 py-3 text-sm leading-6",
-                message.role === "user"
-                  ? "rounded-br-sm bg-brand-purple/70 text-white"
-                  : "border border-white/10 bg-white/[0.055] text-text-secondary",
-              )}
-            >
-              {message.content}
-            </div>
+        <div className="flex items-start gap-4">
+          <span className="grid h-12 w-12 place-items-center rounded-2xl border border-brand-purple/40 bg-brand-purple/20 text-brand-purple">
+            <Bot aria-hidden="true" size={24} />
+          </span>
+          <div>
+            <h2 className="text-xl font-semibold">CEO contextual</h2>
+            <p className="mt-2 text-sm leading-7 text-text-secondary">
+              Usa el botón flotante para preguntar por aplicación práctica,
+              ejercicios, límites de la idea y próximos pasos de este análisis.
+            </p>
           </div>
-        ))}
-        {isLoading ? (
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-sm text-text-secondary">
-            <Loader2 aria-hidden="true" className="animate-spin" size={16} />
-            Pensando...
-          </div>
-        ) : null}
-      </div>
-
-      {error ? (
-        <div className="mt-4 rounded-card border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
-          {error}
         </div>
-      ) : null}
-
-      <form
-        className="mt-4 flex gap-2 rounded-button border border-white/10 bg-white/[0.035] p-2"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void sendMessage(input);
-        }}
-      >
-        <textarea
-          className="min-h-10 flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none placeholder:text-text-muted"
-          disabled={locked}
-          maxLength={2000}
-          onChange={(event) => setInput(event.target.value)}
-          placeholder="Escribe tu pregunta..."
-          ref={inputRef}
-          rows={1}
-          value={input}
-        />
-        <button
-          aria-label="Enviar pregunta"
-          className="grid h-10 w-10 place-items-center rounded-button bg-brand-purple text-white transition hover:brightness-110 disabled:opacity-50"
-          disabled={input.trim().length === 0 || isLoading || locked}
-          type="submit"
-        >
-          <Send aria-hidden="true" size={18} />
-        </button>
-      </form>
-
-      <div className="mt-4 flex flex-wrap gap-2">
-        {promptChips.map((prompt) => (
-          <button
-            className="rounded-full border border-white/10 bg-white/[0.035] px-3 py-2 text-xs text-text-secondary transition hover:text-white"
-            disabled={locked}
-            key={prompt}
-            onClick={() => void sendMessage(prompt)}
-            type="button"
-          >
-            {prompt}
-          </button>
-        ))}
-      </div>
       </div>
     </Card>
   );
@@ -581,7 +395,6 @@ export function BookExperience({ book }: BookExperienceProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabKey>("summary");
   const [currentPlan, setCurrentPlan] = useState<PlanKey>("free");
-  const chatInputRef = useRef<HTMLTextAreaElement | null>(null);
   const progress = getProgress(book);
   const canUseAudio = canAccessFeature(currentPlan, "audio");
   const canUseChat = canAccessFeature(currentPlan, "chat");
@@ -621,15 +434,6 @@ export function BookExperience({ book }: BookExperienceProps) {
     };
   }, []);
 
-  function openBookChat() {
-    setActiveTab("chat");
-    document.getElementById("chat-libro")?.scrollIntoView({
-      behavior: "smooth",
-      block: "center",
-    });
-    window.setTimeout(() => chatInputRef.current?.focus(), 250);
-  }
-
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#03040b] pb-16 pl-[var(--dashboard-sidebar-offset,84px)] text-text-primary transition-[padding] duration-300 ease-out">
       <DashboardSidebar active="home" />
@@ -667,7 +471,10 @@ export function BookExperience({ book }: BookExperienceProps) {
           <div className="grid gap-8 md:grid-cols-[210px_1fr] md:items-center">
             <MiniCover book={book} />
             <div>
-              <h1 className="text-balance text-4xl font-semibold md:text-5xl">
+              <p className="text-sm font-medium uppercase tracking-[0.22em] text-brand-purple">
+                Análisis Ceoteca
+              </p>
+              <h1 className="mt-3 text-balance text-4xl font-semibold md:text-5xl">
                 {book.title}
               </h1>
               <p className="mt-4 text-lg text-text-primary">{book.description}</p>
@@ -696,13 +503,13 @@ export function BookExperience({ book }: BookExperienceProps) {
                 />
                 <BookStat
                   icon={Bot}
-                  label={canUseChat ? "IA incluida" : "IA bloqueada"}
-                  value="IA"
+                  label={canUseChat ? "CEO incluido" : "CEO bloqueado"}
+                  value="CEO"
                 />
               </div>
 
               <div className="mt-7 max-w-xl">
-                <div className="mb-2 flex items-center justify-between text-sm">
+                <div className="mb-2 flex items-center justify-between gap-4 text-sm">
                   <span className="text-text-secondary">Progreso de lectura</span>
                   <span>{progress}%</span>
                   <span className="text-text-secondary">
@@ -728,17 +535,12 @@ export function BookExperience({ book }: BookExperienceProps) {
               {tabs.map((tab) => (
                 <button
                   className={cn(
-                    "min-h-16 border-b-2 border-transparent text-sm text-text-secondary transition hover:text-white",
+                    "min-h-16 border-b-2 border-transparent px-2 text-sm text-text-secondary transition hover:text-white",
                     activeTab === tab.key &&
                       "border-brand-purple text-text-primary shadow-[inset_0_-20px_35px_rgba(124,58,237,0.08)]",
                   )}
                   key={tab.key}
-                  onClick={() => {
-                    setActiveTab(tab.key);
-                    if (tab.key === "chat") {
-                      openBookChat();
-                    }
-                  }}
+                  onClick={() => setActiveTab(tab.key)}
                   type="button"
                 >
                   {tab.label}
@@ -751,28 +553,29 @@ export function BookExperience({ book }: BookExperienceProps) {
                 <section>
                   <h2 className="flex items-center gap-3 text-xl font-semibold">
                     <BookOpen aria-hidden="true" className="text-brand-purple" size={22} />
-                    Resumen del libro
+                    Resumen editorial
                   </h2>
                   <div className="mt-5 space-y-4 text-sm leading-8 text-text-secondary">
                     {getSummary(book)
                       .split(".")
                       .filter(Boolean)
-                      .slice(0, 4)
+                      .slice(0, 5)
                       .map((sentence) => (
                         <p key={sentence}>{sentence.trim()}.</p>
                       ))}
                   </div>
 
-                  <div className="mt-7 rounded-card border border-brand-purple/30 bg-brand-purple/5 p-5">
-                    <p className="text-brand-purple">Principio fundamental</p>
-                    <p className="mt-4 text-lg font-semibold">
-                      Mejora del 1% cada dia → 37x mejor en un año
-                    </p>
-                    <p className="mt-3 text-sm text-text-secondary">
-                      Pequeñas mejoras, repetidas en el tiempo, generan
-                      resultados masivos.
-                    </p>
-                  </div>
+                  {book.analysis[0] ? (
+                    <div className="mt-7 rounded-card border border-brand-purple/30 bg-brand-purple/5 p-5">
+                      <p className="text-brand-purple">Principio fundamental</p>
+                      <p className="mt-4 text-lg font-semibold">
+                        {book.analysis[0].title}
+                      </p>
+                      <p className="mt-3 text-sm leading-7 text-text-secondary">
+                        {book.analysis[0].content}
+                      </p>
+                    </div>
+                  ) : null}
                 </section>
               ) : null}
 
@@ -783,11 +586,7 @@ export function BookExperience({ book }: BookExperienceProps) {
                   </h2>
                   <div className="mt-5 overflow-hidden rounded-card border border-white/10 bg-white/[0.025]">
                     {book.keyPoints.map((point, index) => (
-                      <KeyPointRow
-                        index={index}
-                        key={point.number}
-                        point={point}
-                      />
+                      <KeyPointRow index={index} key={point.number} point={point} />
                     ))}
                   </div>
                 </section>
@@ -807,11 +606,12 @@ export function BookExperience({ book }: BookExperienceProps) {
 
               {activeTab === "chat" ? (
                 <section>
-                  <h2 className="text-xl font-semibold">Chat IA</h2>
+                  <h2 className="text-xl font-semibold">CEO para este análisis</h2>
                   <p className="mt-3 text-sm leading-7 text-text-secondary">
-                    El chat contextual está disponible en el panel del libro.
-                    Usa el panel lateral del libro para abrir la conversacion
-                    entrenada en este contenido.
+                    Usa el botón flotante de CEO en la esquina inferior derecha.
+                    En esta página, CEO recibe el contexto autorizado de este
+                    análisis para responder dudas, sugerir ejercicios y ayudarte
+                    a aplicar las ideas sin sustituir el libro original.
                   </p>
                 </section>
               ) : null}
@@ -841,8 +641,7 @@ export function BookExperience({ book }: BookExperienceProps) {
                           Compra el libro original
                         </h2>
                         <p className="mt-2 text-sm leading-6 text-text-secondary">
-                          Apoya al autor y profundiza en todo el contenido del
-                          libro completo.
+                          Apoya al autor y profundiza en la obra completa.
                         </p>
                         <Link
                           className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-button border border-white/10 bg-white/[0.04] px-4 text-sm transition hover:text-brand-purple"
@@ -861,7 +660,7 @@ export function BookExperience({ book }: BookExperienceProps) {
           </div>
 
           <aside className="space-y-5">
-            <ChatPanel book={book} inputRef={chatInputRef} locked={!canUseChat} />
+            <BookAiContextCard locked={!canUseChat} />
 
             <Card className="rounded-[16px] bg-white/[0.035] p-6">
               <div className="flex items-center justify-between">
@@ -889,16 +688,14 @@ export function BookExperience({ book }: BookExperienceProps) {
             </Card>
 
             <Card className="rounded-[16px] bg-white/[0.035] p-6">
-              <h2 className="text-xl font-semibold">Frases para recordar</h2>
-              <blockquote className="mt-4 text-sm leading-7 text-text-secondary">
-                “No te elevas al nivel de tus metas. Caes al nivel de tus
-                sistemas.”
-              </blockquote>
-              <p className="mt-3 text-sm text-text-secondary">— {book.author}</p>
+              <h2 className="text-xl font-semibold">Conclusión editorial</h2>
+              <p className="mt-4 text-sm leading-7 text-text-secondary">
+                {book.conclusion}
+              </p>
             </Card>
 
             <Card className="rounded-[16px] bg-white/[0.035] p-6">
-              <h2 className="text-xl font-semibold">Disclaimer</h2>
+              <h2 className="text-xl font-semibold">Aviso editorial</h2>
               <p className="mt-3 text-sm leading-7 text-text-secondary">
                 {disclaimer}
               </p>
@@ -907,6 +704,7 @@ export function BookExperience({ book }: BookExperienceProps) {
         </section>
       </section>
 
+      <FloatingBookChat book={book} plan={currentPlan} />
     </main>
   );
 }
