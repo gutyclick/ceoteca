@@ -13,9 +13,8 @@ import {
 } from "lucide-react";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 
-import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import type { PlanKey } from "@/config/plans";
+import { plans, type PlanKey } from "@/config/plans";
 import { canAccessFeature } from "@/lib/permissions";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import type { ChatConversationMessage } from "@/lib/validation/chat";
@@ -147,13 +146,15 @@ export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [remainingQuestions, setRemainingQuestions] = useState<number | null>(null);
-  const [hasUsageLoaded, setHasUsageLoaded] = useState(false);
+  const [remainingQuestions, setRemainingQuestions] = useState<number | null>(
+    plans[plan].chatMonthlyLimit,
+  );
   const [suggestionStartIndex, setSuggestionStartIndex] = useState(0);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const hasChatAccess = canAccessFeature(plan, "chat");
   const visibleSuggestions = getNextSuggestionSet(suggestionStartIndex);
+  const shouldShowQuestionLimit = hasChatAccess && remainingQuestions !== null;
 
   const conversation = useMemo(
     () =>
@@ -216,7 +217,6 @@ export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
           { role: "assistant", content: responseData.message },
         ]);
         setRemainingQuestions(responseData.remainingQuestions);
-        setHasUsageLoaded(responseData.usage.limit !== null);
       }
     } catch (caughtError) {
       setError(
@@ -252,22 +252,21 @@ export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
                   </p>
                 </div>
               </div>
-              <Button
+              <button
                 aria-label="Cerrar chat"
-                className="absolute right-3 top-3 h-9 w-9 px-0"
+                className="absolute right-3 top-3 z-10 grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.08] text-white shadow-[0_10px_30px_rgba(0,0,0,0.25)] transition hover:border-brand-purple/50 hover:bg-white/[0.14]"
                 onClick={() => setIsOpen(false)}
                 type="button"
-                variant="ghost"
               >
-                <X aria-hidden="true" size={18} />
-              </Button>
+                <X aria-hidden="true" size={19} />
+              </button>
             </div>
           </header>
 
           {hasChatAccess ? (
             <>
               <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5">
-                {hasUsageLoaded && remainingQuestions !== null ? (
+                {shouldShowQuestionLimit ? (
                   <p className="mb-4 inline-flex max-w-full items-center gap-2 rounded-full border border-white/10 bg-white/[0.045] px-3 py-1.5 text-xs text-text-secondary">
                     <Sparkles aria-hidden="true" className="shrink-0 text-brand-purple" size={14} />
                     <span className="truncate">
@@ -320,12 +319,15 @@ export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
                   <div className="flex min-w-0 flex-1 gap-2 overflow-x-auto pb-1">
                   {visibleSuggestions.map((suggestion) => (
                     <button
-                      className="min-h-9 max-w-[220px] shrink-0 rounded-full border border-white/10 bg-white/[0.045] px-3 py-2 text-left text-xs leading-5 text-text-secondary transition hover:border-brand-purple/50 hover:text-white"
+                      className="min-h-9 max-w-[260px] shrink-0 rounded-full border border-white/10 bg-white/[0.045] px-3 py-2 text-left text-xs leading-5 text-text-secondary transition hover:border-brand-purple/50 hover:text-white"
                       key={suggestion}
-                      onClick={() => void sendMessage(suggestion)}
+                      onClick={() => {
+                        setInput(suggestion);
+                        inputRef.current?.focus();
+                      }}
                       type="button"
                     >
-                      <span className="block truncate">{suggestion}</span>
+                      <span className="block whitespace-nowrap">{suggestion}</span>
                     </button>
                   ))}
                   </div>
