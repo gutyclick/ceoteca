@@ -15,6 +15,7 @@ import {
   Lock,
   Loader2,
   MoreHorizontal,
+  Pause,
   Play,
   Share2,
   Sparkles,
@@ -229,10 +230,24 @@ function LockedPremiumOverlay({
   );
 }
 
+function formatAudioTime(seconds: number | null | undefined) {
+  if (!seconds || !Number.isFinite(seconds)) {
+    return "0:00";
+  }
+
+  const safeSeconds = Math.max(0, Math.floor(seconds));
+  const minutes = Math.floor(safeSeconds / 60);
+  const remainingSeconds = safeSeconds % 60;
+
+  return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
+}
+
 function AudioPanel({ book, locked = false }: { book: Book; locked?: boolean }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [durationSeconds, setDurationSeconds] = useState<number | null>(null);
+  const [audioDurationSeconds, setAudioDurationSeconds] = useState<number | null>(null);
+  const [currentTimeSeconds, setCurrentTimeSeconds] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoadingAudio, setIsLoadingAudio] = useState(false);
   const [audioError, setAudioError] = useState<string | null>(null);
@@ -274,6 +289,7 @@ function AudioPanel({ book, locked = false }: { book: Book; locked?: boolean }) 
 
     setAudioUrl(payload.data.audioUrl);
     setDurationSeconds(payload.data.durationSeconds);
+    setAudioDurationSeconds(payload.data.durationSeconds);
 
     return payload.data.audioUrl;
   }
@@ -296,8 +312,11 @@ function AudioPanel({ book, locked = false }: { book: Book; locked?: boolean }) 
     try {
       await loadAudioUrl();
       window.setTimeout(() => {
+        if (audioRef.current?.ended) {
+          audioRef.current.currentTime = 0;
+        }
         void audioRef.current?.play();
-      }, 0);
+      }, 30);
       setIsPlaying(true);
     } catch (caughtError) {
       setAudioError(
@@ -310,9 +329,23 @@ function AudioPanel({ book, locked = false }: { book: Book; locked?: boolean }) 
     }
   }
 
-  const durationLabel = durationSeconds
-    ? `${Math.max(1, Math.ceil(durationSeconds / 60))} min`
+  function handleSeek(nextTime: number) {
+    setCurrentTimeSeconds(nextTime);
+
+    if (audioRef.current) {
+      audioRef.current.currentTime = nextTime;
+    }
+  }
+
+  const displayDurationSeconds = audioDurationSeconds ?? durationSeconds;
+  const durationLabel = displayDurationSeconds
+    ? `${Math.max(1, Math.ceil(displayDurationSeconds / 60))} min`
     : `${book.readingTime} min`;
+  const progressPercent =
+    displayDurationSeconds && displayDurationSeconds > 0
+      ? Math.min(100, Math.max(0, (currentTimeSeconds / displayDurationSeconds) * 100))
+      : 0;
+  const playbackStatus = isPlaying ? "En reproducción" : currentTimeSeconds > 0 ? "Pausado" : "Listo";
 
   return (
     <Card className="relative overflow-hidden rounded-[16px] bg-white/[0.04] p-5">
@@ -333,7 +366,7 @@ function AudioPanel({ book, locked = false }: { book: Book; locked?: boolean }) 
           {isLoadingAudio ? (
             <Loader2 aria-hidden="true" className="animate-spin" size={22} />
           ) : isPlaying ? (
-            <span className="h-5 w-5 rounded-sm bg-current" />
+            <Pause aria-hidden="true" fill="currentColor" size={23} />
           ) : (
             <Play aria-hidden="true" fill="currentColor" size={23} />
           )}
@@ -344,18 +377,54 @@ function AudioPanel({ book, locked = false }: { book: Book; locked?: boolean }) 
             <span className="rounded-full border border-white/10 bg-white/[0.05] px-2 py-1 text-xs text-text-secondary">
               {durationLabel}
             </span>
+            <span
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-xs",
+                isPlaying
+                  ? "border-success/25 bg-success/10 text-success"
+                  : "border-white/10 bg-white/[0.04] text-text-secondary",
+              )}
+            >
+              <span
+                className={cn(
+                  "h-1.5 w-1.5 rounded-full",
+                  isPlaying ? "animate-pulse bg-success" : "bg-text-muted",
+                )}
+              />
+              {playbackStatus}
+            </span>
           </div>
           <div className="mt-3 flex items-center gap-1">
             {Array.from({ length: 34 }).map((_, index) => (
               <span
                 className={cn(
-                  "w-1 rounded-full bg-brand-purple transition-opacity",
-                  !isPlaying && "opacity-45",
+                  "w-1 rounded-full transition-all duration-300",
+                  ((index + 1) / 34) * 100 <= progressPercent
+                    ? "bg-brand-purple opacity-100 shadow-[0_0_12px_rgba(168,85,247,0.5)]"
+                    : "bg-white/20 opacity-70",
+                  isPlaying && "animate-pulse",
                 )}
                 key={index}
                 style={{ height: 8 + ((index * 9) % 28) }}
               />
             ))}
+          </div>
+          <div className="mt-4">
+            <input
+              aria-label="Progreso del audio"
+              className="h-2 w-full cursor-pointer appearance-none rounded-full bg-white/10 accent-brand-purple disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={!displayDurationSeconds || isLoadingAudio}
+              max={displayDurationSeconds ?? 0}
+              min={0}
+              onChange={(event) => handleSeek(Number(event.currentTarget.value))}
+              step={1}
+              type="range"
+              value={Math.min(currentTimeSeconds, displayDurationSeconds ?? currentTimeSeconds)}
+            />
+            <div className="mt-2 flex items-center justify-between text-xs text-text-secondary">
+              <span>{formatAudioTime(currentTimeSeconds)}</span>
+              <span>{formatAudioTime(displayDurationSeconds)}</span>
+            </div>
           </div>
           {audioError ? (
             <div className="mt-3 rounded-card border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
@@ -369,9 +438,21 @@ function AudioPanel({ book, locked = false }: { book: Book; locked?: boolean }) 
         </div>
         {audioUrl ? (
           <audio
-            onEnded={() => setIsPlaying(false)}
+            onEnded={(event) => {
+              setIsPlaying(false);
+
+              if (Number.isFinite(event.currentTarget.duration)) {
+                setCurrentTimeSeconds(event.currentTarget.duration);
+              }
+            }}
+            onLoadedMetadata={(event) => {
+              if (Number.isFinite(event.currentTarget.duration)) {
+                setAudioDurationSeconds(event.currentTarget.duration);
+              }
+            }}
             onPause={() => setIsPlaying(false)}
             onPlay={() => setIsPlaying(true)}
+            onTimeUpdate={(event) => setCurrentTimeSeconds(event.currentTarget.currentTime)}
             ref={audioRef}
             src={audioUrl}
           >
