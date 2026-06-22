@@ -142,21 +142,40 @@ function getRemainingMinutes(book: Book) {
   return Math.max(Math.ceil(book.readingTime * (1 - getProgress(book) / 100)), 3);
 }
 
+function getBookDisplayTitle(book: Book) {
+  if (book.slug === "disciplined-entrepreneurship") {
+    return "Análisis de Disciplined Entrepreneurship";
+  }
+
+  return book.title;
+}
+
+function getCoverTitle(book: Book) {
+  if (book.slug === "disciplined-entrepreneurship") {
+    return "La disciplina de emprender";
+  }
+
+  return book.title;
+}
+
 function MiniCover({ book }: { book: Book }) {
+  const coverTitle = getCoverTitle(book);
+
   return (
-    <div className="relative h-[320px] w-full max-w-[210px] overflow-hidden rounded-md border border-white/20 bg-gradient-to-br from-indigo-400 via-violet-600 to-fuchsia-600 p-5 shadow-[0_24px_70px_rgba(0,0,0,0.45)]">
+    <div className="relative h-[340px] w-full max-w-[220px] overflow-hidden rounded-md border border-white/20 bg-gradient-to-br from-indigo-400 via-violet-600 to-fuchsia-600 p-5 shadow-[0_24px_70px_rgba(0,0,0,0.45)]">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_18%,rgba(255,255,255,0.26),transparent_26%),linear-gradient(160deg,rgba(0,0,0,0.05),rgba(0,0,0,0.42))]" />
       <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full border border-white/25" />
+      <div className="absolute bottom-16 right-5 h-24 w-24 rounded-full border border-white/20 bg-white/5 blur-[1px]" />
       <div className="relative z-10 flex h-full flex-col justify-between text-white">
         <div>
           <p className="text-[11px] font-black uppercase tracking-[0.2em]">
-            Ceoteca
+            Análisis Ceoteca
           </p>
-          <h2 className="mt-7 text-balance text-3xl font-black uppercase leading-none">
-            {book.title}
+          <h2 className="mt-7 text-balance text-[2.15rem] font-black uppercase leading-none tracking-tight">
+            {coverTitle}
           </h2>
         </div>
-        <div className="mx-auto grid h-20 w-20 place-items-center rounded-full border-2 border-white/35 bg-white/10">
+        <div className="mx-auto grid h-20 w-20 place-items-center rounded-full border-2 border-white/35 bg-white/10 shadow-[0_0_45px_rgba(168,85,247,0.45)]">
           <Sparkles aria-hidden="true" size={38} />
         </div>
         <p className="text-center text-sm font-black uppercase tracking-[0.16em]">
@@ -484,10 +503,13 @@ function QuizBox() {
             <button
               className={cn(
                 "rounded-[16px] border border-white/10 bg-white/[0.045] p-4 text-left text-sm text-text-secondary transition hover:border-brand-purple/50 hover:text-white",
-                isSelected &&
-                  (isCorrect
-                    ? "border-success/50 bg-success/10 text-white"
-                    : "border-danger/50 bg-danger/10 text-white"),
+                selected &&
+                  isCorrect &&
+                  "border-success/60 bg-success/10 text-white shadow-[0_0_28px_rgba(34,197,94,0.12)]",
+                selected &&
+                  isSelected &&
+                  !isCorrect &&
+                  "border-danger/60 bg-danger/10 text-white shadow-[0_0_28px_rgba(239,68,68,0.12)]",
               )}
               key={key}
               onClick={() => setSelected(key)}
@@ -499,7 +521,14 @@ function QuizBox() {
         })}
       </div>
       {selected ? (
-        <p className="mt-4 rounded-[14px] border border-white/10 bg-[#070812]/80 p-4 text-sm leading-7 text-text-secondary">
+        <p
+          className={cn(
+            "mt-4 rounded-[14px] border p-4 text-sm leading-7",
+            selected === correct
+              ? "border-success/40 bg-success/10 text-white"
+              : "border-danger/40 bg-danger/10 text-white",
+          )}
+        >
           {selected === correct
             ? "Correcto. El foco no es solo inventar, sino construir una ventaja que pueda escalar en un mercado amplio."
             : "Casi. La respuesta más completa es la C: mercado amplio, ventaja innovadora y potencial de escala."}
@@ -695,6 +724,29 @@ function DisciplinedArticle({ book }: { book: Book }) {
               <li>Ventaja competitiva difícil de copiar.</li>
             </ul>
           </div>
+        </div>
+        <div className="overflow-hidden rounded-[18px] border border-white/10 bg-white/[0.035]">
+          <div className="grid grid-cols-3 border-b border-white/10 bg-white/[0.04] text-sm font-semibold text-white">
+            <div className="p-4">Dimensión</div>
+            <div className="p-4">SME</div>
+            <div className="p-4">IDE</div>
+          </div>
+          {[
+            ["Curva de ingresos", "Responde más rápido a la inversión", "Puede perder dinero antes de escalar"],
+            ["Financiamiento", "Propio, deuda o flujo del negocio", "Capital externo o inversión de riesgo"],
+            ["Control", "Alta prioridad para el fundador", "Se comparte control para crecer"],
+            ["Empleos", "Más locales y operativos", "Más exportables y escalables"],
+            ["Ejemplos", "Restaurante, consultora local", "Google, Airbnb, Slack"],
+          ].map(([dimension, sme, ide]) => (
+            <div
+              className="grid grid-cols-3 border-b border-white/10 text-sm last:border-b-0"
+              key={dimension}
+            >
+              <div className="p-4 font-medium text-white">{dimension}</div>
+              <div className="p-4 text-text-secondary">{sme}</div>
+              <div className="p-4 text-text-secondary">{ide}</div>
+            </div>
+          ))}
         </div>
         <Callout title="Pregunta útil" tone="warning">
           ¿Estás construyendo para independencia, para escala o para una mezcla
@@ -1034,13 +1086,19 @@ export function BookExperience({ book }: BookExperienceProps) {
                 Análisis Ceoteca · Libro #001
               </p>
               <h1 className="mt-4 text-balance text-5xl font-black leading-none text-white md:text-7xl">
-                {book.title}
+                {getBookDisplayTitle(book)}
               </h1>
               <p className="mt-5 max-w-3xl text-xl leading-8 text-text-primary">
                 {book.description}
               </p>
-              <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
                 <HeroMetric label="Autor" value={book.author} />
+                {isDisciplined ? (
+                  <HeroMetric
+                    label="Obra original"
+                    value="Disciplined Entrepreneurship"
+                  />
+                ) : null}
                 <HeroMetric label="Categoría" value={book.category} />
                 <HeroMetric label="Dificultad" value={book.difficulty} />
                 <HeroMetric label="Lectura" value={`${book.readingTime} min`} />

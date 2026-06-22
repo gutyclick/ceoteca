@@ -84,17 +84,17 @@ const disciplinedEntrepreneurshipAnalysis = [
   {
     title: "El emprendimiento como proceso aprendible",
     content:
-      "Disciplined Entrepreneurship parte de una idea poderosa: emprender no depende solo de intuición o carisma. Puede enseñarse como una serie de habilidades observables: elegir un mercado, entender al cliente, cuantificar valor, diseñar adquisición, validar supuestos y construir un producto que pueda convertirse en negocio.",
+      "Disciplined Entrepreneurship desmonta la idea de que los grandes emprendedores simplemente nacen. El enfoque de Bill Aulet, desde el MIT, es que emprender puede aprenderse como un conjunto de habilidades observables: elegir un mercado, entender al cliente, cuantificar valor, diseñar adquisición, validar supuestos y construir un producto que pueda convertirse en negocio.",
   },
   {
     title: "Innovación exige invención y comercialización",
     content:
-      "El análisis resume la fórmula central del libro: una invención sin comercialización no crea impacto, y una buena comercialización sin una propuesta diferencial tampoco sostiene una ventaja. Para Ceoteca, el aprendizaje práctico está en dejar de preguntar solo qué queremos construir y empezar a preguntar quién pagaría, por qué, cuánto valor recibe y cómo llegamos a esa persona.",
+      "La fórmula central del análisis es clara: Innovación = Invención × Comercialización. Una invención sin comercialización no crea impacto, y una buena comercialización sin una propuesta diferencial tampoco sostiene una ventaja. La pregunta deja de ser solo qué queremos construir y pasa a ser quién pagaría, por qué, cuánto valor recibe y cómo llegamos a esa persona.",
   },
   {
     title: "No todo emprendimiento funciona igual",
     content:
-      "El libro distingue entre pequeñas y medianas empresas enfocadas en independencia, mercados locales y crecimiento lineal, y empresas impulsadas por innovación que buscan escala, mercados amplios, capital externo y ventajas difíciles de copiar. Confundir ambos caminos puede llevar a decisiones equivocadas de producto, financiamiento, equipo y crecimiento.",
+      "Antes de explicar los 24 pasos, Aulet diferencia dos caminos: pequeñas empresas orientadas a independencia, mercados locales y crecimiento lineal, frente a empresas impulsadas por innovación que buscan escala, mercados amplios, capital externo y ventajas difíciles de copiar. Ninguna es superior por defecto, pero confundirlas puede llevar a decisiones equivocadas de producto, financiamiento, equipo y crecimiento.",
   },
   {
     title: "Los 24 pasos como sistema iterativo",
@@ -248,11 +248,11 @@ export const demoBooks: Book[] = [
   {
     id: "disciplined-entrepreneurship",
     slug: "disciplined-entrepreneurship",
-    title: "Disciplined Entrepreneurship",
+    title: "La disciplina de emprender",
     author: "Bill Aulet",
     category: "Emprendimiento",
     description:
-      "La metodología del MIT para convertir una idea de startup en un proceso disciplinado de mercado, cliente, valor, producto y validación.",
+      "Análisis de Disciplined Entrepreneurship: la metodología del MIT para convertir una idea de startup en un proceso disciplinado de mercado, cliente, valor, producto y validación.",
     readingTime: 10,
     difficulty: "Intermedio",
     tags: [
