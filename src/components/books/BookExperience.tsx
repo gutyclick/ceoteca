@@ -1131,7 +1131,7 @@ export function BookExperience({ book }: BookExperienceProps) {
   }, []);
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#03040b] pb-16 pl-[var(--dashboard-sidebar-offset,84px)] text-text-primary transition-[padding] duration-300 ease-out">
+    <main className="min-h-screen overflow-x-clip bg-[#03040b] pb-16 pl-[var(--dashboard-sidebar-offset,84px)] text-text-primary transition-[padding] duration-300 ease-out">
       <DashboardSidebar active="home" />
       <div className="fixed left-[var(--dashboard-sidebar-offset,84px)] right-0 top-0 z-50 h-1 bg-white/5">
         <div
@@ -1216,7 +1216,8 @@ export function BookExperience({ book }: BookExperienceProps) {
           </div>
         </div>
 
-        <nav className="sticky top-4 z-20 mt-6 overflow-x-auto rounded-[22px] border border-white/10 bg-[#070812]/88 px-3 py-3 shadow-[0_18px_60px_rgba(0,0,0,0.36)] backdrop-blur-xl transition-all duration-300">
+        <div className="sticky top-4 z-30 mt-6 rounded-[22px] border border-white/10 bg-[#070812]/90 shadow-[0_18px_60px_rgba(0,0,0,0.42)] backdrop-blur-xl transition-all duration-300">
+          <nav className="overflow-x-auto px-3 py-3">
           <div className="flex min-w-max items-center gap-2">
             {articleNav.map((item) => (
               <a
@@ -1239,7 +1240,8 @@ export function BookExperience({ book }: BookExperienceProps) {
               {readingProgress}% leído
             </span>
           </div>
-        </nav>
+          </nav>
+        </div>
 
         <section className="mt-4 grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
           <article className="min-w-0 rounded-[24px] border border-white/10 bg-white/[0.025] px-5 py-2 md:px-8">
