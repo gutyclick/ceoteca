@@ -9,7 +9,6 @@ import {
   BookOpen,
   CheckCircle2,
   ChevronDown,
-  Clock3,
   ExternalLink,
   Heart,
   Lock,
@@ -138,14 +137,6 @@ const implementationSteps = [
     text: "Prueba supuestos con comportamiento real: clientes pagando, usando, volviendo o recomendando. Cada ciclo debe mejorar tus respuestas anteriores.",
   },
 ];
-
-function getProgress(book: Book) {
-  return book.progress ?? 0;
-}
-
-function getRemainingMinutes(book: Book) {
-  return Math.max(Math.ceil(book.readingTime * (1 - getProgress(book) / 100)), 3);
-}
 
 function getBookDisplayTitle(book: Book) {
   if (book.slug === "disciplined-entrepreneurship") {
@@ -438,22 +429,30 @@ function AudioPanel({
             className="mt-4 grid h-14 grid-cols-[repeat(40,minmax(2px,1fr))] items-center gap-1 overflow-hidden rounded-[16px] border border-white/10 bg-white/[0.035] px-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
           >
             {Array.from({ length: 40 }).map((_, index) => {
-              const barProgress = ((index + 1) / 40) * 100;
-              const isPastProgress = barProgress <= progressPercent;
+              const barStart = (index / 40) * 100;
+              const barEnd = ((index + 1) / 40) * 100;
+              const fillPercent =
+                progressPercent <= barStart
+                  ? 0
+                  : progressPercent >= barEnd
+                    ? 100
+                    : ((progressPercent - barStart) / (barEnd - barStart)) * 100;
               const height = 18 + ((index * 11) % 32);
 
               return (
                 <span
                   className={cn(
-                    "mx-auto w-full max-w-[5px] rounded-full transition-all duration-300",
-                    isPastProgress
-                      ? "bg-gradient-to-t from-brand-purple via-brand-blue to-brand-pink opacity-100 shadow-[0_0_14px_rgba(168,85,247,0.45)]"
-                      : "bg-white/18 opacity-65",
-                    isPlaying && isPastProgress && "scale-y-110",
+                    "relative mx-auto w-full max-w-[5px] overflow-hidden rounded-full bg-white/20 transition-transform duration-300",
+                    isPlaying && fillPercent > 0 && "scale-y-110",
                   )}
                   key={index}
                   style={{ height }}
-                />
+                >
+                  <span
+                    className="absolute inset-x-0 bottom-0 rounded-full bg-gradient-to-t from-brand-purple via-brand-blue to-brand-pink shadow-[0_0_14px_rgba(168,85,247,0.45)] transition-[height] duration-300"
+                    style={{ height: `${fillPercent}%` }}
+                  />
+                </span>
               );
             })}
           </div>
@@ -1263,21 +1262,6 @@ export function BookExperience({ book }: BookExperienceProps) {
                 <HeroMetric label="Lectura" value={`${book.readingTime} min`} />
               </div>
               <div className="mt-5 max-w-3xl">
-                <div className="mb-2 flex items-center justify-between gap-4 text-sm">
-                  <span className="text-text-secondary">Lectura en pantalla</span>
-                  <span>{readingProgress}%</span>
-                  <span className="text-text-secondary">
-                    {getRemainingMinutes(book)} min restantes
-                  </span>
-                </div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-brand-purple to-brand-blue"
-                    style={{ width: `${readingProgress}%` }}
-                  />
-                </div>
-              </div>
-              <div className="mt-5 max-w-3xl">
                 <AudioPanel
                   book={book}
                   isPlanLoading={isPlanLoading && !currentPlan}
@@ -1289,12 +1273,12 @@ export function BookExperience({ book }: BookExperienceProps) {
         </div>
 
         <div className="sticky top-4 z-30 mt-6 rounded-[22px] border border-white/10 bg-[#070812]/90 shadow-[0_18px_60px_rgba(0,0,0,0.42)] backdrop-blur-xl transition-all duration-300 lg:mr-[372px]">
-          <nav className="overflow-x-auto px-3 py-3">
-          <div className="flex min-w-max items-center gap-2">
+          <nav className="px-3 py-3">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
             {articleNav.map((item) => (
               <a
                 className={cn(
-                  "rounded-full px-4 py-2 text-sm text-text-secondary transition hover:bg-white/[0.06] hover:text-white",
+                  "rounded-full px-3 py-2 text-sm text-text-secondary transition hover:bg-white/[0.06] hover:text-white xl:px-4",
                   activeSection === item.href &&
                     "bg-white/[0.08] font-semibold text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]",
                 )}
@@ -1304,13 +1288,6 @@ export function BookExperience({ book }: BookExperienceProps) {
                 {item.label}
               </a>
             ))}
-            <span className="ml-auto hidden items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-text-secondary lg:inline-flex">
-              <Clock3 aria-hidden="true" size={15} />
-              ~{book.readingTime} min
-            </span>
-            <span className="hidden rounded-full border border-brand-purple/30 bg-brand-purple/10 px-4 py-2 text-sm text-white lg:inline-flex">
-              {readingProgress}% leído
-            </span>
           </div>
           </nav>
         </div>
