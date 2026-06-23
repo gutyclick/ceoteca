@@ -343,6 +343,9 @@ function AudioPanel({ book, locked = false }: { book: Book; locked?: boolean }) 
   const durationLabel = displayDurationSeconds
     ? `${Math.max(1, Math.ceil(displayDurationSeconds / 60))} min`
     : `${book.readingTime} min`;
+  const totalTimeLabel = displayDurationSeconds
+    ? formatAudioTime(displayDurationSeconds)
+    : `~${book.readingTime}:00`;
   const progressPercent =
     displayDurationSeconds && displayDurationSeconds > 0
       ? Math.min(100, Math.max(0, (currentTimeSeconds / displayDurationSeconds) * 100))
@@ -396,20 +399,29 @@ function AudioPanel({ book, locked = false }: { book: Book; locked?: boolean }) 
               {playbackStatus}
             </span>
           </div>
-          <div className="mt-3 flex items-center gap-1">
-            {Array.from({ length: 34 }).map((_, index) => (
-              <span
-                className={cn(
-                  "w-1 rounded-full transition-all duration-300",
-                  ((index + 1) / 34) * 100 <= progressPercent
-                    ? "bg-brand-purple opacity-100 shadow-[0_0_12px_rgba(168,85,247,0.5)]"
-                    : "bg-white/20 opacity-70",
-                  isPlaying && "animate-pulse",
-                )}
-                key={index}
-                style={{ height: 8 + ((index * 9) % 28) }}
-              />
-            ))}
+          <div
+            aria-hidden="true"
+            className="mt-4 grid h-14 grid-cols-[repeat(40,minmax(2px,1fr))] items-center gap-1 overflow-hidden rounded-[16px] border border-white/10 bg-white/[0.035] px-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+          >
+            {Array.from({ length: 40 }).map((_, index) => {
+              const barProgress = ((index + 1) / 40) * 100;
+              const isPastProgress = barProgress <= progressPercent;
+              const height = 18 + ((index * 11) % 32);
+
+              return (
+                <span
+                  className={cn(
+                    "mx-auto w-full max-w-[5px] rounded-full transition-all duration-300",
+                    isPastProgress
+                      ? "bg-gradient-to-t from-brand-purple via-brand-blue to-brand-pink opacity-100 shadow-[0_0_14px_rgba(168,85,247,0.45)]"
+                      : "bg-white/18 opacity-65",
+                    isPlaying && isPastProgress && "scale-y-110",
+                  )}
+                  key={index}
+                  style={{ height }}
+                />
+              );
+            })}
           </div>
           <div className="mt-4">
             <input
@@ -425,7 +437,7 @@ function AudioPanel({ book, locked = false }: { book: Book; locked?: boolean }) 
             />
             <div className="mt-2 flex items-center justify-between text-xs text-text-secondary">
               <span>{formatAudioTime(currentTimeSeconds)}</span>
-              <span>{formatAudioTime(displayDurationSeconds)}</span>
+              <span>{totalTimeLabel}</span>
             </div>
           </div>
           {audioError ? (
