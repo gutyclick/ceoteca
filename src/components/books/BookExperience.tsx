@@ -47,7 +47,6 @@ const articleNav = [
   { href: "#framework", label: "Framework" },
   { href: "#plantilla", label: "Plantilla" },
   { href: "#para-llevar", label: "Para llevar" },
-  { href: "#aviso-editorial", label: "Aviso" },
 ] as const;
 
 const disciplinedPhases = [
