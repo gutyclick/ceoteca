@@ -1,5 +1,5 @@
 import { clientEnv } from "@/lib/env";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createServiceSupabaseClient } from "@/lib/supabase/server";
 import type { ChatConversationMessage } from "@/lib/validation/chat";
 
 export type PersistChatInput = {
@@ -48,10 +48,12 @@ export class MockChatRepository implements ChatRepository {
 }
 
 export class SupabaseChatRepository implements ChatRepository {
-  constructor(private readonly accessToken?: string) {}
+  private getClient() {
+    return createServiceSupabaseClient();
+  }
 
   async getUsage(userId: string, bookId: string): Promise<number> {
-    const supabase = createServerSupabaseClient(this.accessToken);
+    const supabase = this.getClient();
     const month = `${new Date().toISOString().slice(0, 7)}-01`;
     const { data, error } = await supabase
       .from("chat_usage")
@@ -69,23 +71,29 @@ export class SupabaseChatRepository implements ChatRepository {
   }
 
   async incrementUsage(userId: string, bookId: string): Promise<number> {
-    const supabase = createServerSupabaseClient(this.accessToken);
+    const supabase = this.getClient();
     const month = `${new Date().toISOString().slice(0, 7)}-01`;
-    const { data, error } = await supabase.rpc("increment_chat_usage", {
-      target_user_id: userId,
-      target_book_id: bookId,
-      target_month: month,
-    });
+    const currentCount = await this.getUsage(userId, bookId);
+    const nextCount = currentCount + 1;
+    const { error } = await supabase.from("chat_usage").upsert(
+      {
+        user_id: userId,
+        book_id: bookId,
+        month,
+        question_count: nextCount,
+      },
+      { onConflict: "user_id,book_id,month" },
+    );
 
     if (error) {
       throw new Error(error.message);
     }
 
-    return data;
+    return nextCount;
   }
 
   async persistMessages(input: PersistChatInput): Promise<void> {
-    const supabase = createServerSupabaseClient(this.accessToken);
+    const supabase = this.getClient();
     const { error } = await supabase.from("chat_messages").insert([
       {
         user_id: input.userId,
@@ -107,7 +115,7 @@ export class SupabaseChatRepository implements ChatRepository {
   }
 
   async listMessages(userId: string, bookId: string): Promise<ChatConversationMessage[]> {
-    const supabase = createServerSupabaseClient(this.accessToken);
+    const supabase = this.getClient();
     const { data, error } = await supabase
       .from("chat_messages")
       .select("role, content")
@@ -128,5 +136,7 @@ export function createChatRepository(accessToken?: string): ChatRepository {
     return new MockChatRepository();
   }
 
-  return new SupabaseChatRepository(accessToken);
+  void accessToken;
+
+  return new SupabaseChatRepository();
 }

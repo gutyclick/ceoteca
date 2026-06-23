@@ -111,7 +111,7 @@ export function FloatingBookChat({ book, plan }: FloatingBookChatProps) {
     () =>
       messages.filter(
         (message) => message.role === "user" || message.role === "assistant",
-      ),
+      ).slice(-12),
     [messages],
   );
 

@@ -110,7 +110,7 @@ export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
     () =>
       messages.filter(
         (message) => message.role === "user" || message.role === "assistant",
-      ),
+      ).slice(-12),
     [messages],
   );
 

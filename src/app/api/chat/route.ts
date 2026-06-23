@@ -207,10 +207,12 @@ export async function POST(request: NextRequest) {
         limit: plan.chatMonthlyLimit,
       },
     });
-  } catch {
+  } catch (caughtError) {
+    console.error("Chat request failed", caughtError);
+
     return jsonError(
       {
-        code: "AI_PROVIDER_ERROR",
+        code: "CHAT_RESPONSE_FAILED",
         message: "No pudimos generar una respuesta en este momento.",
       },
       502,
