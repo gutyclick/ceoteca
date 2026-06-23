@@ -45,6 +45,8 @@ const articleNav = [
   { href: "#claves", label: "Claves" },
   { href: "#framework", label: "Framework" },
   { href: "#plantilla", label: "Plantilla" },
+  { href: "#para-llevar", label: "Para llevar" },
+  { href: "#aviso-editorial", label: "Aviso" },
 ] as const;
 
 const disciplinedPhases = [
@@ -476,7 +478,7 @@ function ArticleSection({
   children: React.ReactNode;
 }) {
   return (
-    <section className="scroll-mt-28 py-10" id={id}>
+    <section className="scroll-mt-36 py-10" id={id}>
       <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand-purple">
         {eyebrow}
       </p>
@@ -1032,7 +1034,7 @@ function Sidebar({
           ))}
         </div>
       </Card>
-      <Card className="rounded-[16px] bg-white/[0.035] p-6">
+      <Card className="scroll-mt-36 rounded-[16px] bg-white/[0.035] p-6" id="aviso-editorial">
         <h2 className="text-xl font-semibold">Aviso editorial</h2>
         <p className="mt-3 text-sm leading-7 text-text-secondary">{disclaimer}</p>
       </Card>
@@ -1216,7 +1218,7 @@ export function BookExperience({ book }: BookExperienceProps) {
           </div>
         </div>
 
-        <div className="sticky top-4 z-30 mt-6 rounded-[22px] border border-white/10 bg-[#070812]/90 shadow-[0_18px_60px_rgba(0,0,0,0.42)] backdrop-blur-xl transition-all duration-300">
+        <div className="sticky top-4 z-30 mt-6 rounded-[22px] border border-white/10 bg-[#070812]/90 shadow-[0_18px_60px_rgba(0,0,0,0.42)] backdrop-blur-xl transition-all duration-300 lg:mr-[372px]">
           <nav className="overflow-x-auto px-3 py-3">
           <div className="flex min-w-max items-center gap-2">
             {articleNav.map((item) => (
@@ -1247,7 +1249,7 @@ export function BookExperience({ book }: BookExperienceProps) {
           <article className="min-w-0 rounded-[24px] border border-white/10 bg-white/[0.025] px-5 py-2 md:px-8">
             {isDisciplined ? <DisciplinedArticle book={book} /> : <GenericArticle book={book} />}
 
-            <section className="border-t border-white/10 py-10">
+            <section className="scroll-mt-36 border-t border-white/10 py-10" id="para-llevar">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand-purple">
                 Para llevar
               </p>
