@@ -16,6 +16,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { RichChatMessage } from "@/components/chat/RichChatMessage";
 import { Card } from "@/components/ui/Card";
 import { plans, type PlanKey } from "@/config/plans";
+import { prepareChatConversation } from "@/lib/chat/conversation";
 import { canAccessFeature } from "@/lib/permissions";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import type { ChatConversationMessage } from "@/lib/validation/chat";
@@ -107,13 +108,7 @@ export function FloatingBookChat({ book, plan }: FloatingBookChatProps) {
   const shouldShowQuestionLimit =
     hasChatAccess && displayedRemainingQuestions !== null;
 
-  const conversation = useMemo(
-    () =>
-      messages.filter(
-        (message) => message.role === "user" || message.role === "assistant",
-      ).slice(-12),
-    [messages],
-  );
+  const conversation = useMemo(() => prepareChatConversation(messages), [messages]);
 
   useEffect(() => {
     setMessages([introMessage]);

@@ -116,11 +116,14 @@ export async function POST(request: NextRequest) {
   const parsed = chatRequestSchema.safeParse(payload);
 
   if (!parsed.success) {
+    const fieldErrors = getFieldErrors(parsed.error);
+    const firstFieldError = Object.values(fieldErrors).flat()[0];
+
     return jsonError(
       {
         code: "INVALID_INPUT",
-        message: "Revisa los campos enviados.",
-        fieldErrors: getFieldErrors(parsed.error),
+        message: firstFieldError ?? "Revisa los campos enviados.",
+        fieldErrors,
       },
       400,
     );

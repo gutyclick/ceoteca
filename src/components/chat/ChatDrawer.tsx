@@ -5,6 +5,7 @@ import { useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { prepareChatConversation } from "@/lib/chat/conversation";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import type { ChatConversationMessage } from "@/lib/validation/chat";
 import { cn } from "@/lib/utils/cn";
@@ -49,10 +50,7 @@ export function ChatDrawer({ bookSlug, bookTitle }: ChatDrawerProps) {
   const [usage, setUsage] = useState<string>("Sin preguntas todavía.");
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
-  const conversation = useMemo(
-    () => messages.filter((message) => message.role === "user" || message.role === "assistant"),
-    [messages],
-  );
+  const conversation = useMemo(() => prepareChatConversation(messages), [messages]);
 
   async function sendMessage(message: string) {
     const trimmed = message.trim();
