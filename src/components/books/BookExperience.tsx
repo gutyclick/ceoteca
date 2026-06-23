@@ -155,9 +155,13 @@ function getCoverTitle(book: Book) {
 
 function MiniCover({ book }: { book: Book }) {
   const coverTitle = getCoverTitle(book);
+  const titleSize =
+    coverTitle.length > 28
+      ? "text-[clamp(1.45rem,8vw,2rem)]"
+      : "text-[clamp(1.75rem,9vw,2.4rem)]";
 
   return (
-    <div className="relative h-[340px] w-full max-w-[220px] overflow-hidden rounded-md border border-white/20 bg-gradient-to-br from-indigo-400 via-violet-600 to-fuchsia-600 p-5 shadow-[0_24px_70px_rgba(0,0,0,0.45)]">
+    <div className="relative aspect-[2/3] w-full max-w-[220px] overflow-hidden rounded-md border border-white/20 bg-gradient-to-br from-indigo-400 via-violet-600 to-fuchsia-600 p-5 shadow-[0_24px_70px_rgba(0,0,0,0.45)]">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_18%,rgba(255,255,255,0.26),transparent_26%),linear-gradient(160deg,rgba(0,0,0,0.05),rgba(0,0,0,0.42))]" />
       <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full border border-white/25" />
       <div className="absolute bottom-16 right-5 h-24 w-24 rounded-full border border-white/20 bg-white/5 blur-[1px]" />
@@ -166,7 +170,7 @@ function MiniCover({ book }: { book: Book }) {
           <p className="text-[11px] font-black uppercase tracking-[0.2em]">
             Análisis Ceoteca
           </p>
-          <h2 className="mt-7 text-balance text-[2.15rem] font-black uppercase leading-none tracking-tight">
+          <h2 className={cn("mt-7 line-clamp-5 break-words font-black uppercase leading-none tracking-tight", titleSize)}>
             {coverTitle}
           </h2>
         </div>

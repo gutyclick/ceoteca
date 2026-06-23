@@ -148,6 +148,41 @@ function getGradient(index: number) {
   ][index % 5];
 }
 
+function getCoverTitleLines(title: string) {
+  const words = title.toUpperCase().split(/\s+/).filter(Boolean);
+  const lines: string[] = [];
+  let currentLine = "";
+
+  for (const word of words) {
+    const nextLine = currentLine ? `${currentLine} ${word}` : word;
+
+    if (nextLine.length > 12 && currentLine) {
+      lines.push(currentLine);
+      currentLine = word;
+    } else {
+      currentLine = nextLine;
+    }
+  }
+
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+
+  return lines.slice(0, 4);
+}
+
+function getCoverTitleSize(title: string) {
+  if (title.length > 28) {
+    return "text-[clamp(0.9rem,4vw,1.15rem)]";
+  }
+
+  if (title.length > 18) {
+    return "text-[clamp(1rem,4.5vw,1.3rem)]";
+  }
+
+  return "text-[clamp(1.1rem,5vw,1.45rem)]";
+}
+
 function MiniCover({
   book,
   index,
@@ -157,10 +192,12 @@ function MiniCover({
   index: number;
   className?: string;
 }) {
+  const titleLines = getCoverTitleLines(book.title);
+
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-md border border-white/15 bg-gradient-to-br p-3 shadow-[0_14px_35px_rgba(0,0,0,0.35)]",
+        "relative aspect-[2/3] min-h-0 overflow-hidden rounded-md border border-white/15 bg-gradient-to-br p-3 shadow-[0_14px_35px_rgba(0,0,0,0.35)]",
         getGradient(index),
         className,
       )}
@@ -168,14 +205,25 @@ function MiniCover({
       <div className="absolute inset-0 bg-black/20" />
       <div className="absolute -right-5 -top-5 h-16 w-16 rounded-full border border-white/25" />
       <div className="relative z-10 flex h-full flex-col justify-between">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/70">
+        <p className="line-clamp-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-white/70">
           {book.category}
         </p>
-        <div>
-          <h3 className="text-balance text-lg font-black uppercase leading-none text-white">
-            {book.title}
+        <div className="min-w-0">
+          <h3
+            className={cn(
+              "max-w-full break-words font-black uppercase leading-[0.9] text-white",
+              getCoverTitleSize(book.title),
+            )}
+          >
+            {titleLines.map((line) => (
+              <span className="block" key={line}>
+                {line}
+              </span>
+            ))}
           </h3>
-          <p className="mt-2 text-[11px] text-white/72">{book.author}</p>
+          <p className="mt-2 line-clamp-1 text-[10px] text-white/72">
+            {book.author}
+          </p>
         </div>
       </div>
     </div>
@@ -445,7 +493,7 @@ export function HomeView({ books }: HomeViewProps) {
                   key={book.id}
                 >
                   <div className="grid h-full grid-cols-[80px_minmax(0,1fr)_46px] items-center gap-4 sm:grid-cols-[88px_minmax(0,1fr)_46px] sm:gap-5">
-                    <MiniCover book={book} className="h-[120px]" index={index} />
+                    <MiniCover book={book} className="h-[120px] w-[80px]" index={index} />
                     <div className="min-w-0">
                       <p className="text-lg font-bold">
                         {progress}%{" "}
@@ -504,7 +552,7 @@ export function HomeView({ books }: HomeViewProps) {
             <div className="grid gap-6 md:grid-cols-[130px_minmax(0,1fr)] xl:grid-cols-[140px_minmax(0,1.2fr)_minmax(220px,0.9fr)_240px] xl:items-center">
               <MiniCover
                 book={recommendedBook}
-                className="h-[190px] w-[120px] max-md:mx-auto"
+                className="h-[190px] w-[128px] max-md:mx-auto"
                 index={2}
               />
               <div>

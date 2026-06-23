@@ -31,6 +31,18 @@ const sizeClasses = {
   lg: "min-h-[360px]",
 };
 
+function getCoverTitleSize(title: string) {
+  if (title.length > 34) {
+    return "text-[clamp(1.15rem,4vw,1.45rem)]";
+  }
+
+  if (title.length > 24) {
+    return "text-[clamp(1.3rem,4.5vw,1.75rem)]";
+  }
+
+  return "text-[clamp(1.55rem,5vw,2rem)]";
+}
+
 export function BookCover({ book, size = "md" }: BookCoverProps) {
   const Icon = variantIcons[book.cover.variant] ?? Brain;
 
@@ -46,7 +58,7 @@ export function BookCover({ book, size = "md" }: BookCoverProps) {
       <div className="absolute -right-12 -top-12 h-40 w-40 rounded-full border border-white/25" />
       <div className="absolute bottom-8 left-8 h-24 w-24 rounded-full bg-white/20 blur-2xl" />
       <div className="relative z-10 flex h-full min-h-[inherit] flex-col justify-between">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/70">
+        <p className="line-clamp-2 text-xs font-semibold uppercase tracking-[0.16em] text-white/70">
           {book.category}
         </p>
         <div className="grid place-items-center py-8">
@@ -55,10 +67,15 @@ export function BookCover({ book, size = "md" }: BookCoverProps) {
           </span>
         </div>
         <div>
-          <h3 className="text-balance text-2xl font-semibold leading-tight text-white">
+          <h3
+            className={cn(
+              "line-clamp-4 break-words font-semibold leading-tight text-white",
+              getCoverTitleSize(book.title),
+            )}
+          >
             {book.title}
           </h3>
-          <p className="mt-2 text-sm text-white/70">{book.author}</p>
+          <p className="mt-2 line-clamp-1 text-sm text-white/70">{book.author}</p>
         </div>
       </div>
     </div>
