@@ -15,6 +15,7 @@ import type { AppUser, Book } from "@/types";
 
 const audioRequestSchema = z.object({
   bookSlug: z.string().min(1, "El libro es requerido."),
+  metadataOnly: z.boolean().default(false),
 });
 
 type AudioAssetInsert = Database["public"]["Tables"]["audio_assets"]["Insert"];
@@ -240,17 +241,20 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  const { apiKey, model, voice } = getAudioConfig();
-  const existingResponse = await serviceSupabase
-    .from("audio_assets")
-    .select("*")
-    .eq("book_id", book.id)
-    .eq("model", model)
-    .eq("voice", voice)
-    .eq("status", "ready")
-    .order("updated_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const configuredModel = serverEnv.OPENAI_TTS_MODEL;
+  const configuredVoice = (serverEnv.OPENAI_TTS_VOICE ?? "ash").toLowerCase();
+  const existingResponse = configuredModel
+    ? await serviceSupabase
+        .from("audio_assets")
+        .select("*")
+        .eq("book_id", book.id)
+        .eq("model", configuredModel)
+        .eq("voice", configuredVoice)
+        .eq("status", "ready")
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle()
+    : { data: null, error: null };
 
   if (existingResponse.error) {
     return jsonError(
@@ -272,6 +276,17 @@ export async function POST(request: NextRequest) {
     });
   }
 
+  if (parsed.data.metadataOnly) {
+    return jsonError(
+      {
+        code: "AUDIO_NOT_READY",
+        message: "El audio de este libro todavía no está disponible.",
+      },
+      404,
+    );
+  }
+
+  const { apiKey, model, voice } = getAudioConfig();
   const storagePath = `books/${book.slug}/${model}-${voice}.mp3`;
   const insertPayload: AudioAssetInsert = {
     book_id: book.id,

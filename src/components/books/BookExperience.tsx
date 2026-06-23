@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -25,7 +25,7 @@ import {
 import { DashboardSidebar } from "@/components/app/DashboardSidebar";
 import { FloatingBookChat } from "@/components/chat/FloatingBookChat";
 import { Card } from "@/components/ui/Card";
-import type { PlanKey } from "@/config/plans";
+import { planKeys, type PlanKey } from "@/config/plans";
 import { canAccessFeature } from "@/lib/permissions";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
@@ -34,6 +34,8 @@ import type { Book, BookActivity, KeyPoint } from "@/types";
 type BookExperienceProps = {
   book: Book;
 };
+
+const planStorageKey = "ceoteca-current-plan";
 
 const disclaimer =
   "Contenido educativo y editorial propio. Ceoteca no está afiliada al autor ni a la editorial. Este análisis no reemplaza la obra original.";
@@ -244,7 +246,15 @@ function formatAudioTime(seconds: number | null | undefined) {
   return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
 }
 
-function AudioPanel({ book, locked = false }: { book: Book; locked?: boolean }) {
+function AudioPanel({
+  book,
+  isPlanLoading = false,
+  locked = false,
+}: {
+  book: Book;
+  isPlanLoading?: boolean;
+  locked?: boolean;
+}) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [durationSeconds, setDurationSeconds] = useState<number | null>(null);
@@ -254,7 +264,7 @@ function AudioPanel({ book, locked = false }: { book: Book; locked?: boolean }) 
   const [isLoadingAudio, setIsLoadingAudio] = useState(false);
   const [audioError, setAudioError] = useState<string | null>(null);
 
-  async function loadAudioUrl() {
+  const loadAudioUrl = useCallback(async (metadataOnly = false) => {
     if (audioUrl) {
       return audioUrl;
     }
@@ -273,7 +283,7 @@ function AudioPanel({ book, locked = false }: { book: Book; locked?: boolean }) 
         Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ bookSlug: book.slug }),
+      body: JSON.stringify({ bookSlug: book.slug, metadataOnly }),
     });
     const payload = (await response.json()) as {
       data?: {
@@ -294,10 +304,10 @@ function AudioPanel({ book, locked = false }: { book: Book; locked?: boolean }) 
     setAudioDurationSeconds(payload.data.durationSeconds);
 
     return payload.data.audioUrl;
-  }
+  }, [audioUrl, book.slug]);
 
   async function toggleAudio() {
-    if (locked || isLoadingAudio) {
+    if (locked || isPlanLoading || isLoadingAudio) {
       return;
     }
 
@@ -330,6 +340,30 @@ function AudioPanel({ book, locked = false }: { book: Book; locked?: boolean }) 
       setIsLoadingAudio(false);
     }
   }
+
+  useEffect(() => {
+    if (locked || isPlanLoading || audioUrl) {
+      return;
+    }
+
+    let isMounted = true;
+
+    async function preloadAudioMetadata() {
+      try {
+        await loadAudioUrl(true);
+      } catch {
+        if (isMounted) {
+          setAudioError(null);
+        }
+      }
+    }
+
+    void preloadAudioMetadata();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [audioUrl, isPlanLoading, loadAudioUrl, locked]);
 
   function handleSeek(nextTime: number) {
     setCurrentTimeSeconds(nextTime);
@@ -364,7 +398,7 @@ function AudioPanel({ book, locked = false }: { book: Book; locked?: boolean }) 
         <button
           aria-label={isPlaying ? "Pausar audio" : "Reproducir audio"}
           className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-brand-purple/75 text-white shadow-[0_0_38px_rgba(124,58,237,0.42)] transition hover:bg-brand-purple"
-          disabled={isLoadingAudio}
+          disabled={isLoadingAudio || isPlanLoading}
           onClick={() => void toggleAudio()}
           type="button"
         >
@@ -467,6 +501,7 @@ function AudioPanel({ book, locked = false }: { book: Book; locked?: boolean }) 
             onPause={() => setIsPlaying(false)}
             onPlay={() => setIsPlaying(true)}
             onTimeUpdate={(event) => setCurrentTimeSeconds(event.currentTarget.currentTime)}
+            preload="metadata"
             ref={audioRef}
             src={audioUrl}
           >
@@ -1071,13 +1106,24 @@ function Sidebar({
   );
 }
 
+function getCachedPlan(): PlanKey | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const cachedPlan = window.localStorage.getItem(planStorageKey);
+
+  return planKeys.includes(cachedPlan as PlanKey) ? (cachedPlan as PlanKey) : null;
+}
+
 export function BookExperience({ book }: BookExperienceProps) {
   const router = useRouter();
-  const [currentPlan, setCurrentPlan] = useState<PlanKey>("free");
+  const [currentPlan, setCurrentPlan] = useState<PlanKey | null>(() => getCachedPlan());
+  const [isPlanLoading, setIsPlanLoading] = useState(true);
   const [readingProgress, setReadingProgress] = useState(0);
   const [activeSection, setActiveSection] = useState<string>(articleNav[0].href);
-  const canUseAudio = canAccessFeature(currentPlan, "audio");
-  const canUseChat = canAccessFeature(currentPlan, "chat");
+  const canUseAudio = currentPlan ? canAccessFeature(currentPlan, "audio") : false;
+  const canUseChat = currentPlan ? canAccessFeature(currentPlan, "chat") : false;
   const isDisciplined = book.slug === "disciplined-entrepreneurship";
 
   useEffect(() => {
@@ -1089,6 +1135,9 @@ export function BookExperience({ book }: BookExperienceProps) {
         const { data: userData } = await supabase.auth.getUser();
 
         if (!userData.user) {
+          if (isMounted) {
+            setCurrentPlan("free");
+          }
           return;
         }
 
@@ -1100,10 +1149,15 @@ export function BookExperience({ book }: BookExperienceProps) {
 
         if (isMounted && data?.plan) {
           setCurrentPlan(data.plan);
+          window.localStorage.setItem(planStorageKey, data.plan);
         }
       } catch {
         if (isMounted) {
-          setCurrentPlan("free");
+          setCurrentPlan((current) => current ?? "free");
+        }
+      } finally {
+        if (isMounted) {
+          setIsPlanLoading(false);
         }
       }
     }
@@ -1224,7 +1278,11 @@ export function BookExperience({ book }: BookExperienceProps) {
                 </div>
               </div>
               <div className="mt-5 max-w-3xl">
-                <AudioPanel book={book} locked={!canUseAudio} />
+                <AudioPanel
+                  book={book}
+                  isPlanLoading={isPlanLoading && !currentPlan}
+                  locked={!isPlanLoading && !canUseAudio}
+                />
               </div>
             </div>
           </div>
@@ -1294,11 +1352,11 @@ export function BookExperience({ book }: BookExperienceProps) {
             </section>
           </article>
 
-          <Sidebar book={book} canUseChat={canUseChat} />
+          <Sidebar book={book} canUseChat={isPlanLoading || canUseChat} />
         </section>
       </section>
 
-      <FloatingBookChat book={book} plan={currentPlan} />
+      {currentPlan ? <FloatingBookChat book={book} plan={currentPlan} /> : null}
     </main>
   );
 }
