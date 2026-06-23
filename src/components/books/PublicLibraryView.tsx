@@ -4,14 +4,21 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
+  BarChart3,
   BookOpen,
+  Bolt,
+  Brain,
   CheckCircle2,
+  CircleDot,
   Clock3,
   Filter,
+  Grid3X3,
   LibraryBig,
   Lock,
   Search,
   Sparkles,
+  TrendingUp,
+  Users,
 } from "lucide-react";
 
 import { DashboardSidebar } from "@/components/app/DashboardSidebar";
@@ -64,6 +71,67 @@ function pluralizeBooks(count: number) {
   return `${count} ${count === 1 ? "libro" : "libros"}`;
 }
 
+const coverIcons = {
+  orb: CircleDot,
+  steps: BarChart3,
+  bolt: Bolt,
+  growth: TrendingUp,
+  people: Users,
+  grid: Grid3X3,
+} as const;
+
+function getCatalogCoverTitleSize(title: string) {
+  if (title.length > 34) {
+    return "text-[clamp(1rem,2.2vw,1.25rem)]";
+  }
+
+  if (title.length > 22) {
+    return "text-[clamp(1.1rem,2.4vw,1.45rem)]";
+  }
+
+  return "text-[clamp(1.25rem,2.7vw,1.7rem)]";
+}
+
+function CatalogCover({ book }: { book: Book }) {
+  const Icon = coverIcons[book.cover.variant] ?? Brain;
+
+  return (
+    <div
+      className={cn(
+        "relative h-full min-h-[204px] w-full overflow-hidden rounded-[16px] border border-white/10 bg-gradient-to-br p-4 shadow-[0_18px_42px_rgba(0,0,0,0.34)]",
+        book.cover.gradient,
+      )}
+    >
+      <div className="absolute inset-0 bg-black/34" />
+      <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full border border-white/20" />
+      <div className="absolute bottom-4 left-4 h-20 w-20 rounded-full bg-white/20 blur-2xl" />
+      <div className="relative z-10 flex h-full min-h-[172px] flex-col justify-between">
+        <p className="line-clamp-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/72">
+          {book.category}
+        </p>
+        <div className="grid place-items-center py-3">
+          <span className="grid h-14 w-14 place-items-center rounded-[18px] bg-white/15 text-white backdrop-blur-md sm:h-16 sm:w-16">
+            <Icon aria-hidden="true" size={30} />
+          </span>
+        </div>
+        <div className="min-w-0">
+          <h3
+            className={cn(
+              "line-clamp-4 break-words font-black leading-[0.94] text-white",
+              getCatalogCoverTitleSize(book.title),
+            )}
+          >
+            {book.title}
+          </h3>
+          <p className="mt-2 line-clamp-1 text-xs text-white/74">
+            {book.author}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PublicBookPreview({ book, index }: { book: Book; index: number }) {
   return (
     <Card
@@ -105,20 +173,20 @@ function PublicBookPreview({ book, index }: { book: Book; index: number }) {
 function CatalogBookCard({ book }: { book: Book }) {
   return (
     <Link className="group block min-w-0" href={`/libro/${book.slug}`}>
-      <Card className="grid h-full min-h-[220px] grid-cols-[92px_minmax(0,1fr)] gap-4 overflow-hidden rounded-[16px] bg-white/[0.035] p-3 sm:grid-cols-[108px_minmax(0,1fr)]">
-        <BookCover book={book} size="sm" />
+      <Card className="grid h-full min-h-[244px] grid-cols-[minmax(116px,132px)_minmax(0,1fr)] gap-4 overflow-hidden rounded-[16px] bg-white/[0.035] p-3 sm:grid-cols-[142px_minmax(0,1fr)] sm:gap-5">
+        <CatalogCover book={book} />
         <div className="flex min-w-0 flex-col justify-between py-2 pr-1">
           <div className="min-w-0">
             <p className="line-clamp-1 text-xs font-medium uppercase tracking-[0.16em] text-brand-purple">
               {book.category}
             </p>
-            <h3 className="mt-2 line-clamp-2 text-lg font-semibold leading-tight">
+            <h3 className="mt-2 line-clamp-2 text-xl font-semibold leading-tight">
               {book.title}
             </h3>
             <p className="mt-1 line-clamp-1 text-sm text-text-muted">
               {book.author}
             </p>
-            <p className="mt-3 line-clamp-3 text-sm leading-6 text-text-secondary">
+            <p className="mt-4 line-clamp-3 text-sm leading-6 text-text-secondary sm:line-clamp-4">
               {book.description}
             </p>
           </div>
@@ -130,7 +198,7 @@ function CatalogBookCard({ book }: { book: Book }) {
             <span className="rounded-full bg-white/[0.055] px-2.5 py-1">
               {book.difficulty}
             </span>
-            <span className="ml-auto grid h-8 w-8 place-items-center rounded-full bg-white/[0.07] text-text-secondary transition group-hover:bg-brand-purple group-hover:text-white">
+            <span className="ml-auto grid h-9 w-9 place-items-center rounded-full bg-white/[0.07] text-text-secondary transition group-hover:bg-brand-purple group-hover:text-white">
               <ArrowRight aria-hidden="true" size={16} />
             </span>
           </div>
@@ -449,7 +517,7 @@ function PrivateLibrary({ books }: { books: Book[] }) {
                     Ver solo esta categoría
                   </button>
                 </div>
-                <div className="mt-4 grid grid-cols-[repeat(auto-fit,minmax(min(100%,330px),1fr))] gap-5">
+                <div className="mt-4 grid auto-rows-fr grid-cols-[repeat(auto-fit,minmax(min(100%,420px),1fr))] gap-5">
                   {categoryBooks.map((book) => (
                     <CatalogBookCard book={book} key={book.id} />
                   ))}
