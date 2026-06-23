@@ -1120,6 +1120,8 @@ export function BookExperience({ book }: BookExperienceProps) {
   const router = useRouter();
   const [currentPlan, setCurrentPlan] = useState<PlanKey | null>(() => getCachedPlan());
   const [isPlanLoading, setIsPlanLoading] = useState(true);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isFavoriteLoading, setIsFavoriteLoading] = useState(true);
   const [readingProgress, setReadingProgress] = useState(0);
   const [activeSection, setActiveSection] = useState<string>(articleNav[0].href);
   const canUseAudio = currentPlan ? canAccessFeature(currentPlan, "audio") : false;
@@ -1170,6 +1172,56 @@ export function BookExperience({ book }: BookExperienceProps) {
   }, []);
 
   useEffect(() => {
+    let isMounted = true;
+
+    async function loadFavorite() {
+      setIsFavoriteLoading(true);
+
+      try {
+        const supabase = createBrowserSupabaseClient();
+        const { data: userData } = await supabase.auth.getUser();
+
+        if (!userData.user) {
+          if (isMounted) {
+            setIsFavorite(false);
+          }
+
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from("user_book_favorites")
+          .select("id")
+          .eq("user_id", userData.user.id)
+          .eq("book_id", book.id)
+          .maybeSingle();
+
+        if (error) {
+          throw error;
+        }
+
+        if (isMounted) {
+          setIsFavorite(Boolean(data));
+        }
+      } catch {
+        if (isMounted) {
+          setIsFavorite(false);
+        }
+      } finally {
+        if (isMounted) {
+          setIsFavoriteLoading(false);
+        }
+      }
+    }
+
+    void loadFavorite();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [book.id]);
+
+  useEffect(() => {
     function updateReadingProgress() {
       const scrollTop = window.scrollY;
       const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
@@ -1198,6 +1250,54 @@ export function BookExperience({ book }: BookExperienceProps) {
     };
   }, []);
 
+  async function toggleFavorite() {
+    if (isFavoriteLoading) {
+      return;
+    }
+
+    setIsFavoriteLoading(true);
+
+    try {
+      const supabase = createBrowserSupabaseClient();
+      const { data: userData } = await supabase.auth.getUser();
+
+      if (!userData.user) {
+        router.push("/login");
+        return;
+      }
+
+      if (isFavorite) {
+        const { error } = await supabase
+          .from("user_book_favorites")
+          .delete()
+          .eq("user_id", userData.user.id)
+          .eq("book_id", book.id);
+
+        if (error) {
+          throw error;
+        }
+
+        setIsFavorite(false);
+      } else {
+        const { error } = await supabase.from("user_book_favorites").upsert(
+          {
+            user_id: userData.user.id,
+            book_id: book.id,
+          },
+          { onConflict: "user_id,book_id" },
+        );
+
+        if (error) {
+          throw error;
+        }
+
+        setIsFavorite(true);
+      }
+    } finally {
+      setIsFavoriteLoading(false);
+    }
+  }
+
   return (
     <main className="min-h-screen overflow-x-clip bg-[#03040b] pb-16 pl-[var(--dashboard-sidebar-offset,84px)] text-text-primary transition-[padding] duration-300 ease-out">
       <DashboardSidebar active="home" />
@@ -1221,11 +1321,18 @@ export function BookExperience({ book }: BookExperienceProps) {
               <ArrowLeft aria-hidden="true" size={21} />
             </button>
             <button
-              aria-label="Añadir a favoritos"
-              className="grid h-11 w-11 place-items-center rounded-button border border-white/10 bg-white/[0.045] text-text-primary transition hover:bg-white/[0.08] hover:text-brand-purple"
+              aria-label={isFavorite ? "Quitar de favoritos" : "Añadir a favoritos"}
+              className={cn(
+                "grid h-11 w-11 place-items-center rounded-button border text-text-primary transition hover:bg-white/[0.08] hover:text-brand-purple disabled:cursor-not-allowed disabled:opacity-60",
+                isFavorite
+                  ? "border-brand-purple/50 bg-brand-purple/15 text-brand-purple"
+                  : "border-white/10 bg-white/[0.045]",
+              )}
+              disabled={isFavoriteLoading}
+              onClick={() => void toggleFavorite()}
               type="button"
             >
-              <Heart aria-hidden="true" size={21} />
+              <Heart aria-hidden="true" fill={isFavorite ? "currentColor" : "none"} size={21} />
             </button>
           </div>
           <div className="grid gap-8 lg:grid-cols-[230px_1fr] lg:items-center">

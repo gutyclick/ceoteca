@@ -100,6 +100,20 @@ export type Database = {
         };
         Relationships: [];
       };
+      user_book_favorites: {
+        Row: {
+          id: string;
+          user_id: string;
+          book_id: string;
+          created_at: string;
+        };
+        Insert: {
+          user_id: string;
+          book_id: string;
+        };
+        Update: Record<string, never>;
+        Relationships: [];
+      };
       chat_usage: {
         Row: {
           id: string;
