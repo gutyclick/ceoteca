@@ -13,10 +13,8 @@ import {
   Heart,
   Lock,
   Loader2,
-  MoreHorizontal,
   Pause,
   Play,
-  Share2,
   Sparkles,
   Target,
 } from "lucide-react";
@@ -1212,41 +1210,28 @@ export function BookExperience({ book }: BookExperienceProps) {
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_18%_8%,rgba(124,58,237,0.18),transparent_28%),radial-gradient(circle_at_76%_18%,rgba(79,99,255,0.12),transparent_30%),linear-gradient(180deg,#02030a_0%,#050612_52%,#04040a_100%)]" />
 
       <section className="mx-auto w-full max-w-[1240px] px-5 pt-7 md:px-8">
-        <header className="flex items-center justify-between">
-          <button
-            aria-label="Volver"
-            className="grid h-12 w-12 place-items-center rounded-button border border-white/10 bg-white/[0.035] text-text-primary transition hover:bg-white/[0.07]"
-            onClick={() => router.back()}
-            type="button"
-          >
-            <ArrowLeft aria-hidden="true" size={22} />
-          </button>
-          <div className="flex gap-3">
-            {[
-              [Heart, "Favorito"],
-              [Share2, "Compartir"],
-              [MoreHorizontal, "Más opciones"],
-            ].map(([Icon, label]) => (
-              <button
-                aria-label={label as string}
-                className="grid h-12 w-12 place-items-center rounded-button border border-white/10 bg-white/[0.035] text-text-primary transition hover:bg-white/[0.07] hover:text-brand-purple"
-                key={label as string}
-                type="button"
-              >
-                <Icon aria-hidden="true" size={21} />
-              </button>
-            ))}
+        <div className="relative rounded-[24px] border border-white/10 bg-white/[0.025] p-4 pt-16 shadow-[0_24px_90px_rgba(0,0,0,0.36)] md:p-7 md:pt-16">
+          <div className="absolute left-4 right-4 top-4 flex items-center justify-between md:left-7 md:right-7 md:top-5">
+            <button
+              aria-label="Volver"
+              className="grid h-11 w-11 place-items-center rounded-button border border-white/10 bg-white/[0.045] text-text-primary transition hover:bg-white/[0.08]"
+              onClick={() => router.back()}
+              type="button"
+            >
+              <ArrowLeft aria-hidden="true" size={21} />
+            </button>
+            <button
+              aria-label="Añadir a favoritos"
+              className="grid h-11 w-11 place-items-center rounded-button border border-white/10 bg-white/[0.045] text-text-primary transition hover:bg-white/[0.08] hover:text-brand-purple"
+              type="button"
+            >
+              <Heart aria-hidden="true" size={21} />
+            </button>
           </div>
-        </header>
-
-        <div className="mt-5 rounded-[24px] border border-white/10 bg-white/[0.025] p-4 shadow-[0_24px_90px_rgba(0,0,0,0.36)] md:p-7">
           <div className="grid gap-8 lg:grid-cols-[230px_1fr] lg:items-center">
             <MiniCover book={book} />
             <div>
-              <p className="text-sm font-medium uppercase tracking-[0.22em] text-brand-purple">
-                Análisis Ceoteca · Libro #001
-              </p>
-              <h1 className="mt-4 text-balance text-5xl font-black leading-none text-white md:text-7xl">
+              <h1 className="text-balance text-5xl font-black leading-none text-white md:text-7xl">
                 {getBookDisplayTitle(book)}
               </h1>
               <p className="mt-5 max-w-3xl text-xl leading-8 text-text-primary">
