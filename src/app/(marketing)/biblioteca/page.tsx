@@ -6,7 +6,7 @@ import { createBookRepository } from "@/lib/books/repository";
 export const metadata: Metadata = {
   title: "Biblioteca",
   description:
-    "Explora la biblioteca pública parcial de Ceoteca con análisis editoriales y portadas conceptuales.",
+    "Explora la biblioteca de Ceoteca con análisis editoriales, ejercicios y experiencias interactivas.",
 };
 
 export default async function LibraryPage() {
