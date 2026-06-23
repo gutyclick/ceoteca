@@ -106,8 +106,8 @@ export async function GET(request: NextRequest) {
   const plan = plans[session.user.plan];
   const chatRepository = createChatRepository(session.accessToken);
   const [messages, questionCount] = await Promise.all([
-    chatRepository.listMessages(session.user.id, book.id),
-    chatRepository.getUsage(session.user.id, book.id),
+    chatRepository.listMessages(session.user.id, book.id, context),
+    chatRepository.getUsage(session.user.id, book.id, context),
   ]);
 
   return jsonData({

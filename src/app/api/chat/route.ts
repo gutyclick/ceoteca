@@ -164,7 +164,11 @@ export async function POST(request: NextRequest) {
 
   const plan = plans[session.user.plan];
   const chatRepository = createChatRepository(session.accessToken);
-  const questionCount = await chatRepository.getUsage(session.user.id, book.id);
+  const questionCount = await chatRepository.getUsage(
+    session.user.id,
+    book.id,
+    parsed.data.context,
+  );
 
   if (plan.chatMonthlyLimit !== null && questionCount >= plan.chatMonthlyLimit) {
     return jsonError(
@@ -191,10 +195,15 @@ export async function POST(request: NextRequest) {
             conversation: parsed.data.conversation,
           });
 
-    const nextCount = await chatRepository.incrementUsage(session.user.id, book.id);
+    const nextCount = await chatRepository.incrementUsage(
+      session.user.id,
+      book.id,
+      parsed.data.context,
+    );
     await chatRepository.persistMessages({
       userId: session.user.id,
       bookId: book.id,
+      context: parsed.data.context,
       userMessage: parsed.data.message,
       assistantMessage: result.message,
     });

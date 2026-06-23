@@ -105,6 +105,7 @@ export type Database = {
           id: string;
           user_id: string;
           book_id: string | null;
+          context: "book" | "site";
           month: string;
           question_count: number;
           updated_at: string;
@@ -112,10 +113,12 @@ export type Database = {
         Insert: {
           user_id: string;
           book_id?: string | null;
+          context?: "book" | "site";
           month: string;
           question_count?: number;
         };
         Update: {
+          context?: "book" | "site";
           question_count?: number;
         };
         Relationships: [];
@@ -125,6 +128,7 @@ export type Database = {
           id: string;
           user_id: string;
           book_id: string;
+          context: "book" | "site";
           role: "user" | "assistant";
           content: string;
           created_at: string;
@@ -132,6 +136,7 @@ export type Database = {
         Insert: {
           user_id: string;
           book_id: string;
+          context?: "book" | "site";
           role: "user" | "assistant";
           content: string;
         };
@@ -241,6 +246,7 @@ export type Database = {
           target_user_id: string;
           target_book_id: string;
           target_month: string;
+          target_context?: "book" | "site";
         };
         Returns: number;
       };
