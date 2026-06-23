@@ -93,7 +93,6 @@ export function FloatingBookChat({ book, plan }: FloatingBookChatProps) {
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
-  const [hasLoadedHistory, setHasLoadedHistory] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [remainingQuestions, setRemainingQuestions] = useState<number | null>(null);
   const [suggestionStartIndex, setSuggestionStartIndex] = useState(0);
@@ -112,13 +111,12 @@ export function FloatingBookChat({ book, plan }: FloatingBookChatProps) {
 
   useEffect(() => {
     setMessages([introMessage]);
-    setHasLoadedHistory(false);
     setRemainingQuestions(null);
     setError(null);
   }, [book.slug, introMessage]);
 
   useEffect(() => {
-    if (!isOpen || !hasChatAccess || hasLoadedHistory) {
+    if (!isOpen || !hasChatAccess) {
       return;
     }
 
@@ -155,7 +153,6 @@ export function FloatingBookChat({ book, plan }: FloatingBookChatProps) {
           const historyMessages = payload.data?.messages ?? [];
           setMessages(historyMessages.length > 0 ? historyMessages : [introMessage]);
           setRemainingQuestions(payload.data?.remainingQuestions ?? null);
-          setHasLoadedHistory(true);
           window.setTimeout(() => {
             const scrollArea = scrollAreaRef.current;
 
@@ -172,7 +169,6 @@ export function FloatingBookChat({ book, plan }: FloatingBookChatProps) {
               ? caughtError.message
               : "Ocurrió un error inesperado.",
           );
-          setHasLoadedHistory(true);
         }
       } finally {
         if (isMounted) {
@@ -183,10 +179,21 @@ export function FloatingBookChat({ book, plan }: FloatingBookChatProps) {
 
     void loadHistory();
 
+    function handleVisibilityChange() {
+      if (document.visibilityState === "visible") {
+        void loadHistory();
+      }
+    }
+
+    window.addEventListener("focus", loadHistory);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
     return () => {
       isMounted = false;
+      window.removeEventListener("focus", loadHistory);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [book.slug, hasChatAccess, hasLoadedHistory, introMessage, isOpen]);
+  }, [book.slug, hasChatAccess, introMessage, isOpen]);
 
   useEffect(() => {
     if (!isOpen || !shouldFocusLatestAssistantRef.current) {
