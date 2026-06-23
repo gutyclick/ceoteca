@@ -184,9 +184,9 @@ function MiniCover({
 
 function HeaderControls({ title }: { title: string }) {
   return (
-    <div className="flex items-center justify-between gap-4">
-      <h2 className="text-[22px] font-semibold tracking-normal">{title}</h2>
-      <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <h2 className="text-balance text-[22px] font-semibold tracking-normal">{title}</h2>
+      <div className="flex shrink-0 items-center gap-2">
         <Link className="mr-2 text-sm text-brand-purple" href="/biblioteca">
           Ver todo
         </Link>
@@ -313,22 +313,22 @@ export function HomeView({ books }: HomeViewProps) {
 
   return (
     <main
-      className="min-h-screen overflow-x-hidden bg-[#03040b] pb-16 pl-[var(--dashboard-sidebar-offset,84px)] text-text-primary transition-[padding] duration-300 ease-out"
+      className="min-h-screen overflow-x-clip bg-[#03040b] pb-16 pl-[var(--dashboard-sidebar-offset,84px)] text-text-primary transition-[padding] duration-300 ease-out"
     >
       <DashboardSidebar active="home" />
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_22%_12%,rgba(124,58,237,0.18),transparent_30%),radial-gradient(circle_at_70%_0%,rgba(79,99,255,0.1),transparent_24%),linear-gradient(180deg,#02030a_0%,#050612_42%,#04040a_100%)]" />
 
-      <section className="w-full max-w-[1500px] px-5 pt-4 md:px-8 xl:px-10">
+      <section className="mx-auto w-full max-w-[1500px] px-4 pt-4 sm:px-5 md:px-8 xl:px-10">
         <header className="flex items-center justify-end">
           <NotificationBell />
         </header>
 
-        <section className="mt-7 grid gap-7 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-end">
-          <div className="reveal-up">
+        <section className="mt-7 grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-end">
+          <div className="reveal-up min-w-0">
             <p className="text-lg font-medium text-brand-purple">
               Hola, {firstName}
             </p>
-            <h1 className="mt-5 max-w-[680px] text-balance text-[48px] font-black leading-[0.98] tracking-normal text-white md:text-[66px]">
+            <h1 className="mt-5 max-w-[720px] text-balance text-[clamp(2.25rem,7vw,4.75rem)] font-black leading-[0.98] tracking-normal text-white">
               ¿Qué quieres mejorar{" "}
               <span className="bg-gradient-to-r from-brand-purple to-brand-blue bg-clip-text text-transparent">
                 hoy?
@@ -336,7 +336,7 @@ export function HomeView({ books }: HomeViewProps) {
             </h1>
           </div>
 
-          <Card className="reveal-up h-[164px] rounded-[18px] border-white/10 bg-white/[0.035] p-6 [animation-delay:120ms]">
+          <Card className="reveal-up min-h-[164px] rounded-[18px] border-white/10 bg-white/[0.035] p-5 [animation-delay:120ms] sm:p-6">
             <div className="flex h-full items-start justify-between">
               <div>
                 <p className="text-sm font-semibold">Actividad actual</p>
@@ -363,7 +363,7 @@ export function HomeView({ books }: HomeViewProps) {
           </Card>
         </section>
 
-        <section className="mt-7 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
+        <section className="mt-7 grid grid-cols-[repeat(auto-fit,minmax(min(100%,190px),1fr))] gap-5">
           {categoryCards.map((card, index) => {
             const Icon = categoryIcons[index] ?? LibraryBig;
             const count = getCategoryCount(books, card.title);
@@ -434,7 +434,7 @@ export function HomeView({ books }: HomeViewProps) {
 
         <section className="mt-8">
           <HeaderControls title="Continuar aprendiendo" />
-          <div className="mt-4 grid gap-5 lg:grid-cols-3">
+          <div className="mt-4 grid grid-cols-[repeat(auto-fit,minmax(min(100%,300px),1fr))] gap-5">
             {continueBooks.length > 0 ? (
               continueBooks.map((book, index) => {
               const progress = getSavedBookProgress(accountData.progress, book.id);
@@ -444,7 +444,7 @@ export function HomeView({ books }: HomeViewProps) {
                   className="h-[156px] rounded-[14px] border-white/10 bg-white/[0.035] p-4"
                   key={book.id}
                 >
-                  <div className="grid h-full grid-cols-[88px_1fr_46px] items-center gap-5">
+                  <div className="grid h-full grid-cols-[80px_minmax(0,1fr)_46px] items-center gap-4 sm:grid-cols-[88px_minmax(0,1fr)_46px] sm:gap-5">
                     <MiniCover book={book} className="h-[120px]" index={index} />
                     <div className="min-w-0">
                       <p className="text-lg font-bold">
@@ -475,7 +475,7 @@ export function HomeView({ books }: HomeViewProps) {
               );
               })
             ) : (
-              <Card className="rounded-[14px] border-dashed border-white/15 bg-white/[0.025] p-6 lg:col-span-3">
+              <Card className="rounded-[14px] border-dashed border-white/15 bg-white/[0.025] p-6 md:col-span-full">
                 <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
                   <div>
                     <h3 className="text-xl font-semibold">
@@ -500,11 +500,11 @@ export function HomeView({ books }: HomeViewProps) {
 
         <section className="mt-6">
           <h2 className="text-[22px] font-semibold">Recomendado para ti</h2>
-          <Card className="mt-4 rounded-[14px] border-white/10 bg-white/[0.032] p-5">
-            <div className="grid gap-6 lg:grid-cols-[140px_1.2fr_1fr_280px] lg:items-center">
+          <Card className="mt-4 overflow-hidden rounded-[14px] border-white/10 bg-white/[0.032] p-5">
+            <div className="grid gap-6 md:grid-cols-[130px_minmax(0,1fr)] xl:grid-cols-[140px_minmax(0,1.2fr)_minmax(220px,0.9fr)_240px] xl:items-center">
               <MiniCover
                 book={recommendedBook}
-                className="h-[190px] w-[120px]"
+                className="h-[190px] w-[120px] max-md:mx-auto"
                 index={2}
               />
               <div>
@@ -539,10 +539,10 @@ export function HomeView({ books }: HomeViewProps) {
                   </p>
                 ))}
               </div>
-              <div className="relative min-h-[190px]">
-                <div className="ceoteca-orbit absolute inset-0 opacity-90" />
+              <div className="relative min-h-[190px] md:col-span-2 xl:col-span-1">
+                <div className="ceoteca-orbit absolute inset-0 opacity-75 max-md:hidden" />
                 <Link
-                  className="absolute bottom-0 right-0 inline-flex min-h-14 min-w-52 items-center justify-center gap-3 rounded-button border border-brand-purple/80 bg-brand-purple/20 px-5 text-white shadow-[0_0_32px_rgba(168,85,247,0.42)] transition hover:bg-brand-purple/35"
+                  className="absolute bottom-0 right-0 inline-flex min-h-14 min-w-52 items-center justify-center gap-3 rounded-button border border-brand-purple/80 bg-brand-purple/20 px-5 text-white shadow-[0_0_32px_rgba(168,85,247,0.42)] transition hover:bg-brand-purple/35 max-sm:static max-sm:w-full"
                   href={`/libro/${recommendedBook.slug}`}
                 >
                   Explorar libro
@@ -555,7 +555,7 @@ export function HomeView({ books }: HomeViewProps) {
 
         <section className="mt-6">
           <HeaderControls title="Trending en CEOTECA" />
-          <div className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="mt-4 grid grid-cols-[repeat(auto-fit,minmax(min(100%,210px),1fr))] gap-5">
             {trendingBooks.map((book, index) => (
               <Link href={`/libro/${book.slug}`} key={book.id}>
                 <Card
@@ -597,7 +597,7 @@ export function HomeView({ books }: HomeViewProps) {
 
         <section className="mt-7">
           <HeaderControls title="Colecciones populares" />
-          <div className="mt-4 grid gap-5 md:grid-cols-2 lg:grid-cols-5">
+          <div className="mt-4 grid grid-cols-[repeat(auto-fit,minmax(min(100%,220px),1fr))] gap-5">
             {collectionCards.map(({ title, icon: Icon, category }) => {
               const count = getCategoryCount(books, category);
 
@@ -622,7 +622,7 @@ export function HomeView({ books }: HomeViewProps) {
           </div>
         </section>
 
-        <section className="mt-5 grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
+        <section className="mt-5 grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
           <Card className="rounded-[13px] bg-white/[0.035] p-5">
             <div className="flex items-center justify-between">
               <h2 className="font-semibold">Tu progreso</h2>
@@ -630,7 +630,7 @@ export function HomeView({ books }: HomeViewProps) {
                 Ver estadisticas
               </Link>
             </div>
-            <div className="mt-5 grid grid-cols-2 gap-4 md:grid-cols-4">
+            <div className="mt-5 grid grid-cols-[repeat(auto-fit,minmax(min(100%,140px),1fr))] gap-4">
               {[
                 [`${accountData.progress.length}`, "Libros iniciados", LibraryBig, "text-emerald-300"],
                 [`${completedBooks}`, "Libros completados", CheckCircle2, "text-yellow-300"],
@@ -667,7 +667,7 @@ export function HomeView({ books }: HomeViewProps) {
             <div className="mt-5 grid gap-3 text-sm">
               {continueBooks.length > 0 ? (
                 continueBooks.map((book, index) => (
-                <div className="grid grid-cols-[110px_1fr] gap-3" key={book.id}>
+                <div className="grid gap-2 sm:grid-cols-[110px_minmax(0,1fr)] sm:gap-3" key={book.id}>
                   <p className="flex items-center gap-2 text-text-secondary">
                     <CheckCircle2 aria-hidden="true" className="text-success" size={16} />
                     {getRecentLabel(index)}
