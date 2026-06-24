@@ -6,6 +6,7 @@ import {
   BookOpen,
   Bot,
   CalendarDays,
+  CheckCircle2,
   ChevronRight,
   Crown,
   Flame,
@@ -33,6 +34,8 @@ type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 type ProgressRow = Database["public"]["Tables"]["user_book_progress"]["Row"];
 type SubscriptionRow = Database["public"]["Tables"]["subscriptions"]["Row"];
 type BookRow = Database["public"]["Tables"]["books"]["Row"];
+type ChatMessageRow = Database["public"]["Tables"]["chat_messages"]["Row"];
+type FavoriteRow = Database["public"]["Tables"]["user_book_favorites"]["Row"];
 
 type ProgressItem = ProgressRow & {
   bookTitle: string;
@@ -47,7 +50,17 @@ type ProfileData = {
   subscription: SubscriptionRow | null;
   progress: ProgressItem[];
   chatQuestionsThisMonth: number;
+  activity: ActivityItem[];
   isDemo: boolean;
+};
+
+type ActivityItem = {
+  id: string;
+  href: string;
+  title: string;
+  detail: string;
+  createdAt: string;
+  icon: LucideIcon;
 };
 
 type ViewState =
@@ -76,6 +89,26 @@ function formatDate(value: string | null | undefined) {
   }).format(new Date(value));
 }
 
+function formatRelativeDate(value: string) {
+  const timestamp = new Date(value).getTime();
+  const diffMs = Date.now() - timestamp;
+  const diffDays = Math.max(0, Math.floor(diffMs / 86_400_000));
+
+  if (diffDays === 0) {
+    return "Hoy";
+  }
+
+  if (diffDays === 1) {
+    return "Ayer";
+  }
+
+  if (diffDays < 30) {
+    return `Hace ${diffDays} días`;
+  }
+
+  return formatDate(value);
+}
+
 function getInitials(name: string, email: string) {
   const source = name.trim().length > 0 ? name : email;
   const parts = source.split(/[ @._-]+/).filter(Boolean);
@@ -100,10 +133,66 @@ function getRelativeLevel(averageProgress: number, completedBooks: number) {
   return Math.min(96, Math.max(18, completedBooks * 11 + averageProgress));
 }
 
-function getActiveDays(progress: ProgressItem[]) {
+function getActiveDays(progress: ProgressItem[], activity: ActivityItem[] = []) {
   return new Set(
-    progress.map((item) => new Date(item.updated_at).toISOString().slice(0, 10)),
+    [
+      ...progress.map((item) => item.updated_at),
+      ...activity.map((item) => item.createdAt),
+    ].map((value) => new Date(value).toISOString().slice(0, 10)),
   ).size;
+}
+
+function buildActivityItems({
+  progress,
+  chatMessages,
+  favorites,
+  bookMap,
+}: {
+  progress: ProgressItem[];
+  chatMessages: ChatMessageRow[];
+  favorites: FavoriteRow[];
+  bookMap: Map<string, Pick<BookRow, "title" | "category" | "slug">>;
+}) {
+  const progressItems: ActivityItem[] = progress.map((item) => ({
+    id: `progress-${item.id}`,
+    href: `/libro/${item.bookSlug}`,
+    title: item.completed
+      ? `Completaste ${item.bookTitle}`
+      : `Continuaste ${item.bookTitle}`,
+    detail: `${item.progress}% leído · ${item.bookCategory}`,
+    createdAt: item.updated_at,
+    icon: BookOpen,
+  }));
+
+  const chatItems: ActivityItem[] = chatMessages.map((item) => {
+    const book = bookMap.get(item.book_id);
+
+    return {
+      id: `chat-${item.id}`,
+      href: book ? `/libro/${book.slug}` : "/home",
+      title: book ? `Preguntaste a CEO sobre ${book.title}` : "Preguntaste a CEO",
+      detail: item.content.length > 92 ? `${item.content.slice(0, 92)}...` : item.content,
+      createdAt: item.created_at,
+      icon: Bot,
+    };
+  });
+
+  const favoriteItems: ActivityItem[] = favorites.map((item) => {
+    const book = bookMap.get(item.book_id);
+
+    return {
+      id: `favorite-${item.id}`,
+      href: book ? `/libro/${book.slug}` : "/biblioteca",
+      title: book ? `Guardaste ${book.title}` : "Guardaste un libro",
+      detail: book?.category ?? "Favorito de tu biblioteca",
+      createdAt: item.created_at,
+      icon: Sparkles,
+    };
+  });
+
+  return [...progressItems, ...chatItems, ...favoriteItems]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 8);
 }
 
 function createDemoProfileData(): ProfileData {
@@ -138,7 +227,7 @@ function createDemoProfileData(): ProfileData {
         updated_at: now,
         bookTitle: "Hábitos Atómicos",
         bookCategory: "Productividad",
-        bookSlug: "hábitos-atomicos",
+        bookSlug: "habitos-atomicos",
       },
       {
         id: "progress-2",
@@ -169,6 +258,7 @@ function createDemoProfileData(): ProfileData {
         bookSlug: "padre-rico-padre-pobre",
       },
     ],
+    activity: [],
   };
 }
 
@@ -437,7 +527,7 @@ function MonthlyProgressCard({
   );
 }
 
-function RecentActivityPanel({ progress }: { progress: ProgressItem[] }) {
+function RecentActivityPanel({ activity }: { activity: ActivityItem[] }) {
   return (
     <Card className="rounded-[16px] bg-white/[0.035] p-6">
       <div className="flex items-center justify-between">
@@ -447,27 +537,32 @@ function RecentActivityPanel({ progress }: { progress: ProgressItem[] }) {
         </Link>
       </div>
       <div className="mt-6 grid gap-1">
-        {progress.length > 0 ? (
-          progress.slice(0, 4).map((item, index) => (
-            <Link
-              className="grid grid-cols-[48px_1fr_auto_20px] items-center gap-4 border-b border-white/10 py-4 last:border-b-0"
-              href={`/libro/${item.bookSlug}`}
-              key={item.id}
-            >
-              <span className="grid h-12 w-12 place-items-center rounded-button bg-brand-purple/20 text-brand-purple">
-                <BookOpen aria-hidden="true" size={23} />
-              </span>
-              <span>
-                <span className="block font-medium">
-                  {index === 0 ? "Exploraste" : "Continuaste"} {item.bookTitle}
+        {activity.length > 0 ? (
+          activity.slice(0, 5).map((item) => {
+            const Icon = item.icon;
+
+            return (
+              <Link
+                className="grid grid-cols-[48px_1fr_auto_20px] items-center gap-4 border-b border-white/10 py-4 last:border-b-0"
+                href={item.href}
+                key={item.id}
+              >
+                <span className="grid h-12 w-12 place-items-center rounded-button bg-brand-purple/20 text-brand-purple">
+                  <Icon aria-hidden="true" size={23} />
                 </span>
-              </span>
-              <span className="text-sm text-text-secondary">
-                {index === 0 ? "Hoy" : index === 1 ? "Ayer" : `Hace ${index + 1} días`}
-              </span>
-              <ChevronRight aria-hidden="true" className="text-text-secondary" size={17} />
-            </Link>
-          ))
+                <span className="min-w-0">
+                  <span className="block font-medium">{item.title}</span>
+                  <span className="mt-1 line-clamp-1 block text-sm text-text-secondary">
+                    {item.detail}
+                  </span>
+                </span>
+                <span className="whitespace-nowrap text-sm text-text-secondary">
+                  {formatRelativeDate(item.createdAt)}
+                </span>
+                <ChevronRight aria-hidden="true" className="text-text-secondary" size={17} />
+              </Link>
+            );
+          })
         ) : (
           <div className="rounded-card border border-dashed border-white/15 bg-white/[0.025] p-5 text-sm leading-6 text-text-secondary">
             Aún no hay actividad. Empieza un libro desde la biblioteca.
@@ -477,7 +572,6 @@ function RecentActivityPanel({ progress }: { progress: ProgressItem[] }) {
     </Card>
   );
 }
-
 function UpgradeBanner() {
   return (
     <Card className="rounded-[16px] border-brand-purple/30 bg-gradient-to-r from-brand-purple/25 via-brand-purple/12 to-brand-blue/10 p-6">
@@ -557,7 +651,7 @@ function HelpPanel() {
     <Card className="relative overflow-hidden rounded-[16px] bg-white/[0.035] p-6">
       <div className="absolute bottom-0 right-0 h-36 w-72 bg-brand-purple/20 blur-3xl" />
       <div className="relative z-10">
-        <h2 className="text-2xl font-semibold">Necesitas ayuda?</h2>
+        <h2 className="text-2xl font-semibold">¿Necesitas ayuda?</h2>
         <p className="mt-3 text-sm leading-6 text-text-secondary">
           Visita nuestro centro de ayuda o contactanos.
         </p>
@@ -605,14 +699,15 @@ export function ProfileSettingsView() {
           progressResponse,
           subscriptionResponse,
           usageResponse,
+          chatMessagesResponse,
+          favoritesResponse,
         ] = await Promise.all([
           supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
           supabase
             .from("user_book_progress")
             .select("*")
             .eq("user_id", userId)
-            .order("updated_at", { ascending: false })
-            .limit(8),
+            .order("updated_at", { ascending: false }),
           supabase
             .from("subscriptions")
             .select("*")
@@ -625,10 +720,43 @@ export function ProfileSettingsView() {
             .select("question_count")
             .eq("user_id", userId)
             .eq("month", `${new Date().toISOString().slice(0, 7)}-01`),
+          supabase
+            .from("chat_messages")
+            .select("*")
+            .eq("user_id", userId)
+            .eq("role", "user")
+            .order("created_at", { ascending: false })
+            .limit(8),
+          supabase
+            .from("user_book_favorites")
+            .select("*")
+            .eq("user_id", userId)
+            .order("created_at", { ascending: false })
+            .limit(8),
         ]);
 
         if (profileResponse.error) {
           throw profileResponse.error;
+        }
+
+        if (progressResponse.error) {
+          throw progressResponse.error;
+        }
+
+        if (subscriptionResponse.error) {
+          throw subscriptionResponse.error;
+        }
+
+        if (usageResponse.error) {
+          throw usageResponse.error;
+        }
+
+        if (chatMessagesResponse.error) {
+          throw chatMessagesResponse.error;
+        }
+
+        if (favoritesResponse.error) {
+          throw favoritesResponse.error;
         }
 
         const profile = profileResponse.data;
@@ -641,7 +769,15 @@ export function ProfileSettingsView() {
         }
 
         const progressRows = progressResponse.data ?? [];
-        const bookIds = [...new Set(progressRows.map((item) => item.book_id))];
+        const chatRows = chatMessagesResponse.data ?? [];
+        const favoriteRows = favoritesResponse.data ?? [];
+        const bookIds = [
+          ...new Set([
+            ...progressRows.map((item) => item.book_id),
+            ...chatRows.map((item) => item.book_id),
+            ...favoriteRows.map((item) => item.book_id),
+          ]),
+        ];
         let bookMap = new Map<string, Pick<BookRow, "title" | "category" | "slug">>();
 
         if (bookIds.length > 0) {
@@ -672,6 +808,12 @@ export function ProfileSettingsView() {
             bookSlug: book?.slug ?? "biblioteca",
           };
         });
+        const activity = buildActivityItems({
+          progress,
+          chatMessages: chatRows,
+          favorites: favoriteRows,
+          bookMap,
+        });
 
         if (isMounted) {
           setState({
@@ -682,6 +824,7 @@ export function ProfileSettingsView() {
               profile,
               subscription: subscriptionResponse.data ?? null,
               progress,
+              activity,
               chatQuestionsThisMonth: (usageResponse.data ?? []).reduce(
                 (total, row) => total + row.question_count,
                 0,
@@ -806,9 +949,11 @@ export function ProfileSettingsView() {
   const completedBooks = data.progress.filter((item) => item.completed).length;
   const averageProgress = getAverageProgress(data.progress);
   const relativeLevel = getRelativeLevel(averageProgress, completedBooks);
-  const activeDays = getActiveDays(data.progress);
+  const activeDays = getActiveDays(data.progress, data.activity);
   const initials = getInitials(displayName, data.email);
   const chatLimit = plan.chatMonthlyLimit;
+  const remainingChatQuestions =
+    chatLimit === null ? null : Math.max(0, chatLimit - data.chatQuestionsThisMonth);
   const badges = [
     {
       title: "Primer paso",
@@ -832,7 +977,19 @@ export function ProfileSettingsView() {
       title: "Constante",
       description: "Mantienes actividad de aprendizaje.",
       icon: Flame,
-      unlocked: activeDays > 0,
+      unlocked: activeDays >= 3,
+    },
+    {
+      title: "Finalizador",
+      description: "Completaste tu primer análisis.",
+      icon: CheckCircle2,
+      unlocked: completedBooks > 0,
+    },
+    {
+      title: "Enfoque",
+      description: `Promedio de avance: ${averageProgress}%.`,
+      icon: TrendingUp,
+      unlocked: averageProgress >= 50,
     },
   ];
 
@@ -907,7 +1064,7 @@ export function ProfileSettingsView() {
             value={`${data.progress.length}`}
           />
           <ProfileStatCard
-            detail="Sigue as?, t? puedes"
+            detail="Sigue así, tú puedes"
             icon={LibraryBig}
             label="Libros completados"
             tone="border-emerald-300/20 text-emerald-300"
@@ -922,9 +1079,9 @@ export function ProfileSettingsView() {
           />
           <ProfileStatCard
             detail={
-              chatLimit === null
+              remainingChatQuestions === null
                 ? "Uso razonable incluido"
-                : `${chatLimit} disponibles según tu plan`
+                : `${remainingChatQuestions} preguntas disponibles según tu plan`
             }
             icon={Bot}
             label="Preguntas a la IA este mes"
@@ -938,7 +1095,7 @@ export function ProfileSettingsView() {
             progress={data.progress}
             relativeLevel={relativeLevel}
           />
-          <RecentActivityPanel progress={data.progress} />
+          <RecentActivityPanel activity={data.activity} />
         </section>
 
         <section className="mt-5">

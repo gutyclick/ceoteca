@@ -1122,8 +1122,10 @@ export function BookExperience({ book }: BookExperienceProps) {
   const [isPlanLoading, setIsPlanLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
   const [isFavoriteLoading, setIsFavoriteLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
   const [readingProgress, setReadingProgress] = useState(0);
   const [activeSection, setActiveSection] = useState<string>(articleNav[0].href);
+  const persistedProgressRef = useRef(0);
   const canUseAudio = currentPlan ? canAccessFeature(currentPlan, "audio") : false;
   const canUseChat = currentPlan ? canAccessFeature(currentPlan, "chat") : false;
   const isDisciplined = book.slug === "disciplined-entrepreneurship";
@@ -1139,8 +1141,13 @@ export function BookExperience({ book }: BookExperienceProps) {
         if (!userData.user) {
           if (isMounted) {
             setCurrentPlan("free");
+            setUserId(null);
           }
           return;
+        }
+
+        if (isMounted) {
+          setUserId(userData.user.id);
         }
 
         const { data } = await supabase
@@ -1170,6 +1177,79 @@ export function BookExperience({ book }: BookExperienceProps) {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!userId) {
+      return;
+    }
+
+    let isMounted = true;
+    const currentUserId = userId;
+
+    async function loadSavedProgress() {
+      const supabase = createBrowserSupabaseClient();
+      const { data, error } = await supabase
+        .from("user_book_progress")
+        .select("progress")
+        .eq("user_id", currentUserId)
+        .eq("book_id", book.id)
+        .maybeSingle();
+
+      if (error || !isMounted) {
+        return;
+      }
+
+      const savedProgress = data?.progress ?? 0;
+      persistedProgressRef.current = savedProgress;
+      setReadingProgress((current) => Math.max(current, savedProgress));
+    }
+
+    void loadSavedProgress();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [book.id, userId]);
+
+  useEffect(() => {
+    if (!userId) {
+      return;
+    }
+
+    const nextProgress = Math.max(readingProgress, persistedProgressRef.current);
+    const shouldPersist =
+      nextProgress >= 98 ||
+      persistedProgressRef.current === 0 ||
+      nextProgress - persistedProgressRef.current >= 5;
+
+    if (!shouldPersist) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(async () => {
+      const isCompleted = nextProgress >= 98;
+      const supabase = createBrowserSupabaseClient();
+      const { error } = await supabase.from("user_book_progress").upsert(
+        {
+          user_id: userId,
+          book_id: book.id,
+          progress: isCompleted ? 100 : nextProgress,
+          completed: isCompleted,
+          last_section_id: activeSection.replace("#", ""),
+          completed_at: isCompleted ? new Date().toISOString() : null,
+        },
+        { onConflict: "user_id,book_id" },
+      );
+
+      if (!error) {
+        persistedProgressRef.current = isCompleted ? 100 : nextProgress;
+      }
+    }, 750);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [activeSection, book.id, readingProgress, userId]);
 
   useEffect(() => {
     let isMounted = true;
