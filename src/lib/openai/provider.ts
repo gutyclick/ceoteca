@@ -1,4 +1,4 @@
-import OpenAI from "openai";
+﻿import OpenAI from "openai";
 
 import { clientEnv, serverEnv } from "@/lib/env";
 import { MockAIProvider } from "@/lib/openai/mock";
@@ -14,7 +14,7 @@ const MAX_CONTEXT_CHARACTERS = 11_000;
 
 function requireOpenAIConfig() {
   if (!serverEnv.OPENAI_API_KEY || !serverEnv.OPENAI_CHAT_MODEL) {
-    throw new Error("OpenAI no está configurado para modo real.");
+    throw new Error("OpenAI no estÃ¡ configurado para modo real.");
   }
 
   return {
@@ -28,7 +28,7 @@ function truncateContext(value: string) {
     return value;
   }
 
-  return `${value.slice(0, MAX_CONTEXT_CHARACTERS)}\n\n[Contexto recortado por límite técnico.]`;
+  return `${value.slice(0, MAX_CONTEXT_CHARACTERS)}\n\n[Contexto recortado por lÃ­mite tÃ©cnico.]`;
 }
 
 function formatConversation(conversation: BookChatInput["conversation"]) {
@@ -45,21 +45,23 @@ function formatBookContext(book: Book) {
   const keyPoints = book.keyPoints
     .map(
       (point) =>
-        `- ${point.number}. ${point.title}: ${point.explanation} Acción sugerida: ${point.action} Limitación: ${point.limitation}`,
+        `- ${point.number}. ${point.title}: ${point.explanation} AcciÃ³n sugerida: ${point.action} LimitaciÃ³n: ${point.limitation}`,
     )
     .join("\n");
   const activities = book.activities
     .map((activity) => `- ${activity.title}: ${activity.prompt}`)
     .join("\n");
 
-  return truncateContext(`Libro: ${book.title}
+  return truncateContext(`Contexto de libro autorizado por Ceoteca.
+
+Libro: ${book.title}
 Autor: ${book.author}
-Categoría: ${book.category}
+CategorÃ­a: ${book.category}
 Dificultad: ${book.difficulty}
-Descripción editorial: ${book.description}
+DescripciÃ³n editorial: ${book.description}
 Etiquetas: ${book.tags.join(", ")}
 
-Secciones del análisis editorial:
+Secciones del anÃ¡lisis editorial:
 ${sections}
 
 Ideas clave:
@@ -68,39 +70,41 @@ ${keyPoints}
 Ejercicios disponibles:
 ${activities}
 
-Conclusión editorial:
+ConclusiÃ³n editorial:
 ${book.conclusion}`);
 }
 
 function formatSiteContext(books: Book[]) {
-  return truncateContext(
-    books
-      .map(
-        (book) => `- ${book.title} (${book.author})
+  const catalog = books
+    .map(
+      (book) => `- ${book.title} (${book.author})
   Categoría: ${book.category}
   Descripción: ${book.description}
   Etiquetas: ${book.tags.join(", ")}
   Ideas clave: ${book.keyPoints.map((point) => point.title).join("; ")}
   Compra legal: ${book.purchaseUrl ?? "No disponible en Ceoteca"}`,
-      )
-      .join("\n\n"),
-  );
+    )
+    .join("\n\n");
+
+  return truncateContext(`Catálogo autorizado de Ceoteca. Solo recomienda como parte de Ceoteca los libros de esta lista.
+
+${catalog}`);
 }
 
 function baseInstructions() {
-  return `Tu nombre es CEO. Eres la IA de Ceoteca, una plataforma educativa en español con análisis editoriales propios de libros.
+  return `Tu nombre es CEO. Eres la IA de Ceoteca, una plataforma educativa en espaÃ±ol con anÃ¡lisis editoriales propios de libros.
 
 Reglas obligatorias:
-- Responde siempre en español claro, profesional y práctico.
-- Preséntate como CEO si el usuario pregunta tu nombre.
+- Responde siempre en espaÃ±ol claro, profesional y prÃ¡ctico.
+- PresÃ©ntate como CEO si el usuario pregunta tu nombre.
 - Formatea las respuestas con encabezados breves, listas numeradas o bullets cuando ayuden a leer mejor.
 - No digas que Ceoteca reemplaza libros completos.
-- Presenta Ceoteca como complemento de lectura y aplicación práctica.
-- No reproduzcas capítulos, textos extensos, citas largas ni contenido protegido de libros.
+- Presenta Ceoteca como complemento de lectura y aplicaciÃ³n prÃ¡ctica.
+- No reproduzcas capÃ­tulos, textos extensos, citas largas ni contenido protegido de libros.
 - No inventes citas textuales ni atribuyas frases exactas a autores.
-- Si recomiendas comprar un libro, recomienda hacerlo mediante librerías reconocidas, editoriales oficiales o tiendas legales.
-- Si la pregunta sale de Ceoteca, lectura, productividad, hábitos, mentalidad, desarrollo personal, liderazgo, finanzas personales o recomendaciones del catálogo, redirige con amabilidad al alcance permitido.
-- Sé concreto: ofrece próximos pasos, ejercicios, rutas o criterios de decisión.
+- Si recomiendas comprar un libro, recomienda hacerlo mediante librerÃ­as reconocidas, editoriales oficiales o tiendas legales.
+- Si la pregunta sale de Ceoteca, lectura, productividad, hÃ¡bitos, mentalidad, desarrollo personal, liderazgo, finanzas personales o recomendaciones del catÃ¡logo, redirige con amabilidad al alcance permitido.
+- SÃ© concreto: ofrece prÃ³ximos pasos, ejercicios, rutas o criterios de decisiÃ³n.
 - Si no tienes suficiente contexto, dilo y sugiere una pregunta mejor.`;
 }
 
@@ -125,10 +129,12 @@ class OpenAIProvider implements AIProvider {
           role: "developer",
           content: `${baseInstructions()}
 
-Alcance específico:
-- Responde solo con base en el análisis editorial proporcionado.
-- Puedes explicar ideas clave, limitaciones, ejercicios y aplicación práctica.
-- Si el usuario pide un resumen largo o contenido que sustituya la obra, ofrece una orientación breve y recomienda leer el libro completo.
+Alcance especÃ­fico:
+- Responde solo con base en el anÃ¡lisis editorial proporcionado.
+- Puedes explicar ideas clave, limitaciones, ejercicios y aplicaciÃ³n prÃ¡ctica.
+- Puedes convertir el contenido en un plan, checklist, reflexiÃ³n, pregunta de quiz o siguiente paso.
+- Si el usuario pregunta algo no cubierto por este anÃ¡lisis, dilo con claridad y ofrece una forma de conectarlo con el contenido disponible.
+- Si el usuario pide un resumen largo o contenido que sustituya la obra, ofrece una orientaciÃ³n breve y recomienda leer el libro completo.
 
 Contexto autorizado:
 ${formatBookContext(input.book)}`,
@@ -145,7 +151,7 @@ ${formatBookContext(input.book)}`,
     return {
       message:
         response.output_text.trim() ||
-        "No pude generar una respuesta útil en este momento.",
+        "No pude generar una respuesta Ãºtil en este momento.",
     };
   }
 
@@ -159,13 +165,15 @@ ${formatBookContext(input.book)}`,
           role: "developer",
           content: `${baseInstructions()}
 
-Alcance específico:
-- Puedes recomendar análisis del catálogo de Ceoteca.
-- Puedes sugerir rutas de lectura, hábitos de lectura, productividad general, mentalidad y desarrollo personal.
-- Puedes orientar sobre dónde comprar libros completos de forma legal.
-- No afirmes que un libro existe en Ceoteca si no aparece en el catálogo autorizado.
+Alcance especÃ­fico:
+- Puedes recomendar anÃ¡lisis del catÃ¡logo de Ceoteca.
+- Puedes sugerir rutas de lectura, hÃ¡bitos de lectura, productividad general, mentalidad y desarrollo personal.
+- Puedes orientar sobre dÃ³nde comprar libros completos de forma legal.
+- No afirmes que un libro existe en Ceoteca si no aparece en el catÃ¡logo autorizado.
+- Si recomiendas un libro fuera de Ceoteca, aclara que no forma parte del catÃ¡logo actual y sugiere buscarlo en tiendas o bibliotecas legales.
+- Prioriza respuestas accionables: criterio de elecciÃ³n, ruta de lectura, ejercicio o siguiente paso.
 
-Catálogo autorizado:
+CatÃ¡logo autorizado:
 ${formatSiteContext(input.books)}`,
         },
         ...formatConversation(input.conversation),
@@ -180,7 +188,7 @@ ${formatSiteContext(input.books)}`,
     return {
       message:
         response.output_text.trim() ||
-        "No pude generar una respuesta útil en este momento.",
+        "No pude generar una respuesta Ãºtil en este momento.",
     };
   }
 }
@@ -192,3 +200,4 @@ export function createAIProvider(): AIProvider {
 
   return new OpenAIProvider();
 }
+

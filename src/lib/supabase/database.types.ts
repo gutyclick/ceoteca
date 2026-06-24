@@ -157,6 +157,38 @@ export type Database = {
         Update: Record<string, never>;
         Relationships: [];
       };
+      chat_events: {
+        Row: {
+          id: string;
+          user_id: string;
+          book_id: string | null;
+          context: "book" | "site";
+          event_type:
+            | "moderation_block"
+            | "limit_reached"
+            | "provider_error"
+            | "validation_error";
+          code: string;
+          message: string | null;
+          metadata: Json;
+          created_at: string;
+        };
+        Insert: {
+          user_id: string;
+          book_id?: string | null;
+          context?: "book" | "site";
+          event_type:
+            | "moderation_block"
+            | "limit_reached"
+            | "provider_error"
+            | "validation_error";
+          code: string;
+          message?: string | null;
+          metadata?: Json;
+        };
+        Update: Record<string, never>;
+        Relationships: [];
+      };
       subscriptions: {
         Row: {
           id: string;

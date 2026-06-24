@@ -12,10 +12,28 @@ export type PersistChatInput = {
   assistantMessage: string;
 };
 
+export type ChatEventType =
+  | "moderation_block"
+  | "limit_reached"
+  | "provider_error"
+  | "validation_error";
+
+export type LogChatEventInput = {
+  userId: string;
+  bookId: string | null;
+  context: ChatContext;
+  eventType: ChatEventType;
+  code: string;
+  message?: string;
+  metadata?: Record<string, string | number | boolean | null>;
+};
+
 export interface ChatRepository {
   getUsage(userId: string, bookId: string, context: ChatContext): Promise<number>;
+  getMonthlyUsage(userId: string, context?: ChatContext): Promise<number>;
   incrementUsage(userId: string, bookId: string, context: ChatContext): Promise<number>;
   persistMessages(input: PersistChatInput): Promise<void>;
+  logEvent(input: LogChatEventInput): Promise<void>;
   listMessages(
     userId: string,
     bookId: string,
@@ -30,6 +48,15 @@ export class MockChatRepository implements ChatRepository {
   async getUsage(userId: string, bookId: string, context: ChatContext): Promise<number> {
     const key = `${userId}:${context}:${bookId}:${new Date().toISOString().slice(0, 7)}`;
     return mockUsage.get(key) ?? 0;
+  }
+
+  async getMonthlyUsage(userId: string, context?: ChatContext): Promise<number> {
+    const month = new Date().toISOString().slice(0, 7);
+    const prefix = context ? `${userId}:${context}:` : `${userId}:`;
+
+    return Array.from(mockUsage.entries()).reduce((total, [key, value]) => {
+      return key.startsWith(prefix) && key.endsWith(month) ? total + value : total;
+    }, 0);
   }
 
   async incrementUsage(userId: string, bookId: string, context: ChatContext): Promise<number> {
@@ -47,6 +74,10 @@ export class MockChatRepository implements ChatRepository {
       { role: "user", content: input.userMessage },
       { role: "assistant", content: input.assistantMessage },
     ]);
+  }
+
+  async logEvent(): Promise<void> {
+    return;
   }
 
   async listMessages(
@@ -80,6 +111,31 @@ export class SupabaseChatRepository implements ChatRepository {
     }
 
     return data?.question_count ?? 0;
+  }
+
+  async getMonthlyUsage(userId: string, context?: ChatContext): Promise<number> {
+    const supabase = this.getClient();
+    const month = `${new Date().toISOString().slice(0, 7)}-01`;
+    let query = supabase
+      .from("chat_usage")
+      .select("question_count")
+      .eq("user_id", userId)
+      .eq("month", month);
+
+    if (context) {
+      query = query.eq("context", context);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return (data ?? []).reduce(
+      (total, item) => total + item.question_count,
+      0,
+    );
   }
 
   async incrementUsage(userId: string, bookId: string, context: ChatContext): Promise<number> {
@@ -126,6 +182,23 @@ export class SupabaseChatRepository implements ChatRepository {
 
     if (error) {
       throw new Error(error.message);
+    }
+  }
+
+  async logEvent(input: LogChatEventInput): Promise<void> {
+    const supabase = this.getClient();
+    const { error } = await supabase.from("chat_events").insert({
+      user_id: input.userId,
+      book_id: input.bookId,
+      context: input.context,
+      event_type: input.eventType,
+      code: input.code,
+      message: input.message ?? null,
+      metadata: input.metadata ?? {},
+    });
+
+    if (error) {
+      console.error("Chat event logging failed", error);
     }
   }
 

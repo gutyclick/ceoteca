@@ -5,6 +5,7 @@ import { plans } from "@/config/plans";
 import { jsonData, jsonError } from "@/lib/api/response";
 import { demoUser } from "@/lib/auth/demo";
 import { createBookRepository } from "@/lib/books/repository";
+import { moderateChatMessage } from "@/lib/chat/moderation";
 import { createChatRepository } from "@/lib/chat/repository";
 import { clientEnv } from "@/lib/env";
 import { createAIProvider } from "@/lib/openai/provider";
@@ -164,13 +165,27 @@ export async function POST(request: NextRequest) {
 
   const plan = plans[session.user.plan];
   const chatRepository = createChatRepository(session.accessToken);
-  const questionCount = await chatRepository.getUsage(
+  const monthlyQuestionCount = await chatRepository.getMonthlyUsage(
     session.user.id,
-    book.id,
-    parsed.data.context,
   );
 
-  if (plan.chatMonthlyLimit !== null && questionCount >= plan.chatMonthlyLimit) {
+  if (
+    plan.chatMonthlyLimit !== null &&
+    monthlyQuestionCount >= plan.chatMonthlyLimit
+  ) {
+    await chatRepository.logEvent({
+      userId: session.user.id,
+      bookId: book.id,
+      context: parsed.data.context,
+      eventType: "limit_reached",
+      code: "MONTHLY_LIMIT_REACHED",
+      message: "Monthly chat limit reached",
+      metadata: {
+        limit: plan.chatMonthlyLimit,
+        questionCount: monthlyQuestionCount,
+      },
+    });
+
     return jsonError(
       {
         code: "MONTHLY_LIMIT_REACHED",
@@ -180,26 +195,63 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const moderation = moderateChatMessage(
+    parsed.data.message,
+    parsed.data.context,
+  );
+
+  if (!moderation.allowed) {
+    await chatRepository.logEvent({
+      userId: session.user.id,
+      bookId: book.id,
+      context: parsed.data.context,
+      eventType: "moderation_block",
+      code: moderation.code,
+      message: moderation.reason,
+      metadata: {
+        messageLength: parsed.data.message.length,
+      },
+    });
+
+    return jsonError(
+      {
+        code: "MESSAGE_BLOCKED",
+        message: moderation.reason,
+      },
+      400,
+    );
+  }
+
   try {
     const provider = createAIProvider();
+    const storedConversation = await chatRepository.listMessages(
+      session.user.id,
+      book.id,
+      parsed.data.context,
+    );
+    const trustedConversation =
+      storedConversation.length > 0
+        ? storedConversation.slice(-12)
+        : parsed.data.conversation;
     const result =
       parsed.data.context === "site"
         ? await provider.answerSiteQuestion({
             books,
             message: parsed.data.message,
-            conversation: parsed.data.conversation,
+            conversation: trustedConversation,
           })
         : await provider.answerBookQuestion({
             book,
             message: parsed.data.message,
-            conversation: parsed.data.conversation,
+            conversation: trustedConversation,
           });
 
-    const nextCount = await chatRepository.incrementUsage(
+    await chatRepository.incrementUsage(
       session.user.id,
       book.id,
       parsed.data.context,
     );
+    const nextMonthlyCount = monthlyQuestionCount + 1;
     await chatRepository.persistMessages({
       userId: session.user.id,
       bookId: book.id,
@@ -213,14 +265,28 @@ export async function POST(request: NextRequest) {
       remainingQuestions:
         plan.chatMonthlyLimit === null
           ? null
-          : Math.max(plan.chatMonthlyLimit - nextCount, 0),
+          : Math.max(plan.chatMonthlyLimit - nextMonthlyCount, 0),
       usage: {
-        questionCount: nextCount,
+        questionCount: nextMonthlyCount,
         limit: plan.chatMonthlyLimit,
       },
     });
   } catch (caughtError) {
     console.error("Chat request failed", caughtError);
+    await chatRepository.logEvent({
+      userId: session.user.id,
+      bookId: book.id,
+      context: parsed.data.context,
+      eventType: "provider_error",
+      code: "CHAT_RESPONSE_FAILED",
+      message:
+        caughtError instanceof Error
+          ? caughtError.message.slice(0, 500)
+          : "Unknown provider error",
+      metadata: {
+        context: parsed.data.context,
+      },
+    });
 
     return jsonError(
       {
