@@ -125,20 +125,15 @@ function LibraryBookTile({
 function CategoryShelf({
   books,
   category,
-  isPublic = false,
-  limit,
   onFilter,
 }: {
   books: Book[];
   category: BookCategory;
-  isPublic?: boolean;
-  limit?: number;
   onFilter?: (category: BookCategory) => void;
 }) {
   const categoryBooks = books.filter((book) => book.category === category);
-  const visibleBooks = limit ? categoryBooks.slice(0, limit) : categoryBooks;
 
-  if (visibleBooks.length === 0) {
+  if (categoryBooks.length === 0) {
     return null;
   }
 
@@ -159,26 +154,51 @@ function CategoryShelf({
           >
             Ver solo esta categoría
           </button>
-        ) : isPublic ? (
-          <Link
-            className="shrink-0 text-sm text-brand-purple transition hover:text-white"
-            href="/registro"
-          >
-            Ver más
-          </Link>
         ) : null}
       </div>
       <div className="mt-4 grid grid-cols-[repeat(auto-fill,minmax(132px,1fr))] gap-x-4 gap-y-8 sm:grid-cols-[repeat(auto-fill,minmax(150px,1fr))] lg:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] xl:grid-cols-[repeat(auto-fill,minmax(170px,1fr))]">
-        {visibleBooks.map((book) => (
-          <LibraryBookTile
-            book={book}
-            href={isPublic ? "/registro" : `/libro/${book.slug}`}
-            key={book.id}
-            locked={isPublic}
-          />
+        {categoryBooks.map((book) => (
+          <LibraryBookTile book={book} href={`/libro/${book.slug}`} key={book.id} />
         ))}
       </div>
     </section>
+  );
+}
+
+function PublicBookCarousel({ books }: { books: Book[] }) {
+  const carouselBooks = books.slice(0, 8);
+  const radius = 270;
+
+  if (carouselBooks.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="relative mx-auto mt-12 h-[390px] w-full max-w-[860px] overflow-hidden [perspective:1200px] sm:h-[430px]">
+      <div className="absolute inset-x-0 bottom-6 mx-auto h-20 w-[min(82vw,560px)] rounded-full bg-brand-purple/20 blur-3xl" />
+      <div className="absolute left-1/2 top-1/2 h-[220px] w-[150px] -translate-x-1/2 -translate-y-1/2 sm:h-[250px] sm:w-[170px]">
+        <div className="book-carousel-3d relative h-full w-full">
+          {carouselBooks.map((book, index) => {
+            const angle = (360 / carouselBooks.length) * index;
+
+            return (
+              <Link
+                className="group absolute inset-0 block"
+                href="/registro"
+                key={book.id}
+                style={{
+                  transform: `rotateY(${angle}deg) translateZ(${radius}px)`,
+                }}
+              >
+                <ShelfCover book={book} />
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+      <div className="pointer-events-none absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-[#03040b] to-transparent" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-[#03040b] to-transparent" />
+    </div>
   );
 }
 
@@ -201,17 +221,20 @@ function LoadingLibrary() {
 }
 
 function PublicLibrary({ books }: { books: Book[] }) {
-  const categories = getBookCategories();
-  const previewCategories = categories.filter((category) =>
+  const availableCategories = getBookCategories().filter((category) =>
     books.some((book) => book.category === category),
   );
+  const previewBooks = books.slice(0, 10);
 
   return (
     <main className="min-h-screen overflow-x-clip bg-[#03040b] text-text-primary">
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_24%_12%,rgba(124,58,237,0.18),transparent_30%),linear-gradient(180deg,#02030a_0%,#050611_48%,#03040b_100%)]" />
       <header className="mx-auto flex w-full max-w-[1440px] items-center justify-between px-5 py-5 sm:px-8">
         <Logo />
-        <nav className="hidden items-center gap-3 sm:flex" aria-label="Biblioteca pública">
+        <nav
+          className="hidden items-center gap-3 sm:flex"
+          aria-label="Biblioteca pública"
+        >
           <ButtonLink href="/pricing" variant="ghost">
             Precios
           </ButtonLink>
@@ -222,40 +245,57 @@ function PublicLibrary({ books }: { books: Book[] }) {
         </nav>
       </header>
 
-      <section className="mx-auto w-full max-w-[1440px] px-5 pb-10 pt-6 sm:px-8 lg:pt-12">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div className="min-w-0">
-            <p className="text-base font-medium text-brand-purple">
-              Biblioteca Ceoteca
-            </p>
-            <h1 className="mt-4 max-w-4xl text-balance text-[clamp(2.4rem,6vw,5rem)] font-black leading-[0.98] tracking-normal">
-              Explora análisis para aprender y aplicar mejor.
-            </h1>
-            <p className="mt-5 max-w-2xl text-base leading-8 text-text-secondary sm:text-lg">
-              Vista previa de títulos editoriales propios. Cada libro muestra
-              ideas clave, ejercicios, audio según plan y chat contextual.
-            </p>
-          </div>
-          <Card className="w-full rounded-[20px] bg-white/[0.035] p-5 lg:max-w-sm">
-            <p className="text-sm text-text-secondary">Catálogo actual</p>
-            <p className="mt-3 text-5xl font-bold">{books.length}</p>
-            <p className="mt-2 text-sm text-text-secondary">
-              análisis organizados por categoría.
-            </p>
-          </Card>
+      <section className="mx-auto flex w-full max-w-[1180px] flex-col items-center px-5 pb-12 pt-8 text-center sm:px-8 lg:pt-14">
+        <p className="text-base font-medium text-brand-purple">
+          Biblioteca Ceoteca
+        </p>
+        <h1 className="mt-4 max-w-4xl text-balance text-[clamp(2.55rem,7vw,5.8rem)] font-black leading-[0.94] tracking-normal">
+          Una muestra de ideas para convertir lectura en acción.
+        </h1>
+        <p className="mt-6 max-w-2xl text-base leading-8 text-text-secondary sm:text-lg">
+          Explora algunos análisis editoriales propios. Al crear tu cuenta
+          podrás acceder al catálogo completo, ejercicios, audio según plan y
+          chat contextual por libro.
+        </p>
+        <div className="mt-8 flex w-full max-w-md flex-col justify-center gap-3 sm:flex-row">
+          <ButtonLink className="sm:min-w-44" href="/registro">
+            Crear cuenta gratis
+          </ButtonLink>
+          <ButtonLink className="sm:min-w-44" href="/login" variant="secondary">
+            Ya tengo cuenta
+          </ButtonLink>
+        </div>
+
+        <PublicBookCarousel books={books} />
+
+        <div className="mt-2 flex flex-wrap justify-center gap-2 text-xs text-text-secondary">
+          <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5">
+            {books.length} análisis publicados
+          </span>
+          <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5">
+            {availableCategories.length} categorías
+          </span>
+          <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5">
+            Chat contextual
+          </span>
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-[1440px] space-y-12 px-5 pb-20 sm:px-8">
-        {previewCategories.map((category) => (
-          <CategoryShelf
-            books={books}
-            category={category}
-            isPublic
-            key={category}
-            limit={7}
-          />
-        ))}
+      <section className="mx-auto w-full max-w-[1180px] px-5 pb-20 sm:px-8">
+        <div className="flex flex-col items-center gap-2 text-center">
+          <p className="text-sm font-medium uppercase tracking-[0.22em] text-brand-purple">
+            Vista previa
+          </p>
+          <h2 className="text-3xl font-semibold">Algunos libros disponibles</h2>
+          <p className="max-w-2xl text-sm leading-6 text-text-secondary">
+            Cada tarjeta incluye título, autor y tiempo estimado de lectura.
+          </p>
+        </div>
+        <div className="mt-8 grid grid-cols-[repeat(auto-fill,minmax(132px,1fr))] gap-x-5 gap-y-9 sm:grid-cols-[repeat(auto-fill,minmax(150px,1fr))] lg:grid-cols-[repeat(auto-fill,minmax(165px,1fr))]">
+          {previewBooks.map((book) => (
+            <LibraryBookTile book={book} href="/registro" key={book.id} locked />
+          ))}
+        </div>
       </section>
     </main>
   );
@@ -343,7 +383,9 @@ function PrivateLibrary({ books }: { books: Book[] }) {
           <Card className="w-full rounded-[18px] bg-white/[0.035] p-5 lg:max-w-xs">
             <p className="text-sm text-text-secondary">Disponibles</p>
             <p className="mt-2 text-4xl font-bold">{books.length}</p>
-            <p className="mt-1 text-sm text-text-secondary">análisis publicados</p>
+            <p className="mt-1 text-sm text-text-secondary">
+              análisis publicados
+            </p>
           </Card>
         </section>
 

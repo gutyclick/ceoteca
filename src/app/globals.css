@@ -102,6 +102,15 @@ a {
   animation: reveal-up 700ms ease both;
 }
 
+.book-carousel-3d {
+  animation: book-carousel-spin 28s linear infinite;
+  transform-style: preserve-3d;
+}
+
+.book-carousel-3d:hover {
+  animation-play-state: paused;
+}
+
 .ceoteca-orbit {
   border-radius: 999px;
   background:
@@ -191,5 +200,15 @@ a {
 
   to {
     transform: rotate(360deg) translateX(18px) rotate(-360deg);
+  }
+}
+
+@keyframes book-carousel-spin {
+  from {
+    transform: rotateY(0deg);
+  }
+
+  to {
+    transform: rotateY(-360deg);
   }
 }
