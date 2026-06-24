@@ -3,7 +3,7 @@
 import { Chrome, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { ZodError } from "zod";
 
@@ -53,6 +53,29 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
   const [status, setStatus] = useState<FormStatus>({ type: "idle" });
   const authProvider = useMemo(() => createAuthProvider(), []);
   const isRegister = mode === "register";
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function redirectActiveSession() {
+      if (isRegister) {
+        return;
+      }
+
+      const user = await authProvider.getCurrentUser();
+
+      if (isMounted && user) {
+        router.replace("/home");
+        router.refresh();
+      }
+    }
+
+    void redirectActiveSession();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [authProvider, isRegister, router]);
 
   const {
     formState: { errors, isSubmitting },
