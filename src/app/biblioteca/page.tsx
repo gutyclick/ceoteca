@@ -4,9 +4,9 @@ import { PublicLibraryView } from "@/components/books/PublicLibraryView";
 import { createBookRepository } from "@/lib/books/repository";
 
 export const metadata: Metadata = {
-  title: "Biblioteca",
+  title: "Biblioteca de análisis de libros",
   description:
-    "Explora la biblioteca de Ceoteca con análisis editoriales, ejercicios y experiencias interactivas.",
+    "Explora análisis de libros de negocios, finanzas, productividad, liderazgo y desarrollo personal con ideas clave, ejercicios prácticos y aprendizaje aplicado.",
 };
 
 export default async function LibraryPage() {

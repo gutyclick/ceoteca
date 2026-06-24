@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -113,7 +113,7 @@ function LibraryBookTile({
           <span>{book.readingTime} min</span>
           {locked ? (
             <span className="ml-auto rounded-full bg-brand-purple/15 px-2 py-0.5 text-[10px] text-brand-purple">
-              Preview
+              Vista previa
             </span>
           ) : null}
         </div>
@@ -250,12 +250,13 @@ function PublicLibrary({ books }: { books: Book[] }) {
           Biblioteca Ceoteca
         </p>
         <h1 className="mt-4 max-w-4xl text-balance text-[clamp(2.55rem,7vw,5.8rem)] font-black leading-[0.94] tracking-normal">
-          Una muestra de ideas para convertir lectura en acción.
+          Análisis de libros para aprender ideas clave y aplicarlas mejor.
         </h1>
         <p className="mt-6 max-w-2xl text-base leading-8 text-text-secondary sm:text-lg">
-          Explora algunos análisis editoriales propios. Al crear tu cuenta
-          podrás acceder al catálogo completo, ejercicios, audio según plan y
-          chat contextual por libro.
+          Explora análisis editoriales de negocios, finanzas, productividad,
+          liderazgo y desarrollo personal. Ceoteca complementa tus lecturas con
+          ideas clave, ejercicios prácticos y rutas para convertir conocimiento
+          en acción.
         </p>
         <div className="mt-8 flex w-full max-w-md flex-col justify-center gap-3 sm:flex-row">
           <ButtonLink className="sm:min-w-44" href="/registro">
@@ -286,9 +287,9 @@ function PublicLibrary({ books }: { books: Book[] }) {
           <p className="text-sm font-medium uppercase tracking-[0.22em] text-brand-purple">
             Vista previa
           </p>
-          <h2 className="text-3xl font-semibold">Algunos libros disponibles</h2>
+          <h2 className="text-3xl font-semibold">Explora algunos análisis destacados</h2>
           <p className="max-w-2xl text-sm leading-6 text-text-secondary">
-            Cada tarjeta incluye título, autor y tiempo estimado de lectura.
+            Encuentra títulos seleccionados para mejorar tus decisiones, hábitos, finanzas y forma de trabajar.
           </p>
         </div>
         <div className="mt-8 grid grid-cols-[repeat(auto-fill,minmax(132px,1fr))] gap-x-5 gap-y-9 sm:grid-cols-[repeat(auto-fill,minmax(150px,1fr))] lg:grid-cols-[repeat(auto-fill,minmax(165px,1fr))]">
@@ -531,3 +532,4 @@ export function PublicLibraryView({ books }: PublicLibraryViewProps) {
 
   return <PublicLibrary books={books} />;
 }
+
