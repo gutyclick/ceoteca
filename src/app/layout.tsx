@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import { Suspense } from "react";
 
+import { OAuthReturnHandler } from "@/components/auth/OAuthReturnHandler";
 import { siteConfig } from "@/config/site";
 
 import "./globals.css";
@@ -28,6 +30,9 @@ export default function RootLayout({
   return (
     <html lang="es" className={geistSans.variable}>
       <body>
+        <Suspense fallback={null}>
+          <OAuthReturnHandler />
+        </Suspense>
         {children}
         <Analytics />
       </body>

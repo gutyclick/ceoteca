@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { Card } from "@/components/ui/Card";
 import { Logo } from "@/components/ui/Logo";
+import { oauthNextStorageKey } from "@/lib/auth/supabase";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
 type CallbackState =
@@ -54,6 +55,7 @@ export function AuthCallbackView() {
           throw new Error("No pudimos confirmar tu sesión con Google.");
         }
 
+        window.localStorage.removeItem(oauthNextStorageKey);
         router.replace(nextPath);
         router.refresh();
       } catch (error) {

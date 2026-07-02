@@ -1,7 +1,20 @@
 import type { AuthProvider, AuthResult } from "@/lib/auth/types";
 import type { SignInInput, SignUpInput } from "@/lib/validation/auth";
+import { clientEnv } from "@/lib/env";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import type { AppUser } from "@/types";
+
+export const oauthNextStorageKey = "ceoteca-oauth-next";
+
+function getOAuthBaseUrl() {
+  const configuredUrl = new URL(clientEnv.NEXT_PUBLIC_SITE_URL);
+
+  if (configuredUrl.hostname === "localhost") {
+    return window.location.origin;
+  }
+
+  return configuredUrl.origin;
+}
 
 export class SupabaseAuthProvider implements AuthProvider {
   async getCurrentUser(): Promise<AppUser | null> {
@@ -90,7 +103,9 @@ export class SupabaseAuthProvider implements AuthProvider {
     const supabase = createBrowserSupabaseClient();
     const safeRedirectTo =
       redirectTo.startsWith("/") && !redirectTo.startsWith("//") ? redirectTo : "/home";
-    const callbackUrl = new URL("/auth/callback", window.location.origin);
+    window.localStorage.setItem(oauthNextStorageKey, safeRedirectTo);
+
+    const callbackUrl = new URL("/auth/callback", getOAuthBaseUrl());
     callbackUrl.searchParams.set("next", safeRedirectTo);
 
     const { error } = await supabase.auth.signInWithOAuth({
