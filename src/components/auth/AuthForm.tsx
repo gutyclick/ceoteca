@@ -105,8 +105,11 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
         type: "success",
         message: result.message,
       });
-      router.push(result.redirectTo);
-      router.refresh();
+
+      if (result.redirectTo) {
+        router.push(result.redirectTo);
+        router.refresh();
+      }
     } catch (error) {
       setStatus({
         type: "error",
@@ -151,8 +154,11 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
         type: "success",
         message: result.message,
       });
-      router.push(result.redirectTo);
-      router.refresh();
+
+      if (result.redirectTo) {
+        router.push(result.redirectTo);
+        router.refresh();
+      }
     } catch (error) {
       setStatus({
         type: "error",
@@ -235,7 +241,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
               Contraseña
               <input
                 className="min-h-12 rounded-button border border-white/10 bg-white/[0.04] px-4 text-text-primary outline-none transition focus:border-brand-purple"
-                placeholder="Minimo 8 caracteres"
+                placeholder="Mínimo 8 caracteres"
                 type="password"
                 {...register("password")}
               />
@@ -272,7 +278,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
                   <span>
                     Acepto{" "}
                     <Link className="text-brand-purple" href="/terminos">
-                      terminos
+                      términos
                     </Link>{" "}
                     y{" "}
                     <Link className="text-brand-purple" href="/privacidad">
@@ -310,7 +316,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
           </form>
 
           <p className="mt-6 text-center text-sm text-text-secondary">
-            {isRegister ? "Ya tienes cuenta?" : "No tienes cuenta?"}{" "}
+            {isRegister ? "¿Ya tienes cuenta?" : "¿No tienes cuenta?"}{" "}
             <Link
               className="font-medium text-brand-purple"
               href={isRegister ? "/login" : "/registro"}

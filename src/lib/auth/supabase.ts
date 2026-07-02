@@ -88,10 +88,15 @@ export class SupabaseAuthProvider implements AuthProvider {
 
   async signInWithGoogle(redirectTo = "/home"): Promise<AuthResult> {
     const supabase = createBrowserSupabaseClient();
+    const safeRedirectTo =
+      redirectTo.startsWith("/") && !redirectTo.startsWith("//") ? redirectTo : "/home";
+    const callbackUrl = new URL("/auth/callback", window.location.origin);
+    callbackUrl.searchParams.set("next", safeRedirectTo);
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}${redirectTo}`,
+        redirectTo: callbackUrl.toString(),
       },
     });
 
@@ -107,7 +112,7 @@ export class SupabaseAuthProvider implements AuthProvider {
         plan: "free",
         isDemo: false,
       },
-      redirectTo,
+      redirectTo: "",
       message: "Redirección a Google preparada.",
     };
   }
