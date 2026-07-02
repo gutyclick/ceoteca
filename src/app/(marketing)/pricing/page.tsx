@@ -5,7 +5,7 @@ import { PricingPage } from "@/components/pricing/PricingPage";
 export const metadata: Metadata = {
   title: "Precios",
   description:
-    "Planes de Ceoteca: Gratis, Pro, Ilimitado y Fundador con pagos deshabilitados hasta definir proveedor.",
+    "Planes de Ceoteca para aprender con análisis editoriales, audio, CEO y herramientas prácticas de lectura.",
 };
 
 export default function PricingRoutePage() {

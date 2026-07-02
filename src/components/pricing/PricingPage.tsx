@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, Info, Sparkles } from "lucide-react";
+import { CheckCircle2, Crown, Sparkles } from "lucide-react";
 import { useState } from "react";
 
 import { SectionHeading } from "@/components/marketing/SectionHeading";
@@ -53,7 +53,7 @@ export function PricingPage() {
         <SectionHeading
           eyebrow="Precios"
           title="Elige cómo quieres aprender."
-          description="Planes centralizados para aprender con análisis, audio y chat según tu nivel de acceso."
+          description="Planes pensados para explorar ideas clave, escuchar análisis y convertir aprendizaje en acción."
         />
 
         <div className="mx-auto mt-8 flex w-fit rounded-full border border-white/10 bg-white/[0.04] p-1">
@@ -80,25 +80,48 @@ export function PricingPage() {
             return (
               <Card
                 className={cn(
-                  "relative flex flex-col p-6",
-                  plan.isRecommended && "border-brand-purple/70",
+                  "relative flex flex-col overflow-hidden p-6",
+                  plan.isRecommended && "border-brand-purple/60",
+                  plan.isFounderOffer &&
+                    "border-brand-purple/80 bg-[radial-gradient(circle_at_50%_0%,rgba(217,70,239,0.22),transparent_34%),linear-gradient(180deg,rgba(124,58,237,0.12),rgba(255,255,255,0.025))] shadow-[0_0_55px_rgba(168,85,247,0.28)]",
                 )}
                 interactive
                 key={plan.key}
               >
-                {plan.isRecommended ? (
-                  <span className="absolute right-5 top-5 inline-flex items-center gap-1.5 rounded-full bg-brand-purple/20 px-3 py-1 text-xs font-medium text-brand-purple">
-                    <Sparkles aria-hidden="true" size={14} />
-                    Popular
-                  </span>
+                {plan.isFounderOffer ? (
+                  <div className="pointer-events-none absolute inset-x-8 -top-16 h-28 rounded-full bg-brand-purple/35 blur-3xl motion-safe:animate-pulse" />
                 ) : null}
-                <p className="text-sm font-medium text-text-secondary">
-                  {plan.tagline}
-                </p>
+                <div className="relative z-10 flex min-h-8 flex-wrap items-center justify-between gap-2">
+                  <p
+                    className={cn(
+                      "text-sm font-medium text-text-secondary",
+                      plan.isFounderOffer && "text-brand-purple",
+                    )}
+                  >
+                    {plan.tagline}
+                  </p>
+                  {plan.isRecommended ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-purple/30 bg-brand-purple/15 px-3 py-1 text-xs font-medium text-brand-purple">
+                      <Sparkles aria-hidden="true" size={14} />
+                      Más elegido
+                    </span>
+                  ) : null}
+                  {plan.isFounderOffer ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-pink/40 bg-brand-pink/15 px-3 py-1 text-xs font-medium text-brand-pink shadow-[0_0_24px_rgba(217,70,239,0.25)]">
+                      <Crown aria-hidden="true" size={14} />
+                      Oferta limitada
+                    </span>
+                  ) : null}
+                </div>
                 <h2 className="mt-3 text-3xl font-semibold">{plan.name}</h2>
                 <p className="mt-3 min-h-14 text-sm leading-6 text-text-secondary">
                   {plan.description}
                 </p>
+                {plan.isFounderOffer ? (
+                  <p className="mt-4 rounded-[14px] border border-brand-purple/30 bg-brand-purple/10 px-4 py-3 text-sm leading-6 text-brand-purple">
+                    Disponible solo para los primeros 100 miembros fundadores.
+                  </p>
+                ) : null}
                 <div className="mt-6">
                   <p className="text-4xl font-semibold">
                     {formatPrice(planKey, period)}
@@ -106,11 +129,6 @@ export function PricingPage() {
                   <p className="mt-1 text-sm text-text-muted">
                     {getPeriodLabel(planKey, period)}
                   </p>
-                  {plan.setupFeeUsd ? (
-                    <p className="mt-2 text-xs text-warning">
-                      Entrada inicial: USD {plan.setupFeeUsd.toFixed(2)}
-                    </p>
-                  ) : null}
                 </div>
                 <ul className="mt-6 flex-1 space-y-3">
                   {plan.highlights.map((highlight) => (
@@ -130,7 +148,9 @@ export function PricingPage() {
                 <ButtonLink
                   className="mt-7"
                   href={`/registro?plan=${plan.key}`}
-                  variant={plan.isRecommended ? "primary" : "secondary"}
+                  variant={
+                    plan.isRecommended || plan.isFounderOffer ? "primary" : "secondary"
+                  }
                 >
                   {plan.ctaLabel}
                 </ButtonLink>
@@ -138,21 +158,13 @@ export function PricingPage() {
             );
           })}
         </div>
-
-        <Card className="mt-6 flex items-start gap-3 p-5">
-          <Info aria-hidden="true" className="mt-0.5 text-info" size={20} />
-          <p className="text-sm leading-6 text-text-secondary">
-            Integración de pagos pendiente. Los CTAs preparan el plan seleccionado,
-            pero todavía no ejecutan checkout.
-          </p>
-        </Card>
       </section>
 
       <section className="ceoteca-container pb-20">
         <SectionHeading
           eyebrow="Comparativa"
           title="Qué incluye cada plan."
-          description="La lógica visible sale de configuración central para poder cambiar precios y límites sin tocar componentes."
+          description="Compara acceso, audio, CEO y herramientas de aprendizaje antes de elegir."
         />
         <Card className="mt-12 overflow-hidden p-0">
           <div className="grid border-b border-white/10 bg-white/[0.04] p-5 text-sm font-semibold text-text-secondary lg:grid-cols-5">
@@ -180,10 +192,10 @@ export function PricingPage() {
       <section className="ceoteca-container pb-24">
         <SectionHeading
           eyebrow="FAQ"
-          title="Preguntas de planes."
-          description="Información honesta sobre el estado actual del MVP y las integraciones pendientes."
+          title="Preguntas frecuentes."
+          description="Respuestas claras sobre acceso, audio, CEO, suscripciones y la oferta Fundador."
         />
-        <div className="mx-auto mt-12 grid max-w-4xl gap-4 md:grid-cols-2">
+        <div className="mx-auto mt-12 grid max-w-5xl gap-4 md:grid-cols-2">
           {pricingFaqs.map((faq) => (
             <Card className="p-6" key={faq.question}>
               <h3 className="font-semibold">{faq.question}</h3>

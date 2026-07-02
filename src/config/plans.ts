@@ -25,16 +25,16 @@ export const plans: Record<PlanKey, PlanConfig> = {
   free: {
     key: "free",
     name: "Gratis",
-    tagline: "Para explorar",
-    description: "Prueba la biblioteca con acceso limitado y sin compromiso.",
+    tagline: "Para empezar",
+    description: "Explora Ceoteca, descubre análisis seleccionados y conoce la experiencia.",
     monthlyPriceUsd: 0,
     annualPriceUsd: 0,
     chatMonthlyLimit: 0,
     bookLimit: 3,
     features: [],
     highlights: [
-      "3 libros incluidos",
-      "Vista previa de biblioteca",
+      "3 análisis para comenzar",
+      "Biblioteca con vista previa",
       "Sin audio",
       "Sin chat con IA",
     ],
@@ -43,18 +43,18 @@ export const plans: Record<PlanKey, PlanConfig> = {
   pro: {
     key: "pro",
     name: "Pro",
-    tagline: "Para aprender cada semana",
-    description: "Accede a todos los libros, audio y chat contextual mensual.",
+    tagline: "Para avanzar cada semana",
+    description: "Accede al catálogo completo, audio y apoyo contextual de CEO.",
     monthlyPriceUsd: 7.99,
     annualPriceUsd: 79.99,
     chatMonthlyLimit: 50,
     bookLimit: null,
     features: ["allBooks", "audio", "chat", "advancedActivities"],
     highlights: [
-      "Todos los libros publicados",
+      "Catálogo completo de análisis",
       "Audio incluido",
-      "50 preguntas de chat al mes",
-      "Actividades e historial",
+      "50 preguntas a CEO al mes",
+      "Actividades, progreso e historial",
     ],
     ctaLabel: "Elegir Pro",
     isRecommended: true,
@@ -62,8 +62,8 @@ export const plans: Record<PlanKey, PlanConfig> = {
   unlimited: {
     key: "unlimited",
     name: "Ilimitado",
-    tagline: "Para usuarios intensivos",
-    description: "Todo Pro, más acceso anticipado y chat sujeto a uso razonable.",
+    tagline: "Para aprender sin fricción",
+    description: "Todo Pro, más acceso anticipado y consultas ampliadas con CEO.",
     monthlyPriceUsd: 14.99,
     annualPriceUsd: 149.99,
     chatMonthlyLimit: null,
@@ -78,18 +78,18 @@ export const plans: Record<PlanKey, PlanConfig> = {
     ],
     highlights: [
       "Todo lo incluido en Pro",
-      "Chat sujeto a uso razonable",
-      "Acceso anticipado",
-      "Funciones premium futuras",
+      "Consultas ampliadas con uso responsable",
+      "Acceso anticipado a nuevos análisis",
+      "Funciones premium prioritarias",
     ],
     ctaLabel: "Elegir Ilimitado",
   },
   founder: {
     key: "founder",
     name: "Fundador",
-    tagline: "Oferta limitada",
+    tagline: "Primeros 100 miembros",
     description:
-      "Entrada inicial y tarifa protegida mientras mantengas la suscripción.",
+      "Asegura una tarifa especial de lanzamiento mientras mantengas tu suscripción activa.",
     monthlyPriceUsd: 4.99,
     annualPriceUsd: 49.99,
     setupFeeUsd: 20,
@@ -97,9 +97,9 @@ export const plans: Record<PlanKey, PlanConfig> = {
     bookLimit: null,
     features: ["allBooks", "audio", "chat", "advancedActivities"],
     highlights: [
-      "Entrada inicial de USD 20",
-      "USD 4.99 al mes",
-      "Límite de 100 usuarios",
+      "Cupo limitado a 100 fundadores",
+      "Tarifa protegida de lanzamiento",
+      "Catálogo completo, audio y CEO",
       "Beneficios equivalentes a Pro",
     ],
     ctaLabel: "Reservar fundador",
@@ -164,23 +164,33 @@ export const pricingFeatureRows = [
 
 export const pricingFaqs = [
   {
-    question: "¿Los pagos ya están activos?",
+    question: "¿Ceoteca reemplaza la lectura del libro original?",
     answer:
-      "No. La integración de pagos está pendiente y no se simula ningún cobro éxitoso.",
+      "No. Ceoteca ofrece análisis editoriales propios para ayudarte a entender ideas clave, aplicarlas y decidir qué libros quieres profundizar en su versión completa.",
   },
   {
-    question: "¿Necesito tarjeta para empezar?",
+    question: "¿Qué incluye el plan Gratis?",
     answer:
-      "No. Puedes crear una cuenta gratis; los pagos quedan pendientes hasta activar un proveedor real.",
+      "El plan Gratis te permite explorar una selección limitada de análisis y conocer la experiencia. El audio, CEO y el catálogo completo están disponibles desde Pro.",
   },
   {
     question: "¿Puedo cambiar de plan después?",
     answer:
-      "La gestión visual está planificada; los cambios reales dependerán del proveedor de pagos definido.",
+      "Sí. Puedes empezar gratis y mejorar tu plan cuando necesites más acceso. Cuando esté activa una suscripción de pago, podrás gestionarla desde tu cuenta.",
   },
   {
-    question: "¿Qué significa uso razonable?",
+    question: "¿Qué significa el plan Fundador?",
     answer:
-      "Es una política futura para prevenir abuso del chat sin afectar el uso normal de aprendizaje.",
+      "Es una oferta limitada para los primeros 100 miembros. Mantienes una tarifa mensual especial mientras tu suscripción siga activa.",
+  },
+  {
+    question: "¿Qué puede hacer CEO, la IA de Ceoteca?",
+    answer:
+      "CEO te ayuda a elegir análisis, construir rutas de lectura, aplicar ideas a tu contexto y resolver dudas sobre el contenido autorizado de Ceoteca.",
+  },
+  {
+    question: "¿El audio está incluido en todos los planes?",
+    answer:
+      "El audio está incluido desde Pro. En el plan Gratis puedes explorar la biblioteca y leer análisis seleccionados sin audio ni chat con IA.",
   },
 ] as const;
