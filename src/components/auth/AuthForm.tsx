@@ -2,7 +2,7 @@
 
 import { Chrome, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { ZodError } from "zod";
@@ -48,8 +48,21 @@ function applyZodErrors(
   }
 }
 
+function getSafeNextPath(value: string | null) {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) {
+    return "/home";
+  }
+
+  return value;
+}
+
 export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const nextPath = useMemo(
+    () => getSafeNextPath(searchParams.get("next")),
+    [searchParams],
+  );
   const [status, setStatus] = useState<FormStatus>({ type: "idle" });
   const authProvider = useMemo(() => createAuthProvider(), []);
   const isRegister = mode === "register";
@@ -65,7 +78,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
       const user = await authProvider.getCurrentUser();
 
       if (isMounted && user) {
-        router.replace("/home");
+        router.replace(nextPath);
         router.refresh();
       }
     }
@@ -75,7 +88,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
     return () => {
       isMounted = false;
     };
-  }, [authProvider, isRegister, router]);
+  }, [authProvider, isRegister, nextPath, router]);
 
   const {
     formState: { errors, isSubmitting },
@@ -107,7 +120,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
       });
 
       if (result.redirectTo) {
-        router.push(result.redirectTo);
+        router.push(isRegister ? result.redirectTo : nextPath);
         router.refresh();
       }
     } catch (error) {

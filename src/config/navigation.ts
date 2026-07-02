@@ -8,7 +8,13 @@ export const publicRoutes = [
   "/privacidad",
 ] as const;
 
-export const privateRoutes = ["/home", "/libro", "/perfil", "/planes"] as const;
+export const privateRoutes = [
+  "/home",
+  "/libro",
+  "/perfil",
+  "/planes",
+  "/configuracion",
+] as const;
 
 export const apiRoutes = [
   "/api/chat",
