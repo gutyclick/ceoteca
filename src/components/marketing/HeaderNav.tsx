@@ -7,6 +7,7 @@ import { Button, ButtonLink } from "@/components/ui/Button";
 import { Logo } from "@/components/ui/Logo";
 
 const navigationItems = [
+  { href: "/", label: "Inicio" },
   { href: "/biblioteca", label: "Biblioteca" },
   { href: "/pricing", label: "Precios" },
   { href: "/login", label: "Entrar" },

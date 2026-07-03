@@ -22,9 +22,10 @@ import {
 import { DashboardSidebar } from "@/components/app/DashboardSidebar";
 import { NotificationBell } from "@/components/app/NotificationBell";
 import { FloatingSiteChat } from "@/components/chat/FloatingSiteChat";
+import { Footer } from "@/components/marketing/Footer";
+import { PublicHeader } from "@/components/marketing/PublicHeader";
 import { ButtonLink } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { Logo } from "@/components/ui/Logo";
 import { plans, type PlanKey } from "@/config/plans";
 import { bookCategories, filterBooks } from "@/data/books";
 import { clientEnv } from "@/lib/env";
@@ -327,23 +328,8 @@ function PublicLibrary({ books }: { books: Book[] }) {
   return (
     <main className="min-h-screen overflow-x-clip bg-[#03040b] text-text-primary">
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_24%_12%,rgba(124,58,237,0.18),transparent_30%),linear-gradient(180deg,#02030a_0%,#050611_48%,#03040b_100%)]" />
-      <header className="mx-auto flex w-full max-w-[1440px] items-center justify-between px-5 py-5 sm:px-8">
-        <Logo />
-        <nav
-          className="hidden items-center gap-3 sm:flex"
-          aria-label="Biblioteca pública"
-        >
-          <ButtonLink href="/pricing" variant="ghost">
-            Precios
-          </ButtonLink>
-          <ButtonLink href="/login" variant="ghost">
-            Entrar
-          </ButtonLink>
-          <ButtonLink href="/registro">Empieza gratis</ButtonLink>
-        </nav>
-      </header>
 
-      <section className="mx-auto flex w-full max-w-[1180px] flex-col items-center px-5 pb-12 pt-8 text-center sm:px-8 lg:pt-14">
+      <section className="mx-auto flex w-full max-w-[1180px] flex-col items-center px-5 pb-12 pt-12 text-center sm:px-8 lg:pt-16">
         <p className="text-base font-medium text-brand-purple">
           Biblioteca Ceoteca
         </p>
@@ -862,6 +848,12 @@ export function PublicLibraryView({ books }: PublicLibraryViewProps) {
     return <PrivateLibrary books={books} />;
   }
 
-  return <PublicLibrary books={books} />;
+  return (
+    <>
+      <PublicHeader />
+      <PublicLibrary books={books} />
+      <Footer />
+    </>
+  );
 }
 
