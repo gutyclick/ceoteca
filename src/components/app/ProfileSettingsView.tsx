@@ -28,6 +28,7 @@ import { plans } from "@/config/plans";
 import { siteConfig } from "@/config/site";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/database.types";
+import { resolvePlanFromSubscriptions } from "@/lib/subscriptions/resolve";
 import { cn } from "@/lib/utils/cn";
 
 type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
@@ -48,6 +49,7 @@ type ProfileData = {
   email: string;
   profile: ProfileRow;
   subscription: SubscriptionRow | null;
+  effectivePlan: ProfileRow["plan"];
   progress: ProgressItem[];
   chatQuestionsThisMonth: number;
   activity: ActivityItem[];
@@ -213,6 +215,7 @@ function createDemoProfileData(): ProfileData {
       updated_at: now,
     },
     subscription: null,
+    effectivePlan: "free",
     chatQuestionsThisMonth: 0,
     progress: [
       {
@@ -712,9 +715,7 @@ export function ProfileSettingsView() {
             .from("subscriptions")
             .select("*")
             .eq("user_id", userId)
-            .order("updated_at", { ascending: false })
-            .limit(1)
-            .maybeSingle(),
+            .order("updated_at", { ascending: false }),
           supabase
             .from("chat_usage")
             .select("question_count")
@@ -769,6 +770,11 @@ export function ProfileSettingsView() {
         }
 
         const progressRows = progressResponse.data ?? [];
+        const subscriptionRows = subscriptionResponse.data ?? [];
+        const effectivePlan = resolvePlanFromSubscriptions({
+          profilePlan: profile.plan,
+          subscriptions: subscriptionRows,
+        }).plan;
         const chatRows = chatMessagesResponse.data ?? [];
         const favoriteRows = favoritesResponse.data ?? [];
         const bookIds = [
@@ -822,7 +828,8 @@ export function ProfileSettingsView() {
               userId,
               email: userData.user.email ?? "sin-correo@ceoteca.com",
               profile,
-              subscription: subscriptionResponse.data ?? null,
+              subscription: subscriptionRows[0] ?? null,
+              effectivePlan,
               progress,
               activity,
               chatQuestionsThisMonth: (usageResponse.data ?? []).reduce(
@@ -944,7 +951,7 @@ export function ProfileSettingsView() {
 
   const { data, notice } = state;
   const displayName = data.profile.full_name ?? "Usuario Ceoteca";
-  const currentPlan = data.profile.plan;
+  const currentPlan = data.effectivePlan;
   const plan = plans[currentPlan];
   const completedBooks = data.progress.filter((item) => item.completed).length;
   const averageProgress = getAverageProgress(data.progress);

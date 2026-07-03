@@ -31,6 +31,7 @@ import { bookCategories, filterBooks } from "@/data/books";
 import { clientEnv } from "@/lib/env";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/database.types";
+import { resolvePlanFromSubscriptions } from "@/lib/subscriptions/resolve";
 import { cn } from "@/lib/utils/cn";
 import type { Book, BookCategory, BookDifficulty } from "@/types";
 
@@ -507,12 +508,17 @@ function PrivateLibrary({ books }: { books: Book[] }) {
           return;
         }
 
-        const [profileResponse, progressResponse] = await Promise.all([
+        const [profileResponse, subscriptionResponse, progressResponse] = await Promise.all([
           supabase
             .from("profiles")
             .select("plan")
             .eq("id", userData.user.id)
             .maybeSingle(),
+          supabase
+            .from("subscriptions")
+            .select("plan,status,updated_at")
+            .eq("user_id", userData.user.id)
+            .order("updated_at", { ascending: false }),
           supabase
             .from("user_book_progress")
             .select("*")
@@ -521,7 +527,11 @@ function PrivateLibrary({ books }: { books: Book[] }) {
         ]);
 
         if (isMounted) {
-          setPlan(profileResponse.data?.plan ?? "free");
+          const effectivePlan = resolvePlanFromSubscriptions({
+            profilePlan: profileResponse.data?.plan ?? "free",
+            subscriptions: subscriptionResponse.data ?? [],
+          }).plan;
+          setPlan(effectivePlan);
           setProgressRows(progressResponse.data ?? []);
         }
       } catch {

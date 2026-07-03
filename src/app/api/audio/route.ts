@@ -11,6 +11,7 @@ import {
   createServiceSupabaseClient,
 } from "@/lib/supabase/server";
 import type { Database } from "@/lib/supabase/database.types";
+import { getEffectiveSubscriptionForUser } from "@/lib/subscriptions/service";
 import type { AppUser, Book } from "@/types";
 
 const audioRequestSchema = z.object({
@@ -71,13 +72,15 @@ async function getAuthenticatedUser(
     return null;
   }
 
+  const effectiveSubscription = await getEffectiveSubscriptionForUser(authData.user.id);
+
   return {
     accessToken,
     user: {
       id: authData.user.id,
       email: authData.user.email ?? "",
       fullName: profile.full_name ?? "Usuario",
-      plan: profile.plan,
+      plan: effectiveSubscription.plan,
       isDemo: false,
     },
   };

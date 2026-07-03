@@ -25,6 +25,7 @@ import { Card } from "@/components/ui/Card";
 import { planKeys, type PlanKey } from "@/config/plans";
 import { canAccessFeature } from "@/lib/permissions";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
+import { resolvePlanFromSubscriptions } from "@/lib/subscriptions/resolve";
 import { cn } from "@/lib/utils/cn";
 import type { Book, BookActivity, KeyPoint } from "@/types";
 
@@ -1150,15 +1151,26 @@ export function BookExperience({ book }: BookExperienceProps) {
           setUserId(userData.user.id);
         }
 
-        const { data } = await supabase
-          .from("profiles")
-          .select("plan")
-          .eq("id", userData.user.id)
-          .maybeSingle();
+        const [profileResponse, subscriptionResponse] = await Promise.all([
+          supabase
+            .from("profiles")
+            .select("plan")
+            .eq("id", userData.user.id)
+            .maybeSingle(),
+          supabase
+            .from("subscriptions")
+            .select("plan,status,updated_at")
+            .eq("user_id", userData.user.id)
+            .order("updated_at", { ascending: false }),
+        ]);
 
-        if (isMounted && data?.plan) {
-          setCurrentPlan(data.plan);
-          window.localStorage.setItem(planStorageKey, data.plan);
+        if (isMounted && profileResponse.data?.plan) {
+          const effectivePlan = resolvePlanFromSubscriptions({
+            profilePlan: profileResponse.data.plan,
+            subscriptions: subscriptionResponse.data ?? [],
+          }).plan;
+          setCurrentPlan(effectivePlan);
+          window.localStorage.setItem(planStorageKey, effectivePlan);
         }
       } catch {
         if (isMounted) {

@@ -12,6 +12,7 @@ import { createAIProvider } from "@/lib/openai/provider";
 import { canAccessFeature } from "@/lib/permissions";
 import { checkRateLimit } from "@/lib/rate-limit/memory";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { getEffectiveSubscriptionForUser } from "@/lib/subscriptions/service";
 import { chatRequestSchema } from "@/lib/validation/chat";
 import type { AppUser } from "@/types";
 
@@ -66,13 +67,15 @@ async function getAuthenticatedUser(
     return null;
   }
 
+  const effectiveSubscription = await getEffectiveSubscriptionForUser(authData.user.id);
+
   return {
     accessToken,
     user: {
       id: authData.user.id,
       email: authData.user.email ?? "",
       fullName: profile.full_name ?? "Usuario",
-      plan: profile.plan,
+      plan: effectiveSubscription.plan,
       isDemo: false,
     },
   };

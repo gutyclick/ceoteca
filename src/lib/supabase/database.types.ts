@@ -32,6 +32,8 @@ export type Database = {
           full_name?: string | null;
           avatar_url?: string | null;
           birth_date?: string | null;
+          plan?: "free" | "pro" | "unlimited" | "founder";
+          founder?: boolean;
         };
         Relationships: [];
       };
@@ -196,16 +198,58 @@ export type Database = {
           provider: string;
           provider_customer_id: string | null;
           provider_subscription_id: string | null;
-          plan: string;
-          status: string;
+          plan: "free" | "pro" | "unlimited" | "founder";
+          status:
+            | "incomplete"
+            | "pending_payment"
+            | "trialing"
+            | "active"
+            | "past_due"
+            | "canceled"
+            | "unpaid"
+            | "paused";
           current_period_start: string | null;
           current_period_end: string | null;
           cancel_at_period_end: boolean;
           created_at: string;
           updated_at: string;
         };
-        Insert: Record<string, never>;
-        Update: Record<string, never>;
+        Insert: {
+          user_id: string;
+          provider: string;
+          provider_customer_id?: string | null;
+          provider_subscription_id?: string | null;
+          plan: "free" | "pro" | "unlimited" | "founder";
+          status:
+            | "incomplete"
+            | "pending_payment"
+            | "trialing"
+            | "active"
+            | "past_due"
+            | "canceled"
+            | "unpaid"
+            | "paused";
+          current_period_start?: string | null;
+          current_period_end?: string | null;
+          cancel_at_period_end?: boolean;
+        };
+        Update: {
+          provider_customer_id?: string | null;
+          provider_subscription_id?: string | null;
+          plan?: "free" | "pro" | "unlimited" | "founder";
+          status?:
+            | "incomplete"
+            | "pending_payment"
+            | "trialing"
+            | "active"
+            | "past_due"
+            | "canceled"
+            | "unpaid"
+            | "paused";
+          current_period_start?: string | null;
+          current_period_end?: string | null;
+          cancel_at_period_end?: boolean;
+        };
         Relationships: [];
       };
       audio_assets: {

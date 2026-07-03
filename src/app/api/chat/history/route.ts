@@ -7,6 +7,7 @@ import { createBookRepository } from "@/lib/books/repository";
 import { createChatRepository } from "@/lib/chat/repository";
 import { clientEnv } from "@/lib/env";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { getEffectiveSubscriptionForUser } from "@/lib/subscriptions/service";
 import type { AppUser } from "@/types";
 
 function getBearerToken(request: NextRequest) {
@@ -50,13 +51,15 @@ async function getAuthenticatedUser(
     return null;
   }
 
+  const effectiveSubscription = await getEffectiveSubscriptionForUser(authData.user.id);
+
   return {
     accessToken,
     user: {
       id: authData.user.id,
       email: authData.user.email ?? "",
       fullName: profile.full_name ?? "Usuario",
-      plan: profile.plan,
+      plan: effectiveSubscription.plan,
       isDemo: false,
     },
   };

@@ -30,6 +30,7 @@ import { Card } from "@/components/ui/Card";
 import type { PlanKey } from "@/config/plans";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/database.types";
+import { resolvePlanFromSubscriptions } from "@/lib/subscriptions/resolve";
 import { cn } from "@/lib/utils/cn";
 import type { Book, BookCategory } from "@/types";
 
@@ -295,13 +296,18 @@ export function HomeView({ books }: HomeViewProps) {
         }
 
         const userId = userData.user.id;
-        const [profileResponse, progressResponse, usageResponse] =
+        const [profileResponse, subscriptionResponse, progressResponse, usageResponse] =
           await Promise.all([
             supabase
               .from("profiles")
               .select("full_name,plan")
               .eq("id", userId)
               .maybeSingle(),
+            supabase
+              .from("subscriptions")
+              .select("plan,status,updated_at")
+              .eq("user_id", userId)
+              .order("updated_at", { ascending: false }),
             supabase
               .from("user_book_progress")
               .select("*")
@@ -318,13 +324,22 @@ export function HomeView({ books }: HomeViewProps) {
           throw profileResponse.error;
         }
 
+        if (subscriptionResponse.error) {
+          throw subscriptionResponse.error;
+        }
+
+        const effectivePlan = resolvePlanFromSubscriptions({
+          profilePlan: profileResponse.data?.plan ?? "free",
+          subscriptions: subscriptionResponse.data ?? [],
+        }).plan;
+
         if (isMounted) {
           setAccountData({
             fullName:
               profileResponse.data?.full_name ??
               userData.user.email?.split("@")[0] ??
               "Lector Ceoteca",
-            plan: profileResponse.data?.plan ?? "free",
+            plan: effectivePlan,
             progress: progressResponse.data ?? [],
             chatQuestionsThisMonth: (usageResponse.data ?? []).reduce(
               (total, item) => total + item.question_count,

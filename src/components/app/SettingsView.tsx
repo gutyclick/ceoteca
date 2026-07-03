@@ -27,6 +27,7 @@ import { Card } from "@/components/ui/Card";
 import { plans, type PlanKey } from "@/config/plans";
 import { siteConfig } from "@/config/site";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
+import { resolvePlanFromSubscriptions } from "@/lib/subscriptions/resolve";
 import { cn } from "@/lib/utils/cn";
 
 type SettingsSectionKey =
@@ -297,22 +298,39 @@ export function SettingsView() {
           return;
         }
 
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("full_name,birth_date,plan,avatar_url")
-          .eq("id", userData.user.id)
-          .maybeSingle();
+        const [profileResponse, subscriptionResponse] = await Promise.all([
+          supabase
+            .from("profiles")
+            .select("full_name,birth_date,plan,avatar_url")
+            .eq("id", userData.user.id)
+            .maybeSingle(),
+          supabase
+            .from("subscriptions")
+            .select("plan,status,updated_at")
+            .eq("user_id", userData.user.id)
+            .order("updated_at", { ascending: false }),
+        ]);
 
-        if (error) {
-          throw error;
+        if (profileResponse.error) {
+          throw profileResponse.error;
         }
+
+        if (subscriptionResponse.error) {
+          throw subscriptionResponse.error;
+        }
+
+        const data = profileResponse.data;
+        const effectivePlan = resolvePlanFromSubscriptions({
+          profilePlan: data?.plan ?? "free",
+          subscriptions: subscriptionResponse.data ?? [],
+        }).plan;
 
         if (isMounted) {
           setAccountForm({
             fullName: data?.full_name ?? "",
             email: userData.user.email ?? "",
             birthDate: data?.birth_date ?? "",
-            plan: data?.plan ?? "free",
+            plan: effectivePlan,
             avatarUrl: data?.avatar_url ?? null,
           });
         }
