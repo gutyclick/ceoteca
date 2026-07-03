@@ -4,7 +4,7 @@ const defaultAnalysis = [
   {
     title: "Idea central",
     content:
-      "Este análisis demo resume una interpretación editorial propia: el valor del libro está en convertir una idea amplia en decisiones pequeñas que el lector pueda probar esta semana.",
+      "Este análisis ofrece una interpretación editorial propia: el valor del libro está en convertir una idea amplia en decisiones pequeñas que el lector pueda probar esta semana.",
   },
   {
     title: "Aplicación práctica",
@@ -244,7 +244,7 @@ export const bookCategories: Array<"Todos" | BookCategory> = [
   "Biografías y casos de éxito",
 ];
 
-export const demoBooks: Book[] = [
+export const catalogBooks: Book[] = [
   {
     id: "disciplined-entrepreneurship",
     slug: "disciplined-entrepreneurship",
@@ -287,7 +287,7 @@ export const demoBooks: Book[] = [
     author: "James Clear",
     category: "Desarrollo personal",
     description:
-      "Un análisis editorial demo sobre cómo diseñar sistemas simples para sostener pequeñas mejoras diarias.",
+      "Análisis editorial sobre cómo diseñar sistemas simples para sostener pequeñas mejoras diarias.",
     readingTime: 12,
     difficulty: "Inicial",
     tags: ["hábitos", "disciplina", "sistemas"],
@@ -298,14 +298,14 @@ export const demoBooks: Book[] = [
     },
     isFeatured: true,
     isPublished: true,
-    isDemoContent: true,
+    isDemoContent: false,
     progress: 38,
     purchaseUrl: "https://www.google.com/search?q=Hábitos+Atómicos+James+Clear",
     analysis: defaultAnalysis,
     keyPoints: defaultKeyPoints,
     activities: defaultActivities,
     conclusion:
-      "Conclusión editorial demo: el aprendizaje más útil no es acumular ideas, sino diseñar una acción pequeña que pueda repetirse hasta volverse parte del entorno.",
+      "Conclusión editorial: el aprendizaje más útil no es acumular ideas, sino diseñar una acción pequeña que pueda repetirse hasta volverse parte del entorno.",
   },
   {
     id: "padre-rico-padre-pobre",
@@ -314,7 +314,7 @@ export const demoBooks: Book[] = [
     author: "Robert Kiyosaki",
     category: "Finanzas personales",
     description:
-      "Ideas demo sobre mentalidad financiera, activos, pasivos y decisiones de dinero más conscientes.",
+      "Análisis editorial sobre mentalidad financiera, activos, pasivos y decisiones de dinero más conscientes.",
     readingTime: 14,
     difficulty: "Inicial",
     tags: ["finanzas", "dinero", "activos"],
@@ -324,7 +324,7 @@ export const demoBooks: Book[] = [
       accent: "text-emerald-200",
     },
     isPublished: true,
-    isDemoContent: true,
+    isDemoContent: false,
     progress: 68,
     purchaseUrl:
       "https://www.google.com/search?q=Padre+Rico+Padre+Pobre+Robert+Kiyosaki",
@@ -332,7 +332,7 @@ export const demoBooks: Book[] = [
     keyPoints: defaultKeyPoints,
     activities: defaultActivities,
     conclusion:
-      "Conclusión editorial demo: pensar mejor sobre dinero empieza por distinguir entre consumo inmediato, activos posibles y hábitos de decisión más conscientes.",
+      "Conclusión editorial: pensar mejor sobre dinero empieza por distinguir entre consumo inmediato, activos posibles y hábitos de decisión más conscientes.",
   },
   {
     id: "startup-100",
@@ -341,7 +341,7 @@ export const demoBooks: Book[] = [
     author: "Chris Guillebeau",
     category: "Emprendimiento",
     description:
-      "Una lectura demo sobre validar ofertas pequeñas, vender pronto y construir negocios livianos.",
+      "Análisis editorial sobre validar ofertas pequeñas, vender pronto y construir negocios livianos.",
     readingTime: 11,
     difficulty: "Inicial",
     tags: ["negocios", "ventas", "validación"],
@@ -351,14 +351,14 @@ export const demoBooks: Book[] = [
       accent: "text-orange-200",
     },
     isPublished: true,
-    isDemoContent: true,
+    isDemoContent: false,
     progress: 0,
     purchaseUrl: "https://www.google.com/search?q=La+Startup+de+100+Chris+Guillebeau",
     analysis: defaultAnalysis,
     keyPoints: defaultKeyPoints,
     activities: defaultActivities,
     conclusion:
-      "Conclusión editorial demo: una idea de negocio gana claridad cuando se convierte rápido en oferta, conversación con clientes y aprendizaje medible.",
+      "Conclusión editorial: una idea de negocio gana claridad cuando se convierte rápido en oferta, conversación con clientes y aprendizaje medible.",
   },
   {
     id: "hombre-rico-babilonia",
@@ -367,7 +367,7 @@ export const demoBooks: Book[] = [
     author: "George S. Clason",
     category: "Ingresos y riqueza",
     description:
-      "Principios demo de ahorro, disciplina y construcción gradual de patrimonio personal.",
+      "Análisis editorial sobre ahorro, disciplina y construcción gradual de patrimonio personal.",
     readingTime: 10,
     difficulty: "Inicial",
     tags: ["ahorro", "patrimonio", "finanzas"],
@@ -377,14 +377,14 @@ export const demoBooks: Book[] = [
       accent: "text-yellow-200",
     },
     isPublished: true,
-    isDemoContent: true,
+    isDemoContent: false,
     purchaseUrl:
       "https://www.google.com/search?q=El+Hombre+Mas+Rico+de+Babilonia",
     analysis: defaultAnalysis,
     keyPoints: defaultKeyPoints,
     activities: defaultActivities,
     conclusion:
-      "Conclusión editorial demo: la estabilidad financiera suele comenzar con reglas simples, repetidas con paciencia y revisadas con honestidad.",
+      "Conclusión editorial: la estabilidad financiera suele comenzar con reglas simples, repetidas con paciencia y revisadas con honestidad.",
   },
   {
     id: "pensar-rapido-pensar-despacio",
@@ -393,7 +393,7 @@ export const demoBooks: Book[] = [
     author: "Daniel Kahneman",
     category: "Psicología y comportamiento",
     description:
-      "Un mapa demo para reconocer sesgos, intuición y decisiones que merecen más pausa.",
+      "Análisis editorial para reconocer sesgos, intuición y decisiones que merecen más pausa.",
     readingTime: 15,
     difficulty: "Avanzado",
     tags: ["decisiones", "sesgos", "mente"],
@@ -403,14 +403,14 @@ export const demoBooks: Book[] = [
       accent: "text-indigo-200",
     },
     isPublished: true,
-    isDemoContent: true,
+    isDemoContent: false,
     purchaseUrl:
       "https://www.google.com/search?q=Pensar+Rapido+Pensar+Despacio+Daniel+Kahneman",
     analysis: defaultAnalysis,
     keyPoints: defaultKeyPoints,
     activities: defaultActivities,
     conclusion:
-      "Conclusión editorial demo: tomar mejores decisiones exige reconocer cuándo la intuición ayuda y cuándo conviene detenerse a revisar supuestos.",
+      "Conclusión editorial: tomar mejores decisiones exige reconocer cuándo la intuición ayuda y cuándo conviene detenerse a revisar supuestos.",
   },
   {
     id: "poder-del-ahora",
@@ -419,7 +419,7 @@ export const demoBooks: Book[] = [
     author: "Eckhart Tolle",
     category: "Desarrollo personal",
     description:
-      "Reflexiones demo sobre presencia, atención y reducción de ruido mental en la vida diaria.",
+      "Análisis editorial sobre presencia, atención y reducción de ruido mental en la vida diaria.",
     readingTime: 13,
     difficulty: "Intermedio",
     tags: ["presencia", "atención", "calma"],
@@ -429,13 +429,13 @@ export const demoBooks: Book[] = [
       accent: "text-sky-200",
     },
     isPublished: true,
-    isDemoContent: true,
+    isDemoContent: false,
     purchaseUrl: "https://www.google.com/search?q=El+Poder+del+Ahora+Eckhart+Tolle",
     analysis: defaultAnalysis,
     keyPoints: defaultKeyPoints,
     activities: defaultActivities,
     conclusion:
-      "Conclusión editorial demo: practicar presencia no elimina los problemas, pero puede cambiar la relación que tenemos con ellos.",
+      "Conclusión editorial: practicar presencia no elimina los problemas, pero puede cambiar la relación que tenemos con ellos.",
   },
   {
     id: "como-ganar-amigos",
@@ -444,7 +444,7 @@ export const demoBooks: Book[] = [
     author: "Dale Carnegie",
     category: "Comunicación",
     description:
-      "Ideas demo sobre escucha, empatía y relaciones profesionales más cuidadosas.",
+      "Análisis editorial sobre escucha, empatía y relaciones profesionales más cuidadosas.",
     readingTime: 12,
     difficulty: "Inicial",
     tags: ["comúnicación", "relaciones", "influencia"],
@@ -454,14 +454,14 @@ export const demoBooks: Book[] = [
       accent: "text-cyan-200",
     },
     isPublished: true,
-    isDemoContent: true,
+    isDemoContent: false,
     purchaseUrl:
       "https://www.google.com/search?q=Como+Ganar+Amigos+e+Influir+Sobre+las+Personas",
     analysis: defaultAnalysis,
     keyPoints: defaultKeyPoints,
     activities: defaultActivities,
     conclusion:
-      "Conclusión editorial demo: las relaciones mejoran cuando la atención deja de estar solo en convencer y empieza a incluir escucha real.",
+      "Conclusión editorial: las relaciones mejoran cuando la atención deja de estar solo en convencer y empieza a incluir escucha real.",
   },
   {
     id: "semana-laboral-4-horas",
@@ -470,7 +470,7 @@ export const demoBooks: Book[] = [
     author: "Tim Ferriss",
     category: "Productividad",
     description:
-      "Un análisis demo sobre foco, delegación, automatización y diseño de tiempo.",
+      "Análisis editorial sobre foco, delegación, automatización y diseño de tiempo.",
     readingTime: 13,
     difficulty: "Intermedio",
     tags: ["tiempo", "foco", "automatización"],
@@ -480,14 +480,14 @@ export const demoBooks: Book[] = [
       accent: "text-fuchsia-200",
     },
     isPublished: true,
-    isDemoContent: true,
+    isDemoContent: false,
     purchaseUrl:
       "https://www.google.com/search?q=La+Semana+Laboral+de+4+Horas+Tim+Ferriss",
     analysis: defaultAnalysis,
     keyPoints: defaultKeyPoints,
     activities: defaultActivities,
     conclusion:
-      "Conclusión editorial demo: optimizar el tiempo exige elegir qué eliminar, qué delegar y qué merece atención profunda.",
+      "Conclusión editorial: optimizar el tiempo exige elegir qué eliminar, qué delegar y qué merece atención profunda.",
   },
   {
     id: "mindset",
@@ -496,7 +496,7 @@ export const demoBooks: Book[] = [
     author: "Carol S. Dweck",
     category: "Desarrollo personal",
     description:
-      "Contenido demo sobre mentalidad de crecimiento, aprendizaje y respuesta al error.",
+      "Análisis editorial sobre mentalidad de crecimiento, aprendizaje y respuesta al error.",
     readingTime: 11,
     difficulty: "Inicial",
     tags: ["aprendizaje", "mentalidad", "crecimiento"],
@@ -506,13 +506,13 @@ export const demoBooks: Book[] = [
       accent: "text-lime-200",
     },
     isPublished: true,
-    isDemoContent: true,
+    isDemoContent: false,
     purchaseUrl: "https://www.google.com/search?q=Mindset+Carol+Dweck",
     analysis: defaultAnalysis,
     keyPoints: defaultKeyPoints,
     activities: defaultActivities,
     conclusion:
-      "Conclusión editorial demo: una mentalidad de aprendizaje se nota menos en lo que decimos creer y más en cómo respondemos al error.",
+      "Conclusión editorial: una mentalidad de aprendizaje se nota menos en lo que decimos creer y más en cómo respondemos al error.",
   },
   {
     id: "inversor-inteligente",
@@ -521,7 +521,7 @@ export const demoBooks: Book[] = [
     author: "Benjamin Graham",
     category: "Inversiones",
     description:
-      "Una vista demo sobre prudencia, margen de seguridad y disciplina al invertir.",
+      "Análisis editorial sobre prudencia, margen de seguridad y disciplina al invertir.",
     readingTime: 15,
     difficulty: "Avanzado",
     tags: ["inversión", "riesgo", "valor"],
@@ -531,14 +531,14 @@ export const demoBooks: Book[] = [
       accent: "text-emerald-200",
     },
     isPublished: true,
-    isDemoContent: true,
+    isDemoContent: false,
     purchaseUrl:
       "https://www.google.com/search?q=El+Inversor+Inteligente+Benjamin+Graham",
     analysis: defaultAnalysis,
     keyPoints: defaultKeyPoints,
     activities: defaultActivities,
     conclusion:
-      "Conclusión editorial demo: invertir con prudencia requiere reglas, margen de seguridad y una relación madura con la incertidumbre.",
+      "Conclusión editorial: invertir con prudencia requiere reglas, margen de seguridad y una relación madura con la incertidumbre.",
   },
 ];
 
@@ -563,9 +563,9 @@ export function filterBooks(
 }
 
 export function getBooksByCategory(category: BookCategory) {
-  return demoBooks.filter((book) => book.category === category);
+  return catalogBooks.filter((book) => book.category === category);
 }
 
 export function getBookBySlug(slug: string) {
-  return demoBooks.find((book) => book.slug === slug) ?? null;
+  return catalogBooks.find((book) => book.slug === slug) ?? null;
 }

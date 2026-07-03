@@ -1,4 +1,4 @@
-import { demoBooks, filterBooks, getBookBySlug } from "@/data/books";
+import { catalogBooks, filterBooks, getBookBySlug } from "@/data/books";
 import { clientEnv } from "@/lib/env";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { Database, Json } from "@/lib/supabase/database.types";
@@ -23,7 +23,7 @@ export interface BookRepository {
 
 export class MockBookRepository implements BookRepository {
   async list(filters: BookFilters = {}): Promise<Book[]> {
-    return filterBooks(demoBooks, filters.q ?? "", filters.category ?? "Todos");
+    return filterBooks(catalogBooks, filters.q ?? "", filters.category ?? "Todos");
   }
 
   async getBySlug(slug: string): Promise<Book | null> {
