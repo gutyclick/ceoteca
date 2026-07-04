@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Restablece tu contraseña de Ceoteca</title>
+  </head>
+  <body style="margin:0;background:#05050a;color:#f8fafc;font-family:Inter,Arial,sans-serif;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#05050a;padding:32px 16px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;border:1px solid rgba(148,163,184,.18);border-radius:28px;background:#11111a;overflow:hidden;">
+            <tr>
+              <td style="padding:32px 32px 12px;">
+                <div style="display:inline-block;width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#6557ff,#d946ef);color:#fff;font-size:24px;font-weight:800;line-height:42px;text-align:center;">C</div>
+                <span style="display:inline-block;margin-left:12px;vertical-align:12px;font-size:18px;font-weight:800;letter-spacing:5px;color:#fff;">CEOTECA</span>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:20px 32px 8px;">
+                <p style="margin:0 0 12px;color:#a855f7;font-size:13px;font-weight:800;letter-spacing:3px;text-transform:uppercase;">Seguridad de la cuenta</p>
+                <h1 style="margin:0;color:#ffffff;font-size:34px;line-height:1.08;font-weight:850;">Crea una nueva contraseña.</h1>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:12px 32px 0;">
+                <p style="margin:0;color:#cbd5e1;font-size:17px;line-height:1.7;">Recibimos una solicitud para restablecer la contraseña de tu cuenta. Usa este enlace para crear una contraseña nueva y volver a entrar de forma segura.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:28px 32px;">
+                <a href="{{ .ConfirmationURL }}" style="display:inline-block;border-radius:16px;background:linear-gradient(135deg,#6366f1,#d946ef);color:#ffffff;text-decoration:none;font-size:16px;font-weight:800;padding:16px 24px;box-shadow:0 18px 45px rgba(168,85,247,.28);">Crear nueva contraseña</a>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:0 32px 28px;">
+                <p style="margin:0;color:#94a3b8;font-size:14px;line-height:1.7;">Si el botón no funciona, copia y pega este enlace en tu navegador:</p>
+                <p style="margin:10px 0 0;color:#a78bfa;font-size:13px;line-height:1.6;word-break:break-all;">{{ .ConfirmationURL }}</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:22px 32px;background:rgba(255,255,255,.03);border-top:1px solid rgba(148,163,184,.14);">
+                <p style="margin:0;color:#94a3b8;font-size:13px;line-height:1.7;">Si no solicitaste este cambio, puedes ignorar este mensaje. Tu contraseña actual seguirá funcionando.</p>
+              </td>
+            </tr>
+          </table>
+          <p style="margin:18px 0 0;color:#64748b;font-size:12px;">Ceoteca · Aprende ideas clave y conviértelas en acción.</p>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

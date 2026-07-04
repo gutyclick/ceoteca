@@ -120,3 +120,62 @@ Configurar variables por entorno:
 - Production.
 
 No subir `.env.local` al repositorio.
+
+## 9. Supabase Auth y Resend
+
+### Variables
+
+En producción, `NEXT_PUBLIC_SITE_URL` debe ser:
+
+```env
+NEXT_PUBLIC_SITE_URL=https://www.ceoteca.com
+```
+
+`RESEND_API_KEY` se usa solo como secreto SMTP en Supabase local o en el panel de Supabase. No debe exponerse al cliente ni llevar prefijo `NEXT_PUBLIC_`.
+
+### Resend
+
+1. Verificar el dominio de envío en Resend.
+2. Configurar los registros DNS que Resend indique para SPF, DKIM y tracking si aplica.
+3. Crear una API key para SMTP.
+4. Usar un remitente del dominio verificado, por ejemplo:
+
+```txt
+Ceoteca <no-reply@ceoteca.com>
+```
+
+### Supabase Auth
+
+En Supabase Dashboard configurar:
+
+- Auth > URL Configuration > Site URL: `https://www.ceoteca.com`
+- Auth > URL Configuration > Redirect URLs:
+  - `https://www.ceoteca.com/auth/callback`
+  - `https://www.ceoteca.com/nueva-password`
+
+En Auth > SMTP Settings:
+
+- Host: `smtp.resend.com`
+- Port: `587`
+- Username: `resend`
+- Password: API key de Resend
+- Sender email: `no-reply@ceoteca.com`
+- Sender name: `Ceoteca`
+
+En Auth > Email Templates:
+
+- Confirm signup:
+  - Subject: `Confirma tu cuenta en Ceoteca`
+  - Template source: `supabase/templates/confirm_signup.html`
+- Reset password:
+  - Subject: `Restablece tu contraseña de Ceoteca`
+  - Template source: `supabase/templates/recovery.html`
+
+Las plantillas usan `{{ .ConfirmationURL }}` para que Supabase genere el enlace seguro. En producción, Supabase hosted no toma estas plantillas con `db push`; hay que pegarlas en el Dashboard o sincronizarlas con la Management API.
+
+### Flujos esperados
+
+- Registro con correo: envía confirmación y, al confirmar, vuelve por `/auth/callback`.
+- Reenvío de confirmación: usa `/auth/callback?next=/planes`.
+- Recuperación de contraseña: envía al usuario a `/nueva-password`.
+- Google OAuth: vuelve por `/auth/callback` y la app decide si va a `/planes` o `/home`.

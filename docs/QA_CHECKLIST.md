@@ -87,7 +87,12 @@ Comprobar:
 
 - [ ] Validación email.
 - [ ] Validación contraseña.
-- [ ] Confirmación.
+- [ ] Confirmación de correo enviada con Resend.
+- [ ] Plantilla de confirmación con branding de Ceoteca.
+- [ ] Recuperación de contraseña enviada con Resend.
+- [ ] Plantilla de recuperación con branding de Ceoteca.
+- [ ] Redirect de confirmación a `https://www.ceoteca.com/auth/callback`.
+- [ ] Redirect de nueva contraseña a `https://www.ceoteca.com/nueva-password`.
 - [ ] Términos.
 - [ ] Loading.
 - [ ] Error.
