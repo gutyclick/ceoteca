@@ -107,7 +107,12 @@ export async function createPlanSelection({
       }),
       supabase
         .from("profiles")
-        .update({ plan: normalizedPlan, founder: false })
+        .update({
+          plan: normalizedPlan,
+          founder: false,
+          onboarding_completed: true,
+          plan_selected_at: now,
+        })
         .eq("id", userId),
     ]);
 
@@ -160,6 +165,18 @@ export async function createPlanSelection({
 
   if (subscriptionResponse.error) {
     throw subscriptionResponse.error;
+  }
+
+  const profileResponse = await supabase
+    .from("profiles")
+    .update({
+      onboarding_completed: true,
+      plan_selected_at: now,
+    })
+    .eq("id", userId);
+
+  if (profileResponse.error) {
+    throw profileResponse.error;
   }
 
   return {

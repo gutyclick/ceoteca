@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import type { PlanKey } from "@/config/plans";
 import { createAuthProvider } from "@/lib/auth/provider";
+import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { signInSchema, signUpSchema } from "@/lib/validation/auth";
 
 type AuthMode = "login" | "register";
@@ -28,12 +29,29 @@ type AuthFormValues = {
   confirmPassword: string;
   acceptedTerms: boolean;
   plan: PlanKey;
+  website?: string;
 };
 
 type FormStatus =
   | { type: "idle"; message?: never }
   | { type: "success"; message: string }
   | { type: "error"; message: string };
+
+type RegisterApiResponse = {
+  data?: {
+    session: {
+      accessToken: string;
+      refreshToken: string;
+    } | null;
+    requiresEmailConfirmation: boolean;
+    redirectTo: string | null;
+    message: string;
+  };
+  error?: {
+    message: string;
+    fieldErrors?: Partial<Record<keyof AuthFormValues, string[]>>;
+  };
+};
 
 function applyZodErrors(
   error: ZodError,
@@ -56,6 +74,27 @@ function getSafeNextPath(value: string | null) {
   return value;
 }
 
+function getPasswordScore(password: string) {
+  return [
+    password.length >= 10,
+    /[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/.test(password),
+    /\d/.test(password),
+    /[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\d]/.test(password),
+  ].filter(Boolean).length;
+}
+
+function getPasswordLabel(score: number) {
+  if (score <= 1) {
+    return "Débil";
+  }
+
+  if (score <= 3) {
+    return "Buena";
+  }
+
+  return "Fuerte";
+}
+
 export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -63,32 +102,11 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
     () => getSafeNextPath(searchParams.get("next")),
     [searchParams],
   );
-  const [status, setStatus] = useState<FormStatus>({ type: "idle" });
   const authProvider = useMemo(() => createAuthProvider(), []);
   const isRegister = mode === "register";
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function redirectActiveSession() {
-      if (isRegister) {
-        return;
-      }
-
-      const user = await authProvider.getCurrentUser();
-
-      if (isMounted && user) {
-        router.replace(nextPath);
-        router.refresh();
-      }
-    }
-
-    void redirectActiveSession();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [authProvider, isRegister, nextPath, router]);
+  const [status, setStatus] = useState<FormStatus>({ type: "idle" });
+  const [passwordValue, setPasswordValue] = useState("");
+  const passwordScore = getPasswordScore(passwordValue);
 
   const {
     formState: { errors, isSubmitting },
@@ -103,8 +121,62 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
       confirmPassword: "",
       acceptedTerms: false,
       plan: selectedPlan,
+      website: "",
     },
   });
+  const passwordRegistration = register("password");
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function redirectActiveSession() {
+      const user = await authProvider.getCurrentUser();
+
+      if (!isMounted || !user) {
+        return;
+      }
+
+      if (isRegister) {
+        try {
+          const supabase = createBrowserSupabaseClient();
+          const { data } = await supabase
+            .from("profiles")
+            .select("onboarding_completed")
+            .eq("id", user.id)
+            .maybeSingle();
+
+          router.replace(data?.onboarding_completed ? "/home" : "/planes");
+        } catch {
+          router.replace("/planes");
+        }
+        router.refresh();
+        return;
+      }
+
+      router.replace(nextPath);
+      router.refresh();
+    }
+
+    void redirectActiveSession();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [authProvider, isRegister, nextPath, router]);
+
+  function setApiFieldErrors(
+    fieldErrors?: Partial<Record<keyof AuthFormValues, string[]>>,
+  ) {
+    if (!fieldErrors) {
+      return;
+    }
+
+    for (const [field, messages] of Object.entries(fieldErrors)) {
+      if (messages?.[0]) {
+        setError(field as keyof AuthFormValues, { message: messages[0] });
+      }
+    }
+  }
 
   async function onSubmit(values: AuthFormValues) {
     setStatus({ type: "idle" });
@@ -153,7 +225,38 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
       throw new Error("Revisa los campos marcados.");
     }
 
-    return authProvider.signUp(parsed.data);
+    const response = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(parsed.data),
+    });
+    const payload = (await response.json()) as RegisterApiResponse;
+
+    if (!response.ok || !payload.data) {
+      setApiFieldErrors(payload.error?.fieldErrors);
+      throw new Error(payload.error?.message ?? "No pudimos crear tu cuenta.");
+    }
+
+    if (payload.data.session) {
+      const supabase = createBrowserSupabaseClient();
+      const { error } = await supabase.auth.setSession({
+        access_token: payload.data.session.accessToken,
+        refresh_token: payload.data.session.refreshToken,
+      });
+
+      if (error) {
+        throw new Error(
+          "Tu cuenta fue creada, pero no pudimos iniciar la sesión automáticamente.",
+        );
+      }
+    }
+
+    return {
+      redirectTo: payload.data.redirectTo ?? undefined,
+      message: payload.data.message,
+    };
   }
 
   async function handleGoogleAuth() {
@@ -178,7 +281,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
         message:
           error instanceof Error
             ? error.message
-            : "Google OAuth todavía no está disponible.",
+            : "No pudimos conectar con Google.",
       });
     }
   }
@@ -213,6 +316,19 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
             <Chrome aria-hidden="true" size={18} />
             Continuar con Google
           </Button>
+          {isRegister ? (
+            <p className="mt-3 text-center text-xs leading-5 text-text-muted">
+              Al continuar con Google aceptas nuestros{" "}
+              <Link className="text-brand-purple" href="/terminos">
+                términos
+              </Link>{" "}
+              y nuestra{" "}
+              <Link className="text-brand-purple" href="/privacidad">
+                política de privacidad
+              </Link>
+              .
+            </p>
+          ) : null}
 
           <div className="my-6 flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-text-muted">
             <span className="h-px flex-1 bg-white/10" />
@@ -254,10 +370,34 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
               Contraseña
               <input
                 className="min-h-12 rounded-button border border-white/10 bg-white/[0.04] px-4 text-text-primary outline-none transition focus:border-brand-purple"
-                placeholder="Mínimo 8 caracteres"
+                placeholder={isRegister ? "Mínimo 10 caracteres" : "Tu contraseña"}
                 type="password"
-                {...register("password")}
+                {...passwordRegistration}
+                onChange={(event) => {
+                  passwordRegistration.onChange(event);
+                  setPasswordValue(event.target.value);
+                }}
               />
+              {isRegister ? (
+                <div className="grid gap-2">
+                  <div className="grid grid-cols-4 gap-1">
+                    {Array.from({ length: 4 }, (_, index) => (
+                      <span
+                        className={
+                          index < passwordScore
+                            ? "h-1.5 rounded-full bg-brand-purple"
+                            : "h-1.5 rounded-full bg-white/10"
+                        }
+                        key={index}
+                      />
+                    ))}
+                  </div>
+                  <p className="text-xs text-text-muted">
+                    Seguridad: {getPasswordLabel(passwordScore)}. Usa al menos
+                    10 caracteres, una letra y un número.
+                  </p>
+                </div>
+              ) : null}
               {errors.password ? (
                 <span className="text-xs text-danger">
                   {errors.password.message}
@@ -268,6 +408,14 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
             {isRegister ? (
               <>
                 <input type="hidden" value="free" {...register("plan")} />
+                <label className="sr-only">
+                  Sitio web
+                  <input
+                    autoComplete="off"
+                    tabIndex={-1}
+                    {...register("website")}
+                  />
+                </label>
                 <label className="grid gap-2 text-sm">
                   Confirmar contraseña
                   <input

@@ -17,6 +17,14 @@ export type Database = {
           birth_date: string | null;
           plan: "free" | "pro" | "unlimited" | "founder";
           founder: boolean;
+          onboarding_completed: boolean;
+          plan_selected_at: string | null;
+          terms_accepted_at: string | null;
+          terms_version: string | null;
+          privacy_accepted_at: string | null;
+          privacy_version: string | null;
+          legal_acceptance_ip: string | null;
+          legal_acceptance_user_agent: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -27,6 +35,14 @@ export type Database = {
           birth_date?: string | null;
           plan?: "free" | "pro" | "unlimited" | "founder";
           founder?: boolean;
+          onboarding_completed?: boolean;
+          plan_selected_at?: string | null;
+          terms_accepted_at?: string | null;
+          terms_version?: string | null;
+          privacy_accepted_at?: string | null;
+          privacy_version?: string | null;
+          legal_acceptance_ip?: string | null;
+          legal_acceptance_user_agent?: string | null;
         };
         Update: {
           full_name?: string | null;
@@ -34,6 +50,14 @@ export type Database = {
           birth_date?: string | null;
           plan?: "free" | "pro" | "unlimited" | "founder";
           founder?: boolean;
+          onboarding_completed?: boolean;
+          plan_selected_at?: string | null;
+          terms_accepted_at?: string | null;
+          terms_version?: string | null;
+          privacy_accepted_at?: string | null;
+          privacy_version?: string | null;
+          legal_acceptance_ip?: string | null;
+          legal_acceptance_user_agent?: string | null;
         };
         Relationships: [];
       };
@@ -326,6 +350,48 @@ export type Database = {
         Update: {
           read_at?: string | null;
         };
+        Relationships: [];
+      };
+      auth_events: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          email: string | null;
+          event_type:
+            | "register_attempt"
+            | "register_success"
+            | "register_confirmation_required"
+            | "register_error"
+            | "oauth_callback"
+            | "oauth_error"
+            | "rate_limit";
+          provider: string;
+          code: string | null;
+          message: string | null;
+          ip: string | null;
+          user_agent: string | null;
+          metadata: Json;
+          created_at: string;
+        };
+        Insert: {
+          user_id?: string | null;
+          email?: string | null;
+          event_type:
+            | "register_attempt"
+            | "register_success"
+            | "register_confirmation_required"
+            | "register_error"
+            | "oauth_callback"
+            | "oauth_error"
+            | "rate_limit";
+          provider?: string;
+          code?: string | null;
+          message?: string | null;
+          ip?: string | null;
+          user_agent?: string | null;
+          metadata?: Json;
+        };
+        Update: Record<string, never>;
         Relationships: [];
       };
     };

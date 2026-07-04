@@ -6,7 +6,6 @@ import { useEffect, useMemo, useState } from "react";
 
 import { Card } from "@/components/ui/Card";
 import { Logo } from "@/components/ui/Logo";
-import { oauthNextStorageKey } from "@/lib/auth/supabase";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
 type CallbackState =
@@ -55,8 +54,33 @@ export function AuthCallbackView() {
           throw new Error("No pudimos confirmar tu sesión con Google.");
         }
 
-        window.localStorage.removeItem(oauthNextStorageKey);
-        router.replace(nextPath);
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+
+        if (userError || !userData.user) {
+          throw new Error("No pudimos validar tu usuario de Google.");
+        }
+
+        if (nextPath === "/planes") {
+          await fetch("/api/auth/oauth/complete", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${data.session.access_token}`,
+            },
+          });
+        }
+
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("onboarding_completed")
+          .eq("id", userData.user.id)
+          .maybeSingle();
+        const targetPath = profile?.onboarding_completed
+          ? "/home"
+          : nextPath === "/home"
+            ? "/planes"
+            : nextPath;
+
+        router.replace(targetPath);
         router.refresh();
       } catch (error) {
         if (!isMounted) {

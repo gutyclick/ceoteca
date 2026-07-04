@@ -4,7 +4,6 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 
 import { clientEnv } from "@/lib/env";
-import { oauthNextStorageKey } from "@/lib/auth/supabase";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
 function getSafeNext(value: string | null) {
@@ -28,23 +27,18 @@ export function OAuthReturnHandler() {
     let isMounted = true;
 
     async function handleFallbackReturn() {
-      const pendingNext = window.localStorage.getItem(oauthNextStorageKey);
-      const hasOAuthCode = Boolean(searchParams.get("code"));
+      const code = searchParams.get("code");
 
-      if (!pendingNext && !hasOAuthCode) {
+      if (!code) {
         return;
       }
 
       try {
         const supabase = createBrowserSupabaseClient();
-        const code = searchParams.get("code");
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
 
-        if (code) {
-          const { error } = await supabase.auth.exchangeCodeForSession(code);
-
-          if (error) {
-            throw error;
-          }
+        if (error) {
+          throw error;
         }
 
         const { data } = await supabase.auth.getSession();
@@ -53,12 +47,10 @@ export function OAuthReturnHandler() {
           return;
         }
 
-        const nextPath = getSafeNext(pendingNext);
-        window.localStorage.removeItem(oauthNextStorageKey);
-        router.replace(nextPath);
+        router.replace(getSafeNext(searchParams.get("next")));
         router.refresh();
       } catch {
-        window.localStorage.removeItem(oauthNextStorageKey);
+        router.replace("/login");
       }
     }
 

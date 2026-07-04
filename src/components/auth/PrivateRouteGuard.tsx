@@ -50,6 +50,19 @@ export function PrivateRouteGuard({ children }: PrivateRouteGuardProps) {
         return;
       }
 
+      if (pathname !== "/planes") {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("onboarding_completed")
+          .eq("id", userData.user.id)
+          .maybeSingle();
+
+        if (profile && !profile.onboarding_completed) {
+          router.replace("/planes");
+          return;
+        }
+      }
+
       if (isMounted) {
         setStatus("authenticated");
       }

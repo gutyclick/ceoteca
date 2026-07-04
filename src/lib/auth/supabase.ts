@@ -4,8 +4,6 @@ import { clientEnv } from "@/lib/env";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import type { AppUser } from "@/types";
 
-export const oauthNextStorageKey = "ceoteca-oauth-next";
-
 function getOAuthBaseUrl() {
   const configuredUrl = new URL(clientEnv.NEXT_PUBLIC_SITE_URL);
 
@@ -14,6 +12,24 @@ function getOAuthBaseUrl() {
   }
 
   return configuredUrl.origin;
+}
+
+function translateSignInError(message?: string) {
+  const normalized = message?.toLowerCase() ?? "";
+
+  if (normalized.includes("invalid login credentials")) {
+    return "El email o la contraseña no coinciden.";
+  }
+
+  if (normalized.includes("email not confirmed")) {
+    return "Confirma tu correo antes de iniciar sesión.";
+  }
+
+  if (normalized.includes("too many")) {
+    return "Has realizado varios intentos. Espera unos minutos antes de volver a intentarlo.";
+  }
+
+  return "No pudimos iniciar sesión.";
 }
 
 export class SupabaseAuthProvider implements AuthProvider {
@@ -45,7 +61,7 @@ export class SupabaseAuthProvider implements AuthProvider {
     });
 
     if (error || !data.user) {
-      throw new Error(error?.message ?? "No pudimos iniciar sesión.");
+      throw new Error(translateSignInError(error?.message));
     }
 
     return {
@@ -78,7 +94,7 @@ export class SupabaseAuthProvider implements AuthProvider {
     });
 
     if (error || !data.user) {
-      throw new Error(error?.message ?? "No pudimos crear la cuenta.");
+      throw new Error("No pudimos crear la cuenta.");
     }
 
     return {
@@ -103,8 +119,6 @@ export class SupabaseAuthProvider implements AuthProvider {
     const supabase = createBrowserSupabaseClient();
     const safeRedirectTo =
       redirectTo.startsWith("/") && !redirectTo.startsWith("//") ? redirectTo : "/home";
-    window.localStorage.setItem(oauthNextStorageKey, safeRedirectTo);
-
     const callbackUrl = new URL("/auth/callback", getOAuthBaseUrl());
     callbackUrl.searchParams.set("next", safeRedirectTo);
 
@@ -116,7 +130,7 @@ export class SupabaseAuthProvider implements AuthProvider {
     });
 
     if (error) {
-      throw new Error(error.message);
+      throw new Error("No pudimos conectar con Google.");
     }
 
     return {
@@ -128,7 +142,7 @@ export class SupabaseAuthProvider implements AuthProvider {
         isDemo: false,
       },
       redirectTo: "",
-      message: "Redirección a Google preparada.",
+      message: "Te estamos llevando a Google.",
     };
   }
 }
