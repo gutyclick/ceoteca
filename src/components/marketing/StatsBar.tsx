@@ -4,13 +4,13 @@ import { cn } from "@/lib/utils/cn";
 export function StatsBar() {
   return (
     <section className="ceoteca-container pb-20">
-      <div className="grid gap-3 rounded-[1.5rem] border border-white/10 bg-surface-gradient p-4 shadow-ambient md:grid-cols-4">
+      <div className="grid gap-3 rounded-[1.5rem] border border-slate-950/[0.08] bg-white/85 p-4 shadow-[0_20px_70px_rgba(15,23,42,0.06)] md:grid-cols-4">
         {productStats.map((stat) => {
           const Icon = stat.icon;
 
           return (
             <div
-              className="flex items-center gap-4 rounded-[1.1rem] p-3 md:border-r md:border-white/10 md:last:border-r-0"
+              className="flex items-center gap-4 rounded-[1.1rem] p-4 md:border-r md:border-slate-950/[0.06] md:last:border-r-0"
               key={stat.label}
             >
               <span
@@ -23,8 +23,10 @@ export function StatsBar() {
                 <Icon aria-hidden="true" size={26} />
               </span>
               <div>
-                <p className="text-2xl font-semibold">{stat.value}</p>
-                <p className="text-sm text-text-secondary">{stat.label}</p>
+                <p className="text-3xl font-black text-violet-600">
+                  {stat.value}
+                </p>
+                <p className="text-sm font-medium text-slate-600">{stat.label}</p>
               </div>
             </div>
           );

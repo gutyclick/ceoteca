@@ -1,33 +1,46 @@
-import { Card } from "@/components/ui/Card";
+import { ArrowRight } from "lucide-react";
+
 import { howItWorksSteps } from "@/data/landing";
 
 import { SectionHeading } from "./SectionHeading";
 
 export function HowItWorksSection() {
   return (
-    <section className="ceoteca-container ceoteca-section">
+    <section className="ceoteca-container pb-20">
       <SectionHeading
         eyebrow="Cómo funciona"
-        title="Una forma más clara de aplicar ideas."
-        description="Ceoteca organiza análisis editoriales en rutas visuales, prácticas y fáciles de retomar."
+        title="De la lectura al cambio real"
+        description="Un proceso simple para transformar conocimiento en resultados."
       />
-      <div className="mt-12 grid gap-4 md:grid-cols-3">
+      <div className="mt-12 grid gap-5 lg:grid-cols-4">
         {howItWorksSteps.map((step, index) => {
           const Icon = step.icon;
 
           return (
-            <Card className="reveal-up p-6" interactive key={step.title}>
-              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-brand-purple/15 text-brand-purple">
-                <Icon aria-hidden="true" size={24} />
+            <article
+              className="relative rounded-[1.25rem] border border-slate-950/[0.08] bg-white p-6 shadow-[0_20px_60px_rgba(15,23,42,0.06)]"
+              key={step.title}
+            >
+              <span className="absolute left-5 top-5 grid h-8 w-8 place-items-center rounded-full bg-violet-100 text-sm font-black text-violet-700">
+                {index + 1}
               </span>
-              <p className="mt-6 text-sm font-medium text-text-muted">
-                0{index + 1}
-              </p>
-              <h3 className="mt-2 text-2xl font-semibold">{step.title}</h3>
-              <p className="mt-4 text-sm leading-7 text-text-secondary">
+              {index < howItWorksSteps.length - 1 ? (
+                <ArrowRight
+                  aria-hidden="true"
+                  className="absolute -right-4 top-1/2 hidden -translate-y-1/2 text-slate-400 lg:block"
+                  size={20}
+                />
+              ) : null}
+              <div className="mt-10 grid h-14 w-14 place-items-center rounded-2xl bg-violet-50 text-violet-600">
+                <Icon aria-hidden="true" size={28} />
+              </div>
+              <h3 className="mt-7 text-xl font-black text-slate-950">
+                {step.title}
+              </h3>
+              <p className="mt-3 text-sm leading-7 text-slate-600">
                 {step.description}
               </p>
-            </Card>
+            </article>
           );
         })}
       </div>

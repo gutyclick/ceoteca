@@ -363,12 +363,12 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
   }
 
   return (
-    <main className="min-h-screen overflow-hidden bg-background text-text-primary">
-      <section className="ceoteca-container ceoteca-section relative grid gap-10 lg:grid-cols-[0.85fr_1fr] lg:items-center">
-        <div className="ambient-drift absolute left-0 top-20 -z-10 h-80 w-80 rounded-full bg-glow-violet blur-3xl" />
-        <div>
+    <main className="min-h-screen overflow-hidden bg-[#fbfaf8] text-slate-950">
+      <section className="ceoteca-container relative grid gap-10 py-16 md:py-24 lg:grid-cols-[0.9fr_1fr] lg:items-center">
+        <div className="absolute left-0 top-20 -z-10 h-80 w-80 rounded-full bg-violet-100/80 blur-3xl" />
+        <div className="max-w-xl">
           <SectionHeading
-            eyebrow={isRegister ? "Registro" : "Login"}
+            eyebrow={isRegister ? "Registro" : "Inicio de sesión"}
             title={
               isRegister
                 ? "Crea tu cuenta para empezar a aprender."
@@ -377,14 +377,26 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
             description={
               isRegister
                 ? "Crea tu cuenta y luego elige tu plan para activar el acceso."
-                : "Ingresa con email y contraseña para volver a tu home."
+                : "Ingresa con email y contraseña para continuar tu progreso."
             }
           />
+          <div className="mt-10 hidden rounded-[1.5rem] border border-slate-950/[0.08] bg-white p-6 shadow-[0_20px_60px_rgba(15,23,42,0.06)] lg:block">
+            <p className="text-sm font-black uppercase tracking-[0.22em] text-violet-600">
+              Ceoteca
+            </p>
+            <h2 className="mt-4 text-3xl font-black leading-tight">
+              Aprende ideas clave y conviértelas en acción.
+            </h2>
+            <p className="mt-4 text-sm leading-7 text-slate-600">
+              Análisis editoriales, ejercicios prácticos y recomendaciones para
+              complementar tus lecturas sin reemplazar la obra original.
+            </p>
+          </div>
         </div>
 
-        <Card className="mx-auto w-full max-w-xl p-6 md:p-8">
+        <Card className="mx-auto w-full max-w-xl border-slate-950/[0.08] bg-white p-6 text-slate-950 shadow-[0_24px_80px_rgba(15,23,42,0.08)] md:p-8">
           <Button
-            className="w-full"
+            className="w-full border-slate-950/10 bg-white text-slate-950 shadow-sm hover:bg-violet-50"
             onClick={handleGoogleAuth}
             type="button"
             variant="secondary"
@@ -393,7 +405,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
             Continuar con Google
           </Button>
           {isRegister ? (
-            <p className="mt-3 text-center text-xs leading-5 text-text-muted">
+            <p className="mt-3 text-center text-xs leading-5 text-slate-500">
               Al continuar con Google aceptas nuestros{" "}
               <Link className="text-brand-purple" href="/terminos">
                 términos
@@ -406,10 +418,10 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
             </p>
           ) : null}
 
-          <div className="my-6 flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-text-muted">
-            <span className="h-px flex-1 bg-white/10" />
+          <div className="my-6 flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-slate-400">
+            <span className="h-px flex-1 bg-slate-200" />
             o con email
-            <span className="h-px flex-1 bg-white/10" />
+            <span className="h-px flex-1 bg-slate-200" />
           </div>
 
           <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
@@ -417,7 +429,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
               <label className="grid gap-2 text-sm">
                 Nombre
                 <input
-                  className="min-h-12 rounded-button border border-white/10 bg-white/[0.04] px-4 text-text-primary outline-none transition focus:border-brand-purple"
+                  className="min-h-12 rounded-button border border-slate-950/10 bg-white px-4 text-slate-950 outline-none transition focus:border-brand-purple"
                   placeholder="Tu nombre"
                   {...register("fullName")}
                 />
@@ -432,7 +444,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
             <label className="grid gap-2 text-sm">
               Email
               <input
-                className="min-h-12 rounded-button border border-white/10 bg-white/[0.04] px-4 text-text-primary outline-none transition focus:border-brand-purple"
+                className="min-h-12 rounded-button border border-slate-950/10 bg-white px-4 text-slate-950 outline-none transition focus:border-brand-purple"
                 placeholder="tu@email.com"
                 type="email"
                 {...register("email")}
@@ -446,7 +458,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
               Contraseña
               <span className="relative">
                 <input
-                  className="min-h-12 w-full rounded-button border border-white/10 bg-white/[0.04] px-4 pr-12 text-text-primary outline-none transition focus:border-brand-purple"
+                  className="min-h-12 w-full rounded-button border border-slate-950/10 bg-white px-4 pr-12 text-slate-950 outline-none transition focus:border-brand-purple"
                   placeholder={isRegister ? "Mínimo 10 caracteres" : "Tu contraseña"}
                   type={showPassword ? "text" : "password"}
                   {...passwordRegistration}
@@ -459,7 +471,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
                   aria-label={
                     showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
                   }
-                  className="absolute right-3 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full text-text-secondary transition hover:bg-white/[0.06] hover:text-white"
+                  className="absolute right-3 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full text-slate-500 transition hover:bg-violet-50 hover:text-violet-700"
                   onClick={() => setShowPassword((current) => !current)}
                   type="button"
                 >
@@ -478,13 +490,13 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
                         className={
                           index < passwordScore
                             ? "h-1.5 rounded-full bg-brand-purple"
-                            : "h-1.5 rounded-full bg-white/10"
+                            : "h-1.5 rounded-full bg-slate-200"
                         }
                         key={index}
                       />
                     ))}
                   </div>
-                  <p className="text-xs text-text-muted">
+                  <p className="text-xs text-slate-500">
                     Seguridad: {getPasswordLabel(passwordScore)}. Usa al menos
                     10 caracteres, una letra y un número.
                   </p>
@@ -511,7 +523,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
                 <label className="grid gap-2 text-sm">
                   Confirmar contraseña
                   <input
-                    className="min-h-12 rounded-button border border-white/10 bg-white/[0.04] px-4 text-text-primary outline-none transition focus:border-brand-purple"
+                    className="min-h-12 rounded-button border border-slate-950/10 bg-white px-4 text-slate-950 outline-none transition focus:border-brand-purple"
                     placeholder="Repite tu contraseña"
                     type="password"
                     {...register("confirmPassword")}
@@ -522,9 +534,9 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
                     </span>
                   ) : null}
                 </label>
-                <label className="flex items-start gap-3 text-sm leading-6 text-text-secondary">
+                <label className="flex items-start gap-3 text-sm leading-6 text-slate-600">
                   <input
-                    className="mt-1 h-4 w-4 rounded border-white/20 bg-white/[0.04]"
+                    className="mt-1 h-4 w-4 rounded border-slate-300 bg-white"
                     type="checkbox"
                     {...register("acceptedTerms")}
                   />
@@ -576,7 +588,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
             {!isRegister ? (
               <div className="text-right">
                 <Link
-                  className="text-sm font-medium text-brand-purple transition hover:text-white"
+                  className="text-sm font-medium text-brand-purple transition hover:text-violet-800"
                   href="/recuperar-password"
                 >
                   Olvidé mi contraseña
@@ -584,7 +596,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
               </div>
             ) : null}
 
-            <Button className="w-full" disabled={isSubmitting} type="submit">
+            <Button className="w-full shadow-[0_18px_42px_rgba(124,58,237,0.22)]" disabled={isSubmitting} type="submit">
               {isSubmitting ? (
                 <Loader2 aria-hidden="true" className="animate-spin" size={18} />
               ) : null}
@@ -598,7 +610,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
             </Button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-text-secondary">
+          <p className="mt-6 text-center text-sm text-slate-600">
             {isRegister ? "¿Ya tienes cuenta?" : "¿No tienes cuenta?"}{" "}
             <Link
               className="font-medium text-brand-purple"

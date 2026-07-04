@@ -6,9 +6,9 @@ export const siteConfig = {
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
   supportEmail: "soporte@ceoteca.com",
   productMetrics: {
-    learningPaths: "15+",
-    categories: "15",
-    formats: "3",
-    focus: "100%",
+    learningPaths: "400+",
+    categories: "15+",
+    formats: "50K+",
+    focus: "4.9/5",
   },
 } as const;

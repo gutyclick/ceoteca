@@ -146,16 +146,16 @@ export function NewPasswordView() {
   const isBlocked = status.type === "loading" || status.type === "error";
 
   return (
-    <main className="min-h-screen overflow-hidden bg-background text-text-primary">
-      <section className="ceoteca-container ceoteca-section relative grid gap-10 lg:grid-cols-[0.85fr_1fr] lg:items-center">
-        <div className="ambient-drift absolute left-0 top-20 -z-10 h-80 w-80 rounded-full bg-glow-violet blur-3xl" />
+    <main className="min-h-screen overflow-hidden bg-[#fbfaf8] text-slate-950">
+      <section className="ceoteca-container relative grid gap-10 py-16 md:py-24 lg:grid-cols-[0.85fr_1fr] lg:items-center">
+        <div className="absolute left-0 top-20 -z-10 h-80 w-80 rounded-full bg-violet-100/80 blur-3xl" />
         <SectionHeading
           eyebrow="Nuevo acceso"
           title="Crea una nueva contraseña."
           description="Elige una contraseña segura para proteger tu cuenta y volver a tu biblioteca."
         />
 
-        <Card className="mx-auto w-full max-w-xl p-6 md:p-8">
+        <Card className="mx-auto w-full max-w-xl border-slate-950/[0.08] bg-white p-6 text-slate-950 shadow-[0_24px_80px_rgba(15,23,42,0.08)] md:p-8">
           {status.type !== "idle" ? (
             <div
               className={
@@ -163,7 +163,7 @@ export function NewPasswordView() {
                   ? "mb-5 rounded-2xl border border-success/30 bg-success/10 p-4 text-sm text-success"
                   : status.type === "error"
                     ? "mb-5 rounded-2xl border border-danger/30 bg-danger/10 p-4 text-sm text-danger"
-                    : "mb-5 rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm text-text-secondary"
+                    : "mb-5 rounded-2xl border border-slate-950/10 bg-slate-50 p-4 text-sm text-slate-600"
               }
             >
               {status.message}
@@ -175,7 +175,7 @@ export function NewPasswordView() {
               Nueva contraseña
               <span className="relative">
                 <input
-                  className="min-h-12 w-full rounded-button border border-white/10 bg-white/[0.04] px-4 pr-12 text-text-primary outline-none transition focus:border-brand-purple"
+                  className="min-h-12 w-full rounded-button border border-slate-950/10 bg-white px-4 pr-12 text-slate-950 outline-none transition focus:border-brand-purple"
                   disabled={isBlocked}
                   placeholder="Mínimo 10 caracteres"
                   type={showPassword ? "text" : "password"}
@@ -185,7 +185,7 @@ export function NewPasswordView() {
                   aria-label={
                     showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
                   }
-                  className="absolute right-3 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full text-text-secondary transition hover:bg-white/[0.06] hover:text-white"
+                  className="absolute right-3 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full text-slate-500 transition hover:bg-violet-50 hover:text-violet-700"
                   onClick={() => setShowPassword((current) => !current)}
                   type="button"
                 >
@@ -206,7 +206,7 @@ export function NewPasswordView() {
             <label className="grid gap-2 text-sm">
               Confirmar contraseña
               <input
-                className="min-h-12 rounded-button border border-white/10 bg-white/[0.04] px-4 text-text-primary outline-none transition focus:border-brand-purple"
+                className="min-h-12 rounded-button border border-slate-950/10 bg-white px-4 text-slate-950 outline-none transition focus:border-brand-purple"
                 disabled={isBlocked}
                 placeholder="Repite tu contraseña"
                 type={showPassword ? "text" : "password"}
@@ -220,7 +220,7 @@ export function NewPasswordView() {
             </label>
 
             <Button
-              className="w-full"
+              className="w-full shadow-[0_18px_42px_rgba(124,58,237,0.22)]"
               disabled={isBlocked || isSubmitting}
               type="submit"
             >
@@ -231,7 +231,7 @@ export function NewPasswordView() {
             </Button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-text-secondary">
+          <p className="mt-6 text-center text-sm text-slate-600">
             ¿Necesitas otro enlace?{" "}
             <Link
               className="font-medium text-brand-purple"

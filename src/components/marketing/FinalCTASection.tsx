@@ -1,38 +1,41 @@
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, BookOpen } from "lucide-react";
 
 import { ButtonLink } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
 import { finalCta } from "@/data/landing";
 
 export function FinalCTASection() {
-  const PrimaryIcon = finalCta.primary.icon;
-  const SecondaryIcon = finalCta.secondary.icon;
-
   return (
-    <section className="ceoteca-container pb-24">
-      <Card className="relative overflow-hidden px-6 py-14 text-center md:px-12">
-        <div className="ambient-drift absolute left-1/2 top-0 -z-10 h-80 w-80 -translate-x-1/2 rounded-full bg-glow-pink blur-3xl" />
-        <p className="text-sm font-medium uppercase tracking-[0.24em] text-brand-purple">
-          {finalCta.eyebrow}
-        </p>
-        <h2 className="mx-auto mt-4 max-w-3xl text-balance text-4xl font-semibold leading-tight sm:text-5xl">
-          {finalCta.title}
-        </h2>
-        <p className="mx-auto mt-5 max-w-2xl text-pretty text-lg leading-8 text-text-secondary">
-          {finalCta.description}
-        </p>
-        <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-          <ButtonLink href={finalCta.primary.href}>
-            <PrimaryIcon aria-hidden="true" size={18} />
-            {finalCta.primary.label}
-            <ArrowRight aria-hidden="true" size={18} />
-          </ButtonLink>
-          <ButtonLink href={finalCta.secondary.href} variant="secondary">
-            <SecondaryIcon aria-hidden="true" size={18} />
-            {finalCta.secondary.label}
-          </ButtonLink>
+    <section className="ceoteca-container pb-20">
+      <div className="relative overflow-hidden rounded-[1.25rem] bg-gradient-to-r from-violet-600 via-purple-600 to-violet-700 px-8 py-10 text-white shadow-[0_28px_90px_rgba(124,58,237,0.24)] md:px-12">
+        <div className="absolute -right-20 -top-20 h-56 w-56 rounded-full bg-white/10 blur-2xl" />
+        <div className="relative z-10 grid gap-8 md:grid-cols-[1fr_auto] md:items-center">
+          <div className="flex gap-5">
+            <span className="hidden h-16 w-16 shrink-0 place-items-center rounded-2xl bg-white/15 md:grid">
+              <BookOpen aria-hidden="true" size={28} />
+            </span>
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-white/75">
+                {finalCta.eyebrow}
+              </p>
+              <h2 className="mt-2 max-w-xl text-3xl font-black leading-tight md:text-4xl">
+                {finalCta.title}
+              </h2>
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-white/80">
+                {finalCta.description}
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <ButtonLink className="bg-white text-violet-700 hover:bg-violet-50" href={finalCta.primary.href} variant="secondary">
+              {finalCta.primary.label}
+              <ArrowRight aria-hidden="true" size={18} />
+            </ButtonLink>
+            <ButtonLink className="border-white/25 bg-white/10 text-white hover:bg-white/15" href={finalCta.secondary.href} variant="secondary">
+              {finalCta.secondary.label}
+            </ButtonLink>
+          </div>
         </div>
-      </Card>
+      </div>
     </section>
   );
 }

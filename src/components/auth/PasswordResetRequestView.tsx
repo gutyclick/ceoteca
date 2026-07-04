@@ -72,21 +72,21 @@ export function PasswordResetRequestView() {
   }
 
   return (
-    <main className="min-h-screen overflow-hidden bg-background text-text-primary">
-      <section className="ceoteca-container ceoteca-section relative grid gap-10 lg:grid-cols-[0.85fr_1fr] lg:items-center">
-        <div className="ambient-drift absolute left-0 top-20 -z-10 h-80 w-80 rounded-full bg-glow-violet blur-3xl" />
+    <main className="min-h-screen overflow-hidden bg-[#fbfaf8] text-slate-950">
+      <section className="ceoteca-container relative grid gap-10 py-16 md:py-24 lg:grid-cols-[0.85fr_1fr] lg:items-center">
+        <div className="absolute left-0 top-20 -z-10 h-80 w-80 rounded-full bg-violet-100/80 blur-3xl" />
         <SectionHeading
           eyebrow="Recuperar acceso"
           title="Restablece tu contraseña."
           description="Escribe el email de tu cuenta y te enviaremos un enlace seguro para crear una nueva contraseña."
         />
 
-        <Card className="mx-auto w-full max-w-xl p-6 md:p-8">
+        <Card className="mx-auto w-full max-w-xl border-slate-950/[0.08] bg-white p-6 text-slate-950 shadow-[0_24px_80px_rgba(15,23,42,0.08)] md:p-8">
           <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
             <label className="grid gap-2 text-sm">
               Email
               <input
-                className="min-h-12 rounded-button border border-white/10 bg-white/[0.04] px-4 text-text-primary outline-none transition focus:border-brand-purple"
+                className="min-h-12 rounded-button border border-slate-950/10 bg-white px-4 text-slate-950 outline-none transition focus:border-brand-purple"
                 placeholder="tu@email.com"
                 type="email"
                 {...register("email")}
@@ -108,7 +108,7 @@ export function PasswordResetRequestView() {
               </div>
             ) : null}
 
-            <Button className="w-full" disabled={isSubmitting} type="submit">
+            <Button className="w-full shadow-[0_18px_42px_rgba(124,58,237,0.22)]" disabled={isSubmitting} type="submit">
               {isSubmitting ? (
                 <Loader2 aria-hidden="true" className="animate-spin" size={18} />
               ) : null}
@@ -116,7 +116,7 @@ export function PasswordResetRequestView() {
             </Button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-text-secondary">
+          <p className="mt-6 text-center text-sm text-slate-600">
             ¿Recordaste tu contraseña?{" "}
             <Link className="font-medium text-brand-purple" href="/login">
               Inicia sesión
