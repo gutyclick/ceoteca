@@ -1,17 +1,20 @@
-import { comparisonRows, whyCeotecaItems } from "@/data/landing";
+import { whyCeotecaItems } from "@/data/landing";
 import { cn } from "@/lib/utils/cn";
 
 import { SectionHeading } from "./SectionHeading";
 
 export function ComparisonSection() {
   return (
-    <section className="ceoteca-container pb-20">
+    <section
+      className="mx-auto w-full max-w-[1480px] px-6 pb-20 sm:px-8 xl:px-10"
+      id="por-que-ceoteca"
+    >
       <SectionHeading
         eyebrow="Por qué Ceoteca"
         title="Más contexto. Más claridad. Más acción."
         description="Una experiencia pensada para complementar tus lecturas y ayudarte a aplicar mejor."
       />
-      <div className="mt-12 grid gap-6 md:grid-cols-4">
+      <div className="mt-12 grid gap-8 md:grid-cols-4">
         {whyCeotecaItems.map((item) => {
           const Icon = item.icon;
 
@@ -26,23 +29,12 @@ export function ComparisonSection() {
                 <Icon aria-hidden="true" size={24} />
               </span>
               <h3 className="mt-4 font-black text-slate-950">{item.title}</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
+              <p className="mx-auto mt-2 max-w-[240px] text-sm leading-6 text-slate-600">
                 {item.description}
               </p>
             </article>
           );
         })}
-      </div>
-      <div className="mt-12 grid gap-4 md:grid-cols-2">
-        {comparisonRows.map((row) => (
-          <article
-            className="rounded-[1.2rem] border border-slate-950/[0.08] bg-white p-6 shadow-[0_20px_60px_rgba(15,23,42,0.05)]"
-            key={row.feature}
-          >
-            <h3 className="font-black text-slate-950">{row.feature}</h3>
-            <p className="mt-3 text-sm leading-7 text-slate-600">{row.ceoteca}</p>
-          </article>
-        ))}
       </div>
     </section>
   );
