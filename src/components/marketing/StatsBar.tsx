@@ -23,7 +23,7 @@ export function StatsBar() {
                 <Icon aria-hidden="true" size={26} />
               </span>
               <div>
-                <p className="text-3xl font-black text-violet-600">
+                <p className={cn("text-3xl font-black", stat.valueClass)}>
                   {stat.value}
                 </p>
                 <p className="text-sm font-medium text-slate-600">{stat.label}</p>

@@ -103,7 +103,7 @@ export function LandingHero() {
                     <p className="mt-1 text-xs text-slate-500">{book.author}</p>
                     <div className="mt-2 h-1.5 rounded-full bg-slate-100">
                       <span
-                        className="block h-full rounded-full bg-violet-600"
+                        className="block h-full rounded-full bg-gradient-to-r from-emerald-500 to-sky-500"
                         style={{ width: `${book.progress}%` }}
                       />
                     </div>
@@ -114,7 +114,7 @@ export function LandingHero() {
           </article>
 
           <div className="absolute bottom-4 left-12 hidden items-center gap-2 rounded-full border border-slate-950/[0.06] bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-[0_20px_50px_rgba(15,23,42,0.08)] sm:flex">
-            <CheckCircle2 aria-hidden="true" className="text-violet-600" size={18} />
+            <CheckCircle2 aria-hidden="true" className="text-emerald-600" size={18} />
             Ideas listas para aplicar
             <ArrowRight aria-hidden="true" size={16} />
           </div>

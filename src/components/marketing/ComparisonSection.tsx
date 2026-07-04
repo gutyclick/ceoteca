@@ -1,4 +1,5 @@
 import { comparisonRows, whyCeotecaItems } from "@/data/landing";
+import { cn } from "@/lib/utils/cn";
 
 import { SectionHeading } from "./SectionHeading";
 
@@ -16,7 +17,12 @@ export function ComparisonSection() {
 
           return (
             <article className="text-center" key={item.title}>
-              <span className="mx-auto grid h-14 w-14 place-items-center rounded-full border border-violet-100 bg-white text-violet-600 shadow-[0_18px_42px_rgba(124,58,237,0.12)]">
+              <span
+                className={cn(
+                  "mx-auto grid h-14 w-14 place-items-center rounded-full border border-slate-950/[0.06] shadow-[0_18px_42px_rgba(15,23,42,0.08)]",
+                  item.accent,
+                )}
+              >
                 <Icon aria-hidden="true" size={24} />
               </span>
               <h3 className="mt-4 font-black text-slate-950">{item.title}</h3>

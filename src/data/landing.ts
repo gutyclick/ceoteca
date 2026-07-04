@@ -46,27 +46,31 @@ export const productStats = [
     icon: LibraryBig,
     accent: "text-violet-600",
     background: "bg-violet-50",
+    valueClass: "text-violet-600",
   },
   {
     label: "Categorías",
     value: siteConfig.productMetrics.categories,
     icon: Grid3X3,
-    accent: "text-violet-600",
-    background: "bg-violet-50",
+    accent: "text-emerald-600",
+    background: "bg-emerald-50",
+    valueClass: "text-emerald-600",
   },
   {
     label: "Usuarios activos",
     value: siteConfig.productMetrics.formats,
     icon: Users,
-    accent: "text-violet-600",
-    background: "bg-violet-50",
+    accent: "text-sky-600",
+    background: "bg-sky-50",
+    valueClass: "text-sky-600",
   },
   {
     label: "Valoración de usuarios",
     value: siteConfig.productMetrics.focus,
     icon: Star,
-    accent: "text-violet-600",
-    background: "bg-violet-50",
+    accent: "text-amber-500",
+    background: "bg-amber-50",
+    valueClass: "text-slate-950",
   },
 ] as const;
 
@@ -76,24 +80,32 @@ export const howItWorksSteps = [
     description:
       "Explora nuestra biblioteca y elige un análisis que conecte con lo que quieres mejorar.",
     icon: BookOpen,
+    accent: "bg-violet-50 text-violet-600",
+    badge: "bg-violet-100 text-violet-700",
   },
   {
     title: "Aprende ideas clave",
     description:
       "Accede a conceptos esenciales, ejemplos y marcos prácticos sin perder el contexto.",
     icon: Zap,
+    accent: "bg-sky-50 text-sky-600",
+    badge: "bg-sky-100 text-sky-700",
   },
   {
     title: "Aplica con intención",
     description:
       "Usa ejercicios, plantillas y preguntas guiadas para llevar las ideas a tu vida o negocio.",
     icon: Target,
+    accent: "bg-emerald-50 text-emerald-600",
+    badge: "bg-emerald-100 text-emerald-700",
   },
   {
     title: "Obtén resultados",
     description:
       "Convierte tu aprendizaje en hábitos, mejores decisiones y progreso constante.",
     icon: BarChart3,
+    accent: "bg-amber-50 text-amber-600",
+    badge: "bg-amber-100 text-amber-700",
   },
 ] as const;
 
@@ -240,21 +252,25 @@ export const whyCeotecaItems = [
     title: "Análisis originales",
     description: "Contenido creado por expertos, sin copiados ni relleno.",
     icon: Sparkles,
+    accent: "text-violet-600 bg-violet-50",
   },
   {
     title: "Enfoque práctico",
     description: "Ideas accionables, ejemplos reales y marcos útiles.",
     icon: Brain,
+    accent: "text-emerald-600 bg-emerald-50",
   },
   {
     title: "Ahorra tiempo",
     description: "Obtén minutos valiosos antes de profundizar en cada libro.",
     icon: Clock3,
+    accent: "text-sky-600 bg-sky-50",
   },
   {
     title: "Mejora continua",
     description: "Nuevos análisis y progreso para mantener el hábito.",
     icon: Heart,
+    accent: "text-pink-600 bg-pink-50",
   },
 ] as const;
 

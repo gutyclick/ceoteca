@@ -1,6 +1,7 @@
 import { ArrowRight } from "lucide-react";
 
 import { howItWorksSteps } from "@/data/landing";
+import { cn } from "@/lib/utils/cn";
 
 import { SectionHeading } from "./SectionHeading";
 
@@ -21,7 +22,12 @@ export function HowItWorksSection() {
               className="relative rounded-[1.25rem] border border-slate-950/[0.08] bg-white p-6 shadow-[0_20px_60px_rgba(15,23,42,0.06)]"
               key={step.title}
             >
-              <span className="absolute left-5 top-5 grid h-8 w-8 place-items-center rounded-full bg-violet-100 text-sm font-black text-violet-700">
+              <span
+                className={cn(
+                  "absolute left-5 top-5 grid h-8 w-8 place-items-center rounded-full text-sm font-black",
+                  step.badge,
+                )}
+              >
                 {index + 1}
               </span>
               {index < howItWorksSteps.length - 1 ? (
@@ -31,7 +37,12 @@ export function HowItWorksSection() {
                   size={20}
                 />
               ) : null}
-              <div className="mt-10 grid h-14 w-14 place-items-center rounded-2xl bg-violet-50 text-violet-600">
+              <div
+                className={cn(
+                  "mt-10 grid h-14 w-14 place-items-center rounded-2xl",
+                  step.accent,
+                )}
+              >
                 <Icon aria-hidden="true" size={28} />
               </div>
               <h3 className="mt-7 text-xl font-black text-slate-950">
