@@ -1391,9 +1391,9 @@ export function BookExperience({ book }: BookExperienceProps) {
   }
 
   return (
-    <main className="min-h-screen overflow-x-clip bg-[#03040b] pb-16 pl-[var(--dashboard-sidebar-offset,84px)] text-text-primary transition-[padding] duration-300 ease-out">
+    <main className="min-h-screen overflow-x-clip bg-[#03040b] pb-16 pl-0 text-text-primary transition-[padding] duration-300 ease-out sm:pl-[var(--dashboard-sidebar-offset,84px)]">
       <DashboardSidebar active="home" />
-      <div className="fixed left-[var(--dashboard-sidebar-offset,84px)] right-0 top-0 z-50 h-1 bg-white/5">
+      <div className="fixed left-0 right-0 top-0 z-50 h-1 bg-white/5 sm:left-[var(--dashboard-sidebar-offset,84px)]">
         <div
           className="h-full rounded-r-full bg-gradient-to-r from-brand-purple via-brand-blue to-brand-pink transition-[width] duration-300"
           style={{ width: `${readingProgress}%` }}

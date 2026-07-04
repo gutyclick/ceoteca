@@ -549,7 +549,7 @@ function PrivateLibrary({ books }: { books: Book[] }) {
   }, []);
 
   return (
-    <main className="min-h-screen overflow-x-clip bg-[#03040b] pb-16 pl-[var(--dashboard-sidebar-offset,84px)] text-text-primary transition-[padding] duration-300 ease-out">
+    <main className="min-h-screen overflow-x-clip bg-[#03040b] pb-16 pl-0 text-text-primary transition-[padding] duration-300 ease-out sm:pl-[var(--dashboard-sidebar-offset,84px)]">
       <DashboardSidebar active="library" />
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_22%_10%,rgba(124,58,237,0.16),transparent_30%),linear-gradient(180deg,#02030a_0%,#050611_45%,#03040b_100%)]" />
 

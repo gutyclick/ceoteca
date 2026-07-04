@@ -30,7 +30,7 @@ const menuItems = [
   { key: "profile", label: "Perfil", href: "/perfil", icon: User },
   {
     key: "settings",
-    label: "Configuracion",
+    label: "Configuración",
     href: "/configuracion",
     icon: Settings,
   },
@@ -50,6 +50,7 @@ export function DashboardSidebar({ active }: DashboardSidebarProps) {
   const router = useRouter();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [profile, setProfile] = useState({
@@ -59,27 +60,44 @@ export function DashboardSidebar({ active }: DashboardSidebarProps) {
   });
 
   useEffect(() => {
-    const query = window.matchMedia("(min-width: 1280px)");
+    const desktopQuery = window.matchMedia("(min-width: 1280px)");
+    const mobileQuery = window.matchMedia("(max-width: 639px)");
 
-    function syncLayout(event: MediaQueryList | MediaQueryListEvent) {
+    function syncDesktop(event: MediaQueryList | MediaQueryListEvent) {
       setIsDesktop(event.matches);
       setIsExpanded(false);
     }
 
-    syncLayout(query);
-    query.addEventListener("change", syncLayout);
+    function syncMobile(event: MediaQueryList | MediaQueryListEvent) {
+      setIsMobile(event.matches);
+      setIsExpanded(false);
+    }
 
-    return () => query.removeEventListener("change", syncLayout);
+    syncDesktop(desktopQuery);
+    syncMobile(mobileQuery);
+    desktopQuery.addEventListener("change", syncDesktop);
+    mobileQuery.addEventListener("change", syncMobile);
+
+    return () => {
+      desktopQuery.removeEventListener("change", syncDesktop);
+      mobileQuery.removeEventListener("change", syncMobile);
+    };
   }, []);
 
   useEffect(() => {
-    const offset = isDesktop ? (isExpanded ? "292px" : "100px") : "84px";
+    const offset = isDesktop
+      ? isExpanded
+        ? "292px"
+        : "100px"
+      : isMobile
+        ? "0px"
+        : "84px";
     document.documentElement.style.setProperty("--dashboard-sidebar-offset", offset);
 
     return () => {
       document.documentElement.style.removeProperty("--dashboard-sidebar-offset");
     };
-  }, [isDesktop, isExpanded]);
+  }, [isDesktop, isExpanded, isMobile]);
 
   useEffect(() => {
     let isMounted = true;
@@ -139,11 +157,24 @@ export function DashboardSidebar({ active }: DashboardSidebarProps) {
 
   const initials = getInitials(profile.fullName, profile.email);
 
+  if (isMobile && !isExpanded) {
+    return (
+      <button
+        aria-label="Abrir menú"
+        className="fixed left-3 top-3 z-50 grid h-12 w-12 place-items-center rounded-[16px] border border-white/10 bg-[#080a10]/95 text-text-primary shadow-ambient backdrop-blur-xl transition hover:border-brand-purple/45"
+        onClick={() => setIsExpanded(true)}
+        type="button"
+      >
+        <Logo className="justify-center [&>span]:hidden" variant="icon" />
+      </button>
+    );
+  }
+
   return (
     <>
       {!isDesktop && isExpanded ? (
         <button
-          aria-label="Cerrar menu"
+          aria-label="Cerrar menú"
           className="fixed inset-0 z-40 bg-black/55 backdrop-blur-[2px]"
           onClick={() => setIsExpanded(false)}
           type="button"
@@ -165,7 +196,7 @@ export function DashboardSidebar({ active }: DashboardSidebarProps) {
           <Logo className="justify-center [&>span]:hidden" variant="icon" />
         )}
         <button
-          aria-label={isExpanded ? "Contraer menu" : "Expandir menu"}
+          aria-label={isExpanded ? "Contraer menú" : "Expandir menú"}
           className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-white/10 bg-white/[0.04] text-text-secondary transition hover:text-white"
           onClick={() => setIsExpanded((current) => !current)}
           type="button"
