@@ -4,7 +4,7 @@ import { planKeys } from "@/config/plans";
 
 const planSchema = z.enum(planKeys).default("free");
 
-const passwordSchema = z
+export const strongPasswordSchema = z
   .string()
   .min(10, "La contraseña debe tener al menos 10 caracteres.")
   .regex(/[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/, "Incluye al menos una letra.")
@@ -24,7 +24,7 @@ export const signUpSchema = z
       .string()
       .min(1, "Ingresa tu email.")
       .email("Ingresa un email válido."),
-    password: passwordSchema,
+    password: strongPasswordSchema,
     fullName: z
       .string()
       .min(2, "Ingresa tu nombre.")
@@ -41,5 +41,26 @@ export const signUpSchema = z
     path: ["confirmPassword"],
   });
 
+export const passwordResetRequestSchema = z.object({
+  email: z
+    .string()
+    .min(1, "Ingresa tu email.")
+    .email("Ingresa un email válido."),
+});
+
+export const passwordUpdateSchema = z
+  .object({
+    password: strongPasswordSchema,
+    confirmPassword: z.string().min(1, "Confirma tu contraseña."),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Las contraseñas no coinciden.",
+    path: ["confirmPassword"],
+  });
+
 export type SignInInput = z.infer<typeof signInSchema>;
 export type SignUpInput = z.infer<typeof signUpSchema>;
+export type PasswordResetRequestInput = z.infer<
+  typeof passwordResetRequestSchema
+>;
+export type PasswordUpdateInput = z.infer<typeof passwordUpdateSchema>;

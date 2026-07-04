@@ -1,6 +1,6 @@
 "use client";
 
-import { Chrome, Loader2 } from "lucide-react";
+import { Chrome, Eye, EyeOff, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -37,17 +37,19 @@ type FormStatus =
   | { type: "success"; message: string }
   | { type: "error"; message: string };
 
-type RegisterApiResponse = {
+type SessionPayload = {
+  accessToken: string;
+  refreshToken: string;
+};
+
+type AuthApiResponse = {
   data?: {
-    session: {
-      accessToken: string;
-      refreshToken: string;
-    } | null;
-    requiresEmailConfirmation: boolean;
+    session: SessionPayload | null;
     redirectTo: string | null;
     message: string;
   };
   error?: {
+    code?: string;
     message: string;
     fieldErrors?: Partial<Record<keyof AuthFormValues, string[]>>;
   };
@@ -106,6 +108,10 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
   const isRegister = mode === "register";
   const [status, setStatus] = useState<FormStatus>({ type: "idle" });
   const [passwordValue, setPasswordValue] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [pendingEmailForConfirmation, setPendingEmailForConfirmation] =
+    useState<string | null>(null);
+  const [isResendingConfirmation, setIsResendingConfirmation] = useState(false);
   const passwordScore = getPasswordScore(passwordValue);
 
   const {
@@ -178,8 +184,25 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
     }
   }
 
+  async function storeSession(session: SessionPayload | null) {
+    if (!session) {
+      return;
+    }
+
+    const supabase = createBrowserSupabaseClient();
+    const { error } = await supabase.auth.setSession({
+      access_token: session.accessToken,
+      refresh_token: session.refreshToken,
+    });
+
+    if (error) {
+      throw new Error("No pudimos guardar tu sesión en este navegador.");
+    }
+  }
+
   async function onSubmit(values: AuthFormValues) {
     setStatus({ type: "idle" });
+    setPendingEmailForConfirmation(null);
 
     try {
       const result = isRegister
@@ -214,7 +237,31 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
       throw new Error("Revisa los campos marcados.");
     }
 
-    return authProvider.signIn(parsed.data);
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(parsed.data),
+    });
+    const payload = (await response.json()) as AuthApiResponse;
+
+    if (!response.ok || !payload.data) {
+      setApiFieldErrors(payload.error?.fieldErrors);
+
+      if (payload.error?.code === "EMAIL_NOT_CONFIRMED") {
+        setPendingEmailForConfirmation(parsed.data.email);
+      }
+
+      throw new Error(payload.error?.message ?? "No pudimos iniciar sesión.");
+    }
+
+    await storeSession(payload.data.session);
+
+    return {
+      redirectTo: payload.data.redirectTo ?? "/home",
+      message: payload.data.message,
+    };
   }
 
   async function submitSignUp(values: AuthFormValues) {
@@ -232,26 +279,14 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
       },
       body: JSON.stringify(parsed.data),
     });
-    const payload = (await response.json()) as RegisterApiResponse;
+    const payload = (await response.json()) as AuthApiResponse;
 
     if (!response.ok || !payload.data) {
       setApiFieldErrors(payload.error?.fieldErrors);
       throw new Error(payload.error?.message ?? "No pudimos crear tu cuenta.");
     }
 
-    if (payload.data.session) {
-      const supabase = createBrowserSupabaseClient();
-      const { error } = await supabase.auth.setSession({
-        access_token: payload.data.session.accessToken,
-        refresh_token: payload.data.session.refreshToken,
-      });
-
-      if (error) {
-        throw new Error(
-          "Tu cuenta fue creada, pero no pudimos iniciar la sesión automáticamente.",
-        );
-      }
-    }
+    await storeSession(payload.data.session);
 
     return {
       redirectTo: payload.data.redirectTo ?? undefined,
@@ -283,6 +318,47 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
             ? error.message
             : "No pudimos conectar con Google.",
       });
+    }
+  }
+
+  async function resendConfirmation() {
+    if (!pendingEmailForConfirmation) {
+      return;
+    }
+
+    setIsResendingConfirmation(true);
+
+    try {
+      const response = await fetch("/api/auth/resend-confirmation", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: pendingEmailForConfirmation }),
+      });
+      const payload = (await response.json()) as {
+        data?: { message: string };
+        error?: { message: string };
+      };
+
+      if (!response.ok || !payload.data) {
+        throw new Error(payload.error?.message ?? "No pudimos reenviar el correo.");
+      }
+
+      setStatus({
+        type: "success",
+        message: payload.data.message,
+      });
+    } catch (error) {
+      setStatus({
+        type: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "No pudimos reenviar el correo.",
+      });
+    } finally {
+      setIsResendingConfirmation(false);
     }
   }
 
@@ -368,16 +444,32 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
 
             <label className="grid gap-2 text-sm">
               Contraseña
-              <input
-                className="min-h-12 rounded-button border border-white/10 bg-white/[0.04] px-4 text-text-primary outline-none transition focus:border-brand-purple"
-                placeholder={isRegister ? "Mínimo 10 caracteres" : "Tu contraseña"}
-                type="password"
-                {...passwordRegistration}
-                onChange={(event) => {
-                  passwordRegistration.onChange(event);
-                  setPasswordValue(event.target.value);
-                }}
-              />
+              <span className="relative">
+                <input
+                  className="min-h-12 w-full rounded-button border border-white/10 bg-white/[0.04] px-4 pr-12 text-text-primary outline-none transition focus:border-brand-purple"
+                  placeholder={isRegister ? "Mínimo 10 caracteres" : "Tu contraseña"}
+                  type={showPassword ? "text" : "password"}
+                  {...passwordRegistration}
+                  onChange={(event) => {
+                    passwordRegistration.onChange(event);
+                    setPasswordValue(event.target.value);
+                  }}
+                />
+                <button
+                  aria-label={
+                    showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
+                  }
+                  className="absolute right-3 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full text-text-secondary transition hover:bg-white/[0.06] hover:text-white"
+                  onClick={() => setShowPassword((current) => !current)}
+                  type="button"
+                >
+                  {showPassword ? (
+                    <EyeOff aria-hidden="true" size={18} />
+                  ) : (
+                    <Eye aria-hidden="true" size={18} />
+                  )}
+                </button>
+              </span>
               {isRegister ? (
                 <div className="grid gap-2">
                   <div className="grid grid-cols-4 gap-1">
@@ -468,11 +560,41 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
               </div>
             ) : null}
 
+            {pendingEmailForConfirmation ? (
+              <button
+                className="w-full rounded-2xl border border-brand-purple/35 bg-brand-purple/10 px-4 py-3 text-sm font-medium text-brand-purple transition hover:border-brand-purple/70 hover:bg-brand-purple/15 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={isResendingConfirmation}
+                onClick={() => void resendConfirmation()}
+                type="button"
+              >
+                {isResendingConfirmation
+                  ? "Enviando confirmación..."
+                  : "Reenviar correo de confirmación"}
+              </button>
+            ) : null}
+
+            {!isRegister ? (
+              <div className="text-right">
+                <Link
+                  className="text-sm font-medium text-brand-purple transition hover:text-white"
+                  href="/recuperar-password"
+                >
+                  Olvidé mi contraseña
+                </Link>
+              </div>
+            ) : null}
+
             <Button className="w-full" disabled={isSubmitting} type="submit">
               {isSubmitting ? (
                 <Loader2 aria-hidden="true" className="animate-spin" size={18} />
               ) : null}
-              {isRegister ? "Crear cuenta" : "Iniciar sesión"}
+              {isSubmitting
+                ? isRegister
+                  ? "Creando cuenta..."
+                  : "Verificando acceso..."
+                : isRegister
+                  ? "Crear cuenta"
+                  : "Iniciar sesión"}
             </Button>
           </form>
 

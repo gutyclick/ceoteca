@@ -38,7 +38,16 @@ export function AuthCallbackView() {
     async function finishGoogleSignIn() {
       try {
         const supabase = createBrowserSupabaseClient();
+        const oauthError = searchParams.get("error_description") ?? searchParams.get("error");
         const code = searchParams.get("code");
+
+        if (oauthError) {
+          throw new Error(
+            oauthError.toLowerCase().includes("access_denied")
+              ? "Inicio con Google cancelado."
+              : "No pudimos conectar con Google.",
+          );
+        }
 
         if (code) {
           const { error } = await supabase.auth.exchangeCodeForSession(code);
