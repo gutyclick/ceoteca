@@ -2,10 +2,11 @@
 
 import { ChevronDown, Menu, X } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { Logo } from "@/components/ui/Logo";
+import { cn } from "@/lib/utils/cn";
 
 const navigationItems = [
   { href: "/", label: "Inicio" },
@@ -17,9 +18,28 @@ const navigationItems = [
 
 export function HeaderNav() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    function updateHeaderState() {
+      setIsScrolled(window.scrollY > 12);
+    }
+
+    updateHeaderState();
+    window.addEventListener("scroll", updateHeaderState, { passive: true });
+
+    return () => window.removeEventListener("scroll", updateHeaderState);
+  }, []);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-950/[0.06] bg-white text-slate-950">
+    <header
+      className={cn(
+        "sticky top-0 z-40 border-b text-slate-950 transition-all duration-300",
+        isScrolled
+          ? "border-white/50 bg-white/72 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur-2xl"
+          : "border-slate-950/[0.06] bg-white",
+      )}
+    >
       <div className="mx-auto grid min-h-[92px] w-full max-w-[1500px] grid-cols-[220px_minmax(0,1fr)_260px] items-center px-6 sm:px-8 xl:px-10 max-lg:grid-cols-[1fr_auto]">
         <Logo className="text-slate-950" useBrandAsset />
 
