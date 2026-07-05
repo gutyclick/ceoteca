@@ -30,7 +30,7 @@ export function Footer() {
     <footer className="border-t border-slate-950/[0.06] bg-[#fbfaf8]">
       <div className="ceoteca-container grid gap-10 py-14 md:grid-cols-[1.2fr_0.7fr_0.7fr_0.7fr_1fr]">
         <div className="space-y-4">
-          <Logo className="text-slate-950" />
+          <Logo className="text-slate-950" useBrandAsset />
           <p className="max-w-xs text-sm leading-6 text-slate-600">
             Análisis originales de libros para personas que quieren aprender más y aplicar mejor.
           </p>

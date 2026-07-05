@@ -1,14 +1,20 @@
 import Link from "next/link";
+import Image from "next/image";
 
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils/cn";
 
 type LogoProps = {
   variant?: "icon" | "horizontal";
+  useBrandAsset?: boolean;
   className?: string;
 };
 
-export function Logo({ variant = "horizontal", className }: LogoProps) {
+export function Logo({
+  variant = "horizontal",
+  useBrandAsset = false,
+  className,
+}: LogoProps) {
   const icon = (
     <svg
       aria-hidden="true"
@@ -57,12 +63,25 @@ export function Logo({ variant = "horizontal", className }: LogoProps) {
       )}
       aria-label={`Ir al inicio de ${siteConfig.name}`}
     >
-      {icon}
-      {variant === "horizontal" ? (
-        <span className="text-base font-semibold tracking-normal">
-          {siteConfig.name}
-        </span>
-      ) : null}
+      {useBrandAsset && variant === "horizontal" ? (
+        <Image
+          alt=""
+          aria-hidden="true"
+          className="h-10 w-auto max-w-[180px] object-contain"
+          height={40}
+          src="/images/ceoteca_logo.svg"
+          width={180}
+        />
+      ) : (
+        <>
+          {icon}
+          {variant === "horizontal" ? (
+            <span className="text-base font-semibold tracking-normal">
+              {siteConfig.name}
+            </span>
+          ) : null}
+        </>
+      )}
     </Link>
   );
 }

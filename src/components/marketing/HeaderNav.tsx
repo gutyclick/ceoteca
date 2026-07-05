@@ -24,7 +24,7 @@ export function HeaderNav() {
   return (
     <header className="sticky top-0 z-40 border-b border-slate-950/[0.045] bg-[#fffdfa]/92 backdrop-blur-xl">
       <div className="mx-auto grid min-h-[86px] w-full max-w-[1480px] grid-cols-[auto_auto] items-center gap-6 px-6 sm:px-8 lg:grid-cols-[260px_minmax(0,1fr)_300px] xl:px-10">
-        <Logo className="text-slate-950" />
+        <Logo className="text-slate-950" useBrandAsset />
 
         <nav
           aria-label="Navegación principal"
