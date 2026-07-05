@@ -33,6 +33,7 @@ export type CoverConfig = {
   variant: CoverVariant;
   gradient: string;
   accent: string;
+  imagePath?: string;
 };
 
 export type Book = {

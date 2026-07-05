@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -123,6 +124,20 @@ function getPopularityScore(book: Book) {
 
 function ShelfCover({ book }: { book: Book }) {
   const Icon = coverIcons[book.cover.variant] ?? Brain;
+
+  if (book.cover.imagePath) {
+    return (
+      <div className="relative aspect-[2/3] w-full overflow-hidden rounded-[12px] border border-white/10 bg-[#11111e] shadow-[0_18px_42px_rgba(0,0,0,0.34)] transition duration-300 group-hover:-translate-y-1 group-hover:border-brand-purple/45">
+        <Image
+          alt={`Portada editorial de ${book.title}`}
+          className="object-cover"
+          fill
+          sizes="(min-width: 1280px) 180px, (min-width: 768px) 18vw, 42vw"
+          src={book.cover.imagePath}
+        />
+      </div>
+    );
+  }
 
   return (
     <div
@@ -281,6 +296,25 @@ function PublicMiniCover({
   className?: string;
 }) {
   const Icon = coverIcons[book.cover.variant] ?? Brain;
+
+  if (book.cover.imagePath) {
+    return (
+      <div
+        className={cn(
+          "relative aspect-[3/4] min-h-0 w-full overflow-hidden rounded-[18px] border border-slate-950/[0.08] bg-white shadow-[0_24px_70px_rgba(15,23,42,0.10)]",
+          className,
+        )}
+      >
+        <Image
+          alt={`Portada editorial de ${book.title}`}
+          className="object-cover"
+          fill
+          sizes="(min-width: 1280px) 180px, (min-width: 768px) 24vw, 40vw"
+          src={book.cover.imagePath}
+        />
+      </div>
+    );
+  }
 
   return (
     <div

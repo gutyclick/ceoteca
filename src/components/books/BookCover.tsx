@@ -1,3 +1,4 @@
+import Image from "next/image";
 import {
   BarChart3,
   Bolt,
@@ -45,6 +46,29 @@ function getCoverTitleSize(title: string) {
 
 export function BookCover({ book, size = "md" }: BookCoverProps) {
   const Icon = variantIcons[book.cover.variant] ?? Brain;
+
+  if (book.cover.imagePath) {
+    return (
+      <div
+        className={cn(
+          "relative overflow-hidden rounded-card border border-white/10 bg-[#11111e] shadow-ambient",
+          sizeClasses[size],
+        )}
+      >
+        <Image
+          alt={`Portada editorial de ${book.title}`}
+          className="object-cover"
+          fill
+          sizes={
+            size === "lg"
+              ? "(min-width: 1024px) 360px, 90vw"
+              : "(min-width: 1024px) 220px, 45vw"
+          }
+          src={book.cover.imagePath}
+        />
+      </div>
+    );
+  }
 
   return (
     <div
