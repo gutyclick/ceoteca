@@ -4,9 +4,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
+  ArrowRight,
   BookOpen,
   ChevronLeft,
   ChevronRight,
+  Gem,
   Home,
   LogOut,
   Settings,
@@ -64,13 +66,16 @@ export function DashboardSidebar({
     const mobileQuery = window.matchMedia("(max-width: 639px)");
 
     function syncDesktop(event: MediaQueryList | MediaQueryListEvent) {
-      setIsDesktop(event.matches);
-      setIsExpanded(false);
+      const matches = event.matches;
+      setIsDesktop(matches);
+      setIsExpanded(matches && isLight);
     }
 
     function syncMobile(event: MediaQueryList | MediaQueryListEvent) {
       setIsMobile(event.matches);
-      setIsExpanded(false);
+      if (event.matches) {
+        setIsExpanded(false);
+      }
     }
 
     syncDesktop(desktopQuery);
@@ -82,11 +87,13 @@ export function DashboardSidebar({
       desktopQuery.removeEventListener("change", syncDesktop);
       mobileQuery.removeEventListener("change", syncMobile);
     };
-  }, []);
+  }, [isLight]);
 
   useEffect(() => {
     const offset = isDesktop
-      ? isExpanded
+      ? isLight
+        ? "292px"
+        : isExpanded
         ? "292px"
         : "100px"
       : isMobile
@@ -97,7 +104,7 @@ export function DashboardSidebar({
     return () => {
       document.documentElement.style.removeProperty("--dashboard-sidebar-offset");
     };
-  }, [isDesktop, isExpanded, isMobile]);
+  }, [isDesktop, isExpanded, isLight, isMobile]);
 
   useEffect(() => {
     let isMounted = true;
@@ -156,6 +163,8 @@ export function DashboardSidebar({
   }
 
   const initials = getInitials(profile.fullName, profile.email);
+  const isLightDesktop = isLight && isDesktop;
+  const showLabels = isExpanded || isLightDesktop;
 
   if (isMobile && !isExpanded) {
     return (
@@ -192,20 +201,30 @@ export function DashboardSidebar({
 
       <aside
         className={cn(
-          "fixed left-3 top-3 z-50 flex h-[calc(100svh-1.5rem)] flex-col rounded-[22px] border p-2.5 shadow-ambient backdrop-blur-xl transition-[width,transform,box-shadow] duration-300 ease-out sm:left-4 sm:top-4 sm:h-[calc(100svh-2rem)] sm:p-3",
-          isLight
-            ? "border-slate-950/[0.08] bg-white/92 text-slate-950 shadow-[0_24px_80px_rgba(15,23,42,0.08)]"
-            : "border-white/10 bg-[#080a10]/95 text-text-primary",
-          isExpanded
-            ? "w-[min(280px,calc(100vw-1.5rem))] shadow-[0_24px_90px_rgba(15,23,42,0.16)] sm:w-[260px]"
-            : "w-[60px] sm:w-[68px]",
+          "fixed z-50 flex flex-col border backdrop-blur-xl transition-[width,transform,box-shadow] duration-300 ease-out",
+          isLightDesktop
+            ? "left-0 top-0 h-screen w-[280px] rounded-none border-y-0 border-l-0 border-r border-slate-950/[0.08] bg-white px-7 py-8 text-slate-950 shadow-none"
+            : "left-3 top-3 h-[calc(100svh-1.5rem)] rounded-[22px] p-2.5 shadow-ambient sm:left-4 sm:top-4 sm:h-[calc(100svh-2rem)] sm:p-3",
+          !isLightDesktop &&
+            (isLight
+              ? "border-slate-950/[0.08] bg-white/92 text-slate-950 shadow-[0_24px_80px_rgba(15,23,42,0.08)]"
+              : "border-white/10 bg-[#080a10]/95 text-text-primary"),
+          !isLightDesktop &&
+            (isExpanded
+              ? "w-[min(280px,calc(100vw-1.5rem))] shadow-[0_24px_90px_rgba(15,23,42,0.16)] sm:w-[260px]"
+              : "w-[60px] sm:w-[68px]"),
         )}
       >
         <div className="flex items-center justify-between gap-2">
-          {isExpanded ? (
+          {showLabels ? (
             <Logo
-              className="[&>span]:text-[13px] [&>span]:tracking-[0.24em]"
-              useBrandAsset={isLight}
+              className={cn(
+                "[&>span]:text-[18px] [&>span]:font-black [&>span]:tracking-[-0.03em]",
+                isLightDesktop && "text-slate-950 [&>span]:text-slate-950",
+                !isLightDesktop &&
+                  "[&>span]:text-[13px] [&>span]:tracking-[0.24em]",
+              )}
+              useBrandAsset={isLight && !isLightDesktop}
             />
           ) : (
             <Logo
@@ -214,28 +233,33 @@ export function DashboardSidebar({
               variant="icon"
             />
           )}
-          <button
-            aria-label={isExpanded ? "Contraer menú" : "Expandir menú"}
-            className={cn(
-              "grid h-8 w-8 shrink-0 place-items-center rounded-full border transition",
-              isLight
-                ? "border-slate-950/[0.08] bg-slate-50 text-slate-500 hover:text-violet-700"
-                : "border-white/10 bg-white/[0.04] text-text-secondary hover:text-white",
-            )}
-            onClick={() => setIsExpanded((current) => !current)}
-            type="button"
-          >
-            {!isDesktop && isExpanded ? (
-              <X aria-hidden="true" size={17} />
-            ) : isExpanded ? (
-              <ChevronLeft aria-hidden="true" size={17} />
-            ) : (
-              <ChevronRight aria-hidden="true" size={17} />
-            )}
-          </button>
+          {!isLightDesktop ? (
+            <button
+              aria-label={isExpanded ? "Contraer menú" : "Expandir menú"}
+              className={cn(
+                "grid h-8 w-8 shrink-0 place-items-center rounded-full border transition",
+                isLight
+                  ? "border-slate-950/[0.08] bg-slate-50 text-slate-500 hover:text-violet-700"
+                  : "border-white/10 bg-white/[0.04] text-text-secondary hover:text-white",
+              )}
+              onClick={() => setIsExpanded((current) => !current)}
+              type="button"
+            >
+              {!isDesktop && isExpanded ? (
+                <X aria-hidden="true" size={17} />
+              ) : isExpanded ? (
+                <ChevronLeft aria-hidden="true" size={17} />
+              ) : (
+                <ChevronRight aria-hidden="true" size={17} />
+              )}
+            </button>
+          ) : null}
         </div>
 
-        <nav aria-label="Menú principal" className="mt-8 grid gap-2">
+        <nav
+          aria-label="Menú principal"
+          className={cn("grid gap-2", isLightDesktop ? "mt-11" : "mt-8")}
+        >
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = active === item.key;
@@ -251,23 +275,46 @@ export function DashboardSidebar({
                     (isLight
                       ? "bg-violet-50 text-violet-700"
                       : "bg-white/[0.08] text-white"),
-                  !isExpanded && "justify-center px-0",
+                  isLightDesktop && "min-h-12 rounded-[16px] px-4 font-semibold",
+                  !showLabels && "justify-center px-0",
                 )}
                 href={item.href}
                 key={item.key}
-                title={!isExpanded ? item.label : undefined}
+                title={!showLabels ? item.label : undefined}
               >
                 <Icon
                   aria-hidden="true"
                   className={cn(isActive && "text-brand-purple")}
                   size={22}
                 />
-                {isExpanded ? <span>{item.label}</span> : null}
+                {showLabels ? <span>{item.label}</span> : null}
               </Link>
             );
           })}
         </nav>
 
+        {isLightDesktop ? (
+          <div className="mt-auto rounded-[22px] border border-violet-100 bg-gradient-to-br from-violet-50 to-white p-4 shadow-[0_18px_55px_rgba(124,58,237,0.10)]">
+            <span className="grid h-11 w-11 place-items-center rounded-[14px] bg-violet-100 text-violet-700">
+              <Gem aria-hidden="true" size={22} />
+            </span>
+            <h3 className="mt-4 text-base font-black tracking-[-0.02em]">
+              Mejora a Pro
+            </h3>
+            <p className="mt-2 text-sm leading-6 text-slate-500">
+              Accede a más análisis, audio y apoyo de CEO para aplicar ideas.
+            </p>
+            <Link
+              className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-[12px] bg-gradient-to-r from-violet-700 to-fuchsia-500 text-sm font-black text-white shadow-[0_16px_35px_rgba(124,58,237,0.22)]"
+              href="/precios"
+            >
+              Mejorar a Pro
+              <ArrowRight aria-hidden="true" size={16} />
+            </Link>
+          </div>
+        ) : null}
+
+        {!isLightDesktop ? (
         <div className="relative mt-auto">
           {isProfileOpen ? (
             <div
@@ -297,7 +344,7 @@ export function DashboardSidebar({
               isLight
                 ? "border-slate-950/[0.08] bg-slate-50"
                 : "border-white/10 bg-white/[0.035]",
-              !isExpanded && "justify-center",
+              !showLabels && "justify-center",
             )}
             onClick={() => setIsProfileOpen((current) => !current)}
             type="button"
@@ -314,7 +361,7 @@ export function DashboardSidebar({
                 initials
               )}
             </span>
-            {isExpanded ? (
+            {showLabels ? (
               <span className="min-w-0">
                 <span className="block truncate text-sm font-medium">
                   {profile.fullName}
@@ -331,6 +378,7 @@ export function DashboardSidebar({
             ) : null}
           </button>
         </div>
+        ) : null}
       </aside>
     </>
   );

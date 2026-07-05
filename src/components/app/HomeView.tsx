@@ -26,7 +26,6 @@ import {
 import type { LucideIcon } from "lucide-react";
 
 import { DashboardSidebar } from "@/components/app/DashboardSidebar";
-import { FloatingSiteChat } from "@/components/chat/FloatingSiteChat";
 import type { PlanKey } from "@/config/plans";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/database.types";
@@ -728,9 +727,6 @@ export function HomeView({ books }: HomeViewProps) {
         </footer>
       </section>
 
-      <div className="hidden md:block">
-        <FloatingSiteChat plan={accountData.plan} />
-      </div>
     </main>
   );
 }
