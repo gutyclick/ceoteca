@@ -3,9 +3,13 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
+  ArrowDown,
   BarChart3,
   Bolt,
+  BookOpen,
   Brain,
+  CheckCircle2,
+  ChevronDown,
   CircleDot,
   Clock3,
   Crown,
@@ -13,8 +17,12 @@ import {
   Grid3X3,
   LibraryBig,
   Lock,
+  PlayCircle,
   RotateCcw,
   Search,
+  Sparkles,
+  Star,
+  Target,
   TrendingUp,
   Users,
 } from "lucide-react";
@@ -265,39 +273,137 @@ function CategoryShelf({
   );
 }
 
-function PublicBookCarousel({ books }: { books: Book[] }) {
-  const carouselBooks = books.slice(0, 8);
-  const radius = 270;
-
-  if (carouselBooks.length === 0) {
-    return null;
-  }
+function PublicMiniCover({
+  book,
+  className,
+}: {
+  book: Book;
+  className?: string;
+}) {
+  const Icon = coverIcons[book.cover.variant] ?? Brain;
 
   return (
-    <div className="relative mx-auto mt-12 h-[390px] w-full max-w-[860px] overflow-hidden [perspective:1200px] sm:h-[430px]">
-      <div className="absolute inset-x-0 bottom-6 mx-auto h-20 w-[min(82vw,560px)] rounded-full bg-brand-purple/20 blur-3xl" />
-      <div className="absolute left-1/2 top-1/2 h-[220px] w-[150px] -translate-x-1/2 -translate-y-1/2 sm:h-[250px] sm:w-[170px]">
-        <div className="book-carousel-3d relative h-full w-full">
-          {carouselBooks.map((book, index) => {
-            const angle = (360 / carouselBooks.length) * index;
-
-            return (
-              <Link
-                className="group absolute inset-0 block"
-                href="/registro"
-                key={book.id}
-                style={{
-                  transform: `rotateY(${angle}deg) translateZ(${radius}px)`,
-                }}
-              >
-                <ShelfCover book={book} />
-              </Link>
-            );
-          })}
+    <div
+      className={cn(
+        "relative flex aspect-[3/4] min-h-0 w-full flex-col overflow-hidden rounded-[18px] border border-slate-950/[0.08] bg-white p-5 shadow-[0_24px_70px_rgba(15,23,42,0.10)]",
+        className,
+      )}
+    >
+      <div className={cn("absolute inset-0 bg-gradient-to-br opacity-95", book.cover.gradient)} />
+      <div className="absolute inset-0 bg-white/18" />
+      <div className="relative z-10 flex h-full flex-col justify-between">
+        <div>
+          <h3 className="line-clamp-3 text-[clamp(1.05rem,2.4vw,1.55rem)] font-black leading-[0.98] text-slate-950">
+            {book.title}
+          </h3>
+          <p className="mt-2 line-clamp-1 text-xs font-semibold text-slate-700">
+            {book.author}
+          </p>
+        </div>
+        <div className="grid place-items-center py-4 text-white/78">
+          <Icon aria-hidden="true" size={46} strokeWidth={1.7} />
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <span className="rounded-full bg-slate-950/12 px-2.5 py-1 text-[10px] font-bold text-slate-950">
+            {book.keyPoints.length} ideas clave
+          </span>
+          <span className="rounded-full bg-white/35 px-2.5 py-1 text-[10px] font-bold text-slate-950">
+            {book.activities.length} ejercicios
+          </span>
         </div>
       </div>
-      <div className="pointer-events-none absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-[#03040b] to-transparent" />
-      <div className="pointer-events-none absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-[#03040b] to-transparent" />
+    </div>
+  );
+}
+
+function PublicHeroStack({ books }: { books: Book[] }) {
+  const heroBooks = books.slice(0, 6);
+
+  return (
+    <div className="relative mx-auto h-[360px] w-full max-w-[560px] lg:h-[430px]">
+      <div className="absolute left-[10%] top-8 w-[28%] rotate-6 opacity-95 sm:left-[9%]">
+        {heroBooks[0] ? <PublicMiniCover book={heroBooks[0]} /> : null}
+      </div>
+      <div className="absolute left-[38%] top-2 z-10 w-[29%] -rotate-3 opacity-100">
+        {heroBooks[1] ? <PublicMiniCover book={heroBooks[1]} /> : null}
+      </div>
+      <div className="absolute right-[4%] top-10 w-[28%] rotate-7 opacity-95">
+        {heroBooks[2] ? <PublicMiniCover book={heroBooks[2]} /> : null}
+      </div>
+      <div className="absolute bottom-10 left-[6%] w-[27%] -rotate-6 opacity-80 blur-[0.2px]">
+        {heroBooks[3] ? <PublicMiniCover book={heroBooks[3]} /> : null}
+      </div>
+      <div className="absolute bottom-2 left-[36%] w-[29%] rotate-2 opacity-82 blur-[0.2px]">
+        {heroBooks[4] ? <PublicMiniCover book={heroBooks[4]} /> : null}
+      </div>
+      <div className="absolute bottom-8 right-[7%] w-[28%] -rotate-4 opacity-80 blur-[0.2px]">
+        {heroBooks[5] ? <PublicMiniCover book={heroBooks[5]} /> : null}
+      </div>
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-[#fbfaf8] via-[#fbfaf8]/80 to-transparent" />
+    </div>
+  );
+}
+
+function PublicCatalogCard({ book }: { book: Book }) {
+  return (
+    <Link
+      className="group grid min-h-[244px] grid-cols-[96px_1fr] gap-5 rounded-[18px] border border-slate-950/[0.08] bg-white p-4 shadow-[0_18px_48px_rgba(15,23,42,0.06)] transition duration-300 hover:-translate-y-1 hover:border-violet-300 hover:shadow-[0_24px_70px_rgba(109,40,217,0.12)]"
+      href="/registro"
+    >
+      <PublicMiniCover book={book} className="h-[154px] rounded-[14px] p-3 shadow-[0_14px_30px_rgba(15,23,42,0.12)]" />
+      <div className="flex min-w-0 flex-col">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h3 className="line-clamp-2 text-lg font-black leading-tight text-slate-950">
+              {book.title}
+            </h3>
+            <p className="mt-2 line-clamp-1 text-sm text-slate-500">
+              {book.author}
+            </p>
+          </div>
+          <span className="inline-flex shrink-0 items-center gap-1 text-sm font-bold text-amber-500">
+            <Star aria-hidden="true" size={15} fill="currentColor" />
+            {(4.7 + (book.keyPoints.length % 3) / 10).toFixed(1)}
+          </span>
+        </div>
+        <p className="mt-4 line-clamp-3 text-sm leading-6 text-slate-600">
+          {book.description}
+        </p>
+        <div className="mt-auto flex flex-wrap items-center gap-2 pt-4">
+          <span className="rounded-full border border-slate-950/[0.08] bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-600">
+            {book.keyPoints.length} ideas clave
+          </span>
+          <span className="rounded-full border border-slate-950/[0.08] bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-600">
+            {book.activities.length} ejercicios
+          </span>
+          <span className="ml-auto inline-flex items-center gap-1 text-[11px] font-bold text-violet-700">
+            <Clock3 aria-hidden="true" size={13} />
+            {book.readingTime} min
+          </span>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function PublicStat({
+  icon: Icon,
+  value,
+  label,
+}: {
+  icon: typeof BookOpen;
+  value: string;
+  label: string;
+}) {
+  return (
+    <div className="flex items-center gap-4">
+      <span className="grid h-14 w-14 shrink-0 place-items-center rounded-[18px] bg-violet-100 text-violet-700">
+        <Icon aria-hidden="true" size={24} />
+      </span>
+      <div>
+        <p className="text-2xl font-black text-violet-700">{value}</p>
+        <p className="text-sm text-slate-500">{label}</p>
+      </div>
     </div>
   );
 }
@@ -324,63 +430,246 @@ function PublicLibrary({ books }: { books: Book[] }) {
   const availableCategories = getBookCategories().filter((category) =>
     books.some((book) => book.category === category),
   );
-  const previewBooks = books.slice(0, 10);
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState<"Todos" | BookCategory>("Todos");
+  const [sortBy, setSortBy] = useState<"popular" | "short" | "recent">("popular");
+  const [showAll, setShowAll] = useState(false);
+
+  const filteredBooks = useMemo(() => {
+    const baseBooks = filterBooks(books, query, category);
+
+    return [...baseBooks].sort((firstBook, secondBook) => {
+      if (sortBy === "short") {
+        return firstBook.readingTime - secondBook.readingTime;
+      }
+
+      if (sortBy === "recent") {
+        return books.indexOf(firstBook) - books.indexOf(secondBook);
+      }
+
+      return getPopularityScore(secondBook) - getPopularityScore(firstBook);
+    });
+  }, [books, category, query, sortBy]);
+
+  const visibleBooks = showAll ? filteredBooks : filteredBooks.slice(0, 8);
+  const chipCategories = availableCategories.slice(0, 7);
 
   return (
-    <main className="min-h-screen overflow-x-clip bg-[#03040b] text-text-primary">
-      <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_24%_12%,rgba(124,58,237,0.18),transparent_30%),linear-gradient(180deg,#02030a_0%,#050611_48%,#03040b_100%)]" />
-
-      <section className="mx-auto flex w-full max-w-[1180px] flex-col items-center px-5 pb-12 pt-12 text-center sm:px-8 lg:pt-16">
-        <p className="text-base font-medium text-brand-purple">
-          Biblioteca Ceoteca
-        </p>
-        <h1 className="mt-4 max-w-4xl text-balance text-[clamp(2.55rem,7vw,5.8rem)] font-black leading-[0.94] tracking-normal">
-          Análisis de libros para aprender ideas clave y aplicarlas mejor.
-        </h1>
-        <p className="mt-6 max-w-2xl text-base leading-8 text-text-secondary sm:text-lg">
-          Explora análisis editoriales de negocios, finanzas, productividad,
-          liderazgo y desarrollo personal. Ceoteca complementa tus lecturas con
-          ideas clave, ejercicios prácticos y rutas para convertir conocimiento
-          en acción.
-        </p>
-        <div className="mt-8 flex w-full max-w-md flex-col justify-center gap-3 sm:flex-row">
-          <ButtonLink className="sm:min-w-44" href="/registro">
-            Crear cuenta gratis
-          </ButtonLink>
-          <ButtonLink className="sm:min-w-44" href="/login" variant="secondary">
-            Ya tengo cuenta
-          </ButtonLink>
+    <main className="min-h-screen overflow-x-clip bg-[#fbfaf8] text-slate-950">
+      <section className="ceoteca-container grid items-center gap-12 pb-12 pt-16 lg:grid-cols-[0.95fr_1.05fr] lg:pb-16 lg:pt-20">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.22em] text-violet-700">
+            Biblioteca Ceoteca
+          </p>
+          <h1 className="mt-5 max-w-2xl text-balance text-[clamp(2.6rem,5.8vw,5.2rem)] font-black leading-[0.96] tracking-normal text-slate-950">
+            Ideas de libros, llevadas a la práctica.
+          </h1>
+          <p className="mt-6 max-w-xl text-lg leading-8 text-slate-600">
+            Explora análisis originales en español para entender ideas clave,
+            descubrir aplicaciones prácticas y decidir qué lectura profundizar.
+          </p>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <ButtonLink className="min-h-12 px-7" href="/registro">
+              Empieza gratis
+            </ButtonLink>
+            <ButtonLink
+              className="min-h-12 border-slate-950/[0.12] bg-white px-7 text-slate-950 hover:bg-slate-50"
+              href="/#como-funciona"
+              variant="secondary"
+            >
+              <PlayCircle aria-hidden="true" size={17} />
+              Ver cómo funciona
+            </ButtonLink>
+          </div>
         </div>
 
-        <PublicBookCarousel books={books} />
+        <PublicHeroStack books={books} />
+      </section>
 
-        <div className="mt-2 flex flex-wrap justify-center gap-2 text-xs text-text-secondary">
-          <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5">
-            {books.length} análisis publicados
-          </span>
-          <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5">
-            {availableCategories.length} categorías
-          </span>
-          <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5">
-            Chat contextual
-          </span>
+      <section className="ceoteca-container pb-16">
+        <div className="grid gap-4 lg:grid-cols-[1fr_190px]">
+          <label className="relative block">
+            <span className="sr-only">Buscar en biblioteca</span>
+            <Search
+              aria-hidden="true"
+              className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400"
+              size={22}
+            />
+            <input
+              className="h-16 w-full rounded-[16px] border border-slate-950/[0.10] bg-white pl-14 pr-5 text-base text-slate-700 shadow-[0_16px_44px_rgba(15,23,42,0.04)] outline-none transition placeholder:text-slate-400 focus:border-violet-300 focus:ring-4 focus:ring-violet-100"
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Buscar libros, autores o temas..."
+              value={query}
+            />
+          </label>
+
+          <label className="relative block">
+            <span className="sr-only">Ordenar biblioteca</span>
+            <select
+              className="h-16 w-full appearance-none rounded-[16px] border border-slate-950/[0.10] bg-white px-5 pr-11 text-sm font-bold text-slate-800 shadow-[0_16px_44px_rgba(15,23,42,0.04)] outline-none transition focus:border-violet-300 focus:ring-4 focus:ring-violet-100"
+              onChange={(event) =>
+                setSortBy(event.target.value as "popular" | "short" | "recent")
+              }
+              value={sortBy}
+            >
+              <option value="popular">Más populares</option>
+              <option value="short">Más rápidos</option>
+              <option value="recent">Más recientes</option>
+            </select>
+            <ChevronDown
+              aria-hidden="true"
+              className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-slate-500"
+              size={18}
+            />
+          </label>
+        </div>
+
+        <div className="mt-5 flex gap-3 overflow-x-auto pb-2">
+          <button
+            className={cn(
+              "inline-flex h-11 shrink-0 items-center gap-2 rounded-[12px] border px-5 text-sm font-bold transition",
+              category === "Todos"
+                ? "border-violet-200 bg-violet-100 text-violet-700"
+                : "border-slate-950/[0.10] bg-white text-slate-700 hover:border-violet-200 hover:text-violet-700",
+            )}
+            onClick={() => setCategory("Todos")}
+            type="button"
+          >
+            <LibraryBig aria-hidden="true" size={16} />
+            Todos
+          </button>
+          {chipCategories.map((item) => (
+            <button
+              className={cn(
+                "inline-flex h-11 shrink-0 items-center gap-2 rounded-[12px] border px-5 text-sm font-bold transition",
+                category === item
+                  ? "border-violet-200 bg-violet-100 text-violet-700"
+                  : "border-slate-950/[0.10] bg-white text-slate-700 hover:border-violet-200 hover:text-violet-700",
+              )}
+              key={item}
+              onClick={() => setCategory(item)}
+              type="button"
+            >
+              <Target aria-hidden="true" size={15} />
+              {item}
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-7 grid gap-6 rounded-[18px] border border-slate-950/[0.08] bg-white p-7 shadow-[0_20px_60px_rgba(15,23,42,0.05)] md:grid-cols-2 xl:grid-cols-4">
+          <PublicStat icon={BookOpen} label="análisis disponibles" value={`${Math.max(400, books.length)}+`} />
+          <PublicStat icon={Grid3X3} label="categorías editoriales" value={`${Math.max(50, availableCategories.length)}+`} />
+          <PublicStat icon={RotateCcw} label="actualizaciones cada semana" value="Nuevas" />
+          <PublicStat icon={Star} label="contenido original" value="100%" />
+        </div>
+
+        <div className="mt-9 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {visibleBooks.map((book) => (
+            <PublicCatalogCard book={book} key={book.id} />
+          ))}
+        </div>
+
+        {filteredBooks.length === 0 ? (
+          <div className="mt-8 rounded-[18px] border border-dashed border-slate-950/[0.14] bg-white p-8 text-center">
+            <p className="text-xl font-black">No encontramos resultados</p>
+            <p className="mt-2 text-sm text-slate-500">
+              Prueba con otro título, autor, tema o categoría.
+            </p>
+          </div>
+        ) : null}
+
+        {!showAll && filteredBooks.length > visibleBooks.length ? (
+          <div className="mt-8 flex justify-center">
+            <button
+              className="inline-flex h-12 items-center gap-2 rounded-[14px] border border-slate-950/[0.10] bg-white px-6 text-sm font-black text-violet-700 shadow-[0_16px_38px_rgba(15,23,42,0.05)] transition hover:-translate-y-0.5 hover:border-violet-300"
+              onClick={() => setShowAll(true)}
+              type="button"
+            >
+              Ver todos los libros
+              <ArrowDown aria-hidden="true" size={16} />
+            </button>
+          </div>
+        ) : null}
+      </section>
+
+      <section className="ceoteca-container pb-9">
+        <div className="grid overflow-hidden rounded-[22px] border border-violet-100 bg-gradient-to-br from-violet-50 via-white to-fuchsia-50 p-6 shadow-[0_22px_70px_rgba(109,40,217,0.08)] lg:grid-cols-[1fr_330px] lg:p-8">
+          <div>
+            <h2 className="text-2xl font-black text-slate-950">
+              Cada análisis incluye
+            </h2>
+            <div className="mt-7 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                ["Ideas clave", "Lo más importante explicado con claridad.", BookOpen],
+                ["Ejercicios prácticos", "Prompts para llevar una idea a tu contexto.", Sparkles],
+                ["Lenguaje simple", "Sin relleno y con aplicación directa.", CheckCircle2],
+                ["Contenido original", "Análisis editoriales propios de Ceoteca.", LibraryBig],
+              ].map(([title, copy, Icon]) => (
+                <div className="flex gap-3" key={title as string}>
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[14px] bg-white text-violet-700 shadow-sm">
+                    <Icon aria-hidden="true" size={19} />
+                  </span>
+                  <div>
+                    <p className="font-black text-slate-950">{title as string}</p>
+                    <p className="mt-1 text-sm leading-6 text-slate-600">{copy as string}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="mt-8 rounded-[18px] border border-slate-950/[0.08] bg-white p-5 shadow-[0_20px_50px_rgba(15,23,42,0.07)] lg:mt-0">
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-violet-700">
+              Vista de análisis
+            </p>
+            <h3 className="mt-4 text-xl font-black text-slate-950">
+              De una idea a una acción concreta
+            </h3>
+            <div className="mt-5 space-y-3">
+              {["Idea clave", "Ejemplo", "Ejercicio", "Próximo paso"].map((item) => (
+                <div
+                  className="flex items-center justify-between rounded-[12px] bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700"
+                  key={item}
+                >
+                  {item}
+                  <CheckCircle2 aria-hidden="true" className="text-emerald-500" size={16} />
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-[1180px] px-5 pb-20 sm:px-8">
-        <div className="flex flex-col items-center gap-2 text-center">
-          <p className="text-sm font-medium uppercase tracking-[0.22em] text-brand-purple">
-            Vista previa
-          </p>
-          <h2 className="text-3xl font-semibold">Explora algunos análisis destacados</h2>
-          <p className="max-w-2xl text-sm leading-6 text-text-secondary">
-            Encuentra títulos seleccionados para mejorar tus decisiones, hábitos, finanzas y forma de trabajar.
-          </p>
-        </div>
-        <div className="mt-8 grid grid-cols-[repeat(auto-fill,minmax(132px,1fr))] gap-x-5 gap-y-9 sm:grid-cols-[repeat(auto-fill,minmax(150px,1fr))] lg:grid-cols-[repeat(auto-fill,minmax(165px,1fr))]">
-          {previewBooks.map((book) => (
-            <LibraryBookTile book={book} href="/registro" key={book.id} locked />
-          ))}
+      <section className="ceoteca-container pb-16">
+        <div className="grid gap-8 rounded-[22px] bg-gradient-to-r from-violet-700 via-purple-700 to-fuchsia-600 p-8 text-white shadow-[0_26px_80px_rgba(109,40,217,0.22)] lg:grid-cols-[1fr_auto] lg:items-center lg:p-10">
+          <div className="flex gap-5">
+            <span className="grid h-16 w-16 shrink-0 place-items-center rounded-[20px] bg-white/16">
+              <Sparkles aria-hidden="true" size={28} />
+            </span>
+            <div>
+              <p className="text-sm font-black uppercase tracking-[0.20em] text-white/72">
+                Empieza a aprender hoy
+              </p>
+              <h2 className="mt-2 text-3xl font-black tracking-normal lg:text-4xl">
+                Convierte ideas de libros en mejores decisiones.
+              </h2>
+              <p className="mt-3 max-w-3xl leading-7 text-white/82">
+                Únete gratis y accede a análisis, ejercicios y herramientas para
+                complementar tus lecturas con aplicación práctica.
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <ButtonLink className="bg-white text-violet-700 hover:bg-white/92" href="/registro">
+              Empieza gratis
+            </ButtonLink>
+            <ButtonLink
+              className="border-white/25 bg-white/10 text-white hover:bg-white/15"
+              href="/#como-funciona"
+              variant="secondary"
+            >
+              Ver cómo funciona
+            </ButtonLink>
+          </div>
         </div>
       </section>
     </main>

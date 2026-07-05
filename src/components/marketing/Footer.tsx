@@ -32,7 +32,8 @@ export function Footer() {
         <div className="space-y-4">
           <Logo className="text-slate-950" useBrandAsset />
           <p className="max-w-xs text-sm leading-6 text-slate-600">
-            Análisis originales de libros para personas que quieren aprender más y aplicar mejor.
+            Análisis originales de libros para personas que quieren aprender más
+            y aplicar mejor.
           </p>
           <div className="flex gap-2 text-slate-500">
             {[Twitter, Instagram, Linkedin].map((Icon, index) => (
