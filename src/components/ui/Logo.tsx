@@ -67,10 +67,10 @@ export function Logo({
         <Image
           alt=""
           aria-hidden="true"
-          className="h-10 w-auto max-w-[180px] object-contain"
-          height={40}
+          className="h-9 w-auto max-w-[165px] object-contain"
+          height={36}
           src="/images/ceoteca_logo.svg"
-          width={180}
+          width={165}
         />
       ) : (
         <>
