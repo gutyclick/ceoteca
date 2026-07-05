@@ -79,6 +79,15 @@ a {
   padding-block: clamp(72px, 10vw, 144px);
 }
 
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
 .text-gradient-brand {
   background: linear-gradient(135deg, #4f63ff 0%, #8b5cf6 45%, #ec4899 100%);
   -webkit-background-clip: text;

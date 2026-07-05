@@ -524,36 +524,40 @@ function PublicLibrary({ books }: { books: Book[] }) {
           </label>
         </div>
 
-        <div className="mt-5 flex gap-3 overflow-x-auto pb-2">
-          <button
-            className={cn(
-              "inline-flex h-11 shrink-0 items-center gap-2 rounded-[12px] border px-5 text-sm font-bold transition",
-              category === "Todos"
-                ? "border-violet-200 bg-violet-100 text-violet-700"
-                : "border-slate-950/[0.10] bg-white text-slate-700 hover:border-violet-200 hover:text-violet-700",
-            )}
-            onClick={() => setCategory("Todos")}
-            type="button"
-          >
-            <LibraryBig aria-hidden="true" size={16} />
-            Todos
-          </button>
-          {chipCategories.map((item) => (
+        <div className="relative mt-5">
+          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-10 bg-gradient-to-r from-[#fbfaf8] to-transparent" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-[#fbfaf8] to-transparent" />
+          <div className="scrollbar-none flex gap-3 overflow-x-auto scroll-smooth py-1">
             <button
               className={cn(
                 "inline-flex h-11 shrink-0 items-center gap-2 rounded-[12px] border px-5 text-sm font-bold transition",
-                category === item
+                category === "Todos"
                   ? "border-violet-200 bg-violet-100 text-violet-700"
                   : "border-slate-950/[0.10] bg-white text-slate-700 hover:border-violet-200 hover:text-violet-700",
               )}
-              key={item}
-              onClick={() => setCategory(item)}
+              onClick={() => setCategory("Todos")}
               type="button"
             >
-              <Target aria-hidden="true" size={15} />
-              {item}
+              <LibraryBig aria-hidden="true" size={16} />
+              Todos
             </button>
-          ))}
+            {chipCategories.map((item) => (
+              <button
+                className={cn(
+                  "inline-flex h-11 shrink-0 items-center gap-2 rounded-[12px] border px-5 text-sm font-bold transition",
+                  category === item
+                    ? "border-violet-200 bg-violet-100 text-violet-700"
+                    : "border-slate-950/[0.10] bg-white text-slate-700 hover:border-violet-200 hover:text-violet-700",
+                )}
+                key={item}
+                onClick={() => setCategory(item)}
+                type="button"
+              >
+                <Target aria-hidden="true" size={15} />
+                {item}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="mt-7 grid gap-6 rounded-[18px] border border-slate-950/[0.08] bg-white p-7 shadow-[0_20px_60px_rgba(15,23,42,0.05)] md:grid-cols-2 xl:grid-cols-4">
