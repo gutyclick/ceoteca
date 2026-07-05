@@ -1,208 +1,422 @@
 "use client";
 
-import { CheckCircle2, Crown, Sparkles } from "lucide-react";
+import {
+  Check,
+  Crown,
+  FileText,
+  Infinity,
+  Leaf,
+  MonitorSmartphone,
+  RefreshCw,
+  Sparkles,
+  Star,
+  X,
+  Zap,
+} from "lucide-react";
 import { useState } from "react";
 
-import { SectionHeading } from "@/components/marketing/SectionHeading";
 import { ButtonLink } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import {
-  billingPeriods,
-  plans,
-  pricingFaqs,
-  pricingFeatureRows,
-  type BillingPeriod,
-  type PlanKey,
-} from "@/config/plans";
+import type { BillingPeriod, PlanKey } from "@/config/plans";
 import { cn } from "@/lib/utils/cn";
 
-const planOrder: PlanKey[] = ["free", "pro", "unlimited", "founder"];
-
-const billingLabels: Record<BillingPeriod, string> = {
-  monthly: "Mensual",
-  annual: "Anual",
+type PricingPlan = {
+  key: PlanKey;
+  name: string;
+  description: string;
+  monthlyPrice: number;
+  annualPrice: number;
+  priceLabel?: string;
+  periodLabel: string;
+  icon: typeof Leaf;
+  iconClassName: string;
+  borderClassName?: string;
+  glowClassName?: string;
+  badge?: string;
+  badgeClassName?: string;
+  cta: string;
+  ctaClassName: string;
+  note: string;
+  noteIcon: typeof Zap;
+  features: Array<{ label: string; included?: boolean }>;
+  founder?: boolean;
 };
 
-function formatPrice(planKey: PlanKey, period: BillingPeriod) {
-  const plan = plans[planKey];
-  const amount =
-    period === "annual" ? plan.annualPriceUsd ?? plan.monthlyPriceUsd * 10 : plan.monthlyPriceUsd;
+const founderSlotsTotal = 50;
+const founderSlotsLeft = 27;
+const founderProgress =
+  ((founderSlotsTotal - founderSlotsLeft) / founderSlotsTotal) * 100;
 
-  if (amount === 0) {
-    return "Gratis";
+const pricingPlans: PricingPlan[] = [
+  {
+    key: "free",
+    name: "Gratis",
+    description:
+      "Explora Ceoteca, descubre análisis seleccionados y conoce la experiencia.",
+    monthlyPrice: 0,
+    annualPrice: 0,
+    priceLabel: "Gratis",
+    periodLabel: "para empezar",
+    icon: Leaf,
+    iconClassName: "bg-violet-100 text-violet-700",
+    cta: "Empezar gratis",
+    ctaClassName: "border-slate-950/[0.10] bg-white text-violet-700 hover:bg-violet-50",
+    note: "Para empezar",
+    noteIcon: Sparkles,
+    features: [
+      { label: "3 análisis para comenzar" },
+      { label: "Biblioteca con vista previa" },
+      { label: "Sin audio", included: false },
+      { label: "Sin chat con IA", included: false },
+    ],
+  },
+  {
+    key: "pro",
+    name: "Pro",
+    description: "Accede al catálogo completo, audio y apoyo contextual de CEO.",
+    monthlyPrice: 7.99,
+    annualPrice: 79.99,
+    periodLabel: "al mes",
+    icon: Sparkles,
+    iconClassName: "bg-violet-100 text-violet-700",
+    borderClassName: "border-violet-400",
+    glowClassName:
+      "bg-[radial-gradient(circle_at_50%_18%,rgba(124,58,237,0.13),transparent_48%)]",
+    badge: "Más elegido",
+    badgeClassName: "bg-violet-700 text-white",
+    cta: "Elegir Pro",
+    ctaClassName:
+      "bg-gradient-to-r from-violet-700 to-indigo-600 text-white shadow-[0_18px_48px_rgba(124,58,237,0.24)] hover:brightness-105",
+    note: "Para avanzar cada semana",
+    noteIcon: Zap,
+    features: [
+      { label: "Catálogo completo de análisis" },
+      { label: "Audio incluido" },
+      { label: "50 preguntas a CEO al mes" },
+      { label: "Actividades, progreso e historial" },
+    ],
+  },
+  {
+    key: "unlimited",
+    name: "Ilimitado",
+    description: "Todo Pro, más acceso anticipado y consultas ampliadas con CEO.",
+    monthlyPrice: 14.99,
+    annualPrice: 149.99,
+    periodLabel: "al mes",
+    icon: Infinity,
+    iconClassName: "bg-emerald-100 text-emerald-700",
+    cta: "Elegir Ilimitado",
+    ctaClassName: "border-slate-950/[0.10] bg-white text-emerald-700 hover:bg-emerald-50",
+    note: "Para aprender sin fricción",
+    noteIcon: Zap,
+    features: [
+      { label: "Todo lo incluido en Pro" },
+      { label: "Consultas ampliadas con uso responsable" },
+      { label: "Acceso anticipado a nuevos análisis" },
+      { label: "Funciones premium prioritarias" },
+    ],
+  },
+  {
+    key: "founder",
+    name: "Fundador",
+    description:
+      "Asegura una tarifa especial de lanzamiento mientras mantengas tu suscripción activa.",
+    monthlyPrice: 4.99,
+    annualPrice: 49.99,
+    periodLabel: "al mes",
+    icon: Crown,
+    iconClassName: "bg-orange-100 text-orange-600",
+    borderClassName: "border-orange-200",
+    glowClassName:
+      "bg-[radial-gradient(circle_at_50%_16%,rgba(249,115,22,0.16),transparent_50%)]",
+    badge: "Oferta limitada",
+    badgeClassName: "bg-orange-100 text-orange-600",
+    cta: "Quiero ser fundador",
+    ctaClassName:
+      "bg-gradient-to-r from-orange-600 to-orange-500 text-white shadow-[0_18px_48px_rgba(249,115,22,0.22)] hover:brightness-105",
+    note: "Primeros 50 miembros",
+    noteIcon: Crown,
+    founder: true,
+    features: [
+      { label: "Cupo limitado a 50 fundadores" },
+      { label: "Tarifa protegida de lanzamiento" },
+      { label: "Catálogo completo, audio y CEO" },
+      { label: "Beneficios equivalentes a Pro" },
+    ],
+  },
+];
+
+const includedItems = [
+  { title: "Análisis originales de alta calidad", icon: FileText },
+  { title: "Ideas clave aplicables", icon: Sparkles },
+  { title: "Contenido claro y sin relleno", icon: Star },
+  { title: "Actualizaciones cada semana", icon: RefreshCw },
+  { title: "Acceso desde cualquier dispositivo", icon: MonitorSmartphone },
+] as const;
+
+const faqs = [
+  {
+    question: "¿Ceoteca reemplaza la lectura del libro original?",
+    answer:
+      "No. Ceoteca complementa tus lecturas con análisis editoriales propios, ideas clave, ejercicios y rutas de aplicación. Siempre recomendamos profundizar en las obras originales cuando un tema conecte contigo.",
+  },
+  {
+    question: "¿Qué incluye el plan Gratis?",
+    answer:
+      "Incluye acceso a una selección inicial de análisis y vista previa de la biblioteca. Es ideal para conocer la experiencia antes de activar audio, CEO y el catálogo completo.",
+  },
+  {
+    question: "¿Qué hace CEO, la IA de Ceoteca?",
+    answer:
+      "CEO te ayuda a elegir análisis, construir rutas de lectura, aplicar ideas a tu contexto y resolver dudas sobre el contenido autorizado dentro de Ceoteca.",
+  },
+  {
+    question: "¿Puedo cambiar de plan después?",
+    answer:
+      "Sí. Puedes empezar gratis y mejorar tu plan cuando necesites más acceso. Cuando integremos Stripe, la gestión de cambios, cancelaciones y facturas estará disponible desde tu cuenta.",
+  },
+] as const;
+
+function formatPrice(plan: PricingPlan, period: BillingPeriod) {
+  if (plan.priceLabel) {
+    return plan.priceLabel;
   }
+
+  const amount = period === "annual" ? plan.annualPrice : plan.monthlyPrice;
 
   return `USD ${amount.toFixed(2)}`;
 }
 
-function getPeriodLabel(planKey: PlanKey, period: BillingPeriod) {
-  if (plans[planKey].monthlyPriceUsd === 0) {
-    return "para empezar";
+function periodLabel(plan: PricingPlan, period: BillingPeriod) {
+  if (plan.priceLabel) {
+    return plan.periodLabel;
   }
 
-  return period === "annual" ? "al año" : "al mes";
+  return period === "annual" ? "al año" : plan.periodLabel;
 }
 
 export function PricingPage() {
   const [period, setPeriod] = useState<BillingPeriod>("monthly");
 
   return (
-    <main className="min-h-screen overflow-hidden bg-background text-text-primary">
-      <section className="ceoteca-container ceoteca-section relative">
-        <div className="ambient-drift absolute left-1/2 top-10 -z-10 h-96 w-96 -translate-x-1/2 rounded-full bg-glow-violet blur-3xl" />
-        <SectionHeading
-          eyebrow="Precios"
-          title="Elige cómo quieres aprender."
-          description="Planes pensados para explorar ideas clave, escuchar análisis y convertir aprendizaje en acción."
-        />
+    <main className="min-h-screen overflow-hidden bg-[#fbfaf8] text-slate-950">
+      <section className="ceoteca-container pb-10 pt-16 text-center lg:pt-20">
+        <p className="text-xs font-black uppercase tracking-[0.28em] text-violet-700">
+          Planes simples, valor real
+        </p>
+        <h1 className="mx-auto mt-5 max-w-4xl text-balance text-[clamp(2.5rem,5vw,4.6rem)] font-black leading-[1.02] tracking-[-0.04em]">
+          Elige el plan que se adapta a tu momento de aprendizaje
+        </h1>
+        <p className="mx-auto mt-5 max-w-3xl text-lg leading-8 text-slate-600">
+          Análisis de libros, audio, herramientas y apoyo de IA para que
+          apliques lo aprendido en tu vida y negocio.
+        </p>
 
-        <div className="mx-auto mt-8 flex w-fit rounded-full border border-white/10 bg-white/[0.04] p-1">
-          {billingPeriods.map((billingPeriod) => (
-            <button
-              className={cn(
-                "min-h-11 rounded-full px-5 text-sm font-medium text-text-secondary transition",
-                period === billingPeriod &&
-                  "bg-brand-gradient text-white shadow-[0_0_32px_rgba(168,85,247,0.22)]",
-              )}
-              key={billingPeriod}
-              onClick={() => setPeriod(billingPeriod)}
-              type="button"
-            >
-              {billingLabels[billingPeriod]}
-            </button>
-          ))}
+        <div className="mx-auto mt-8 grid w-full max-w-[560px] grid-cols-2 rounded-[22px] border border-slate-950/[0.08] bg-white p-1.5 shadow-[0_18px_55px_rgba(15,23,42,0.06)]">
+          <button
+            className={cn(
+              "rounded-[17px] px-5 py-3 text-sm font-black transition",
+              period === "monthly"
+                ? "bg-violet-50 text-violet-700 shadow-sm"
+                : "text-slate-600 hover:text-violet-700",
+            )}
+            onClick={() => setPeriod("monthly")}
+            type="button"
+          >
+            Mensual
+            <span className="block text-xs font-semibold opacity-75">
+              Paga mes a mes
+            </span>
+          </button>
+          <button
+            className={cn(
+              "rounded-[17px] px-5 py-3 text-sm font-black transition",
+              period === "annual"
+                ? "bg-violet-50 text-violet-700 shadow-sm"
+                : "text-slate-600 hover:text-violet-700",
+            )}
+            onClick={() => setPeriod("annual")}
+            type="button"
+          >
+            Anual
+            <span className="block text-xs font-semibold opacity-75">
+              Ahorra 20%
+            </span>
+          </button>
         </div>
+      </section>
 
-        <div className="mt-12 grid gap-5 xl:grid-cols-4">
-          {planOrder.map((planKey) => {
-            const plan = plans[planKey];
+      <section className="ceoteca-container pb-10">
+        <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-4">
+          {pricingPlans.map((plan) => {
+            const Icon = plan.icon;
+            const NoteIcon = plan.noteIcon;
 
             return (
-              <Card
+              <article
                 className={cn(
-                  "relative flex flex-col overflow-hidden p-6",
-                  plan.isRecommended && "border-brand-purple/60",
-                  plan.isFounderOffer &&
-                    "border-brand-purple/80 bg-[radial-gradient(circle_at_50%_0%,rgba(217,70,239,0.22),transparent_34%),linear-gradient(180deg,rgba(124,58,237,0.12),rgba(255,255,255,0.025))] shadow-[0_0_55px_rgba(168,85,247,0.28)]",
+                  "relative flex min-h-[560px] flex-col rounded-[24px] border border-slate-950/[0.10] bg-white p-7 shadow-[0_22px_70px_rgba(15,23,42,0.06)]",
+                  plan.borderClassName,
+                  plan.glowClassName,
                 )}
-                interactive
                 key={plan.key}
               >
-                {plan.isFounderOffer ? (
-                  <div className="pointer-events-none absolute inset-x-8 -top-16 h-28 rounded-full bg-brand-purple/35 blur-3xl motion-safe:animate-pulse" />
-                ) : null}
-                <div className="relative z-10 flex min-h-8 flex-wrap items-center justify-between gap-2">
-                  <p
+                {plan.badge ? (
+                  <span
                     className={cn(
-                      "text-sm font-medium text-text-secondary",
-                      plan.isFounderOffer && "text-brand-purple",
+                      "absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 rounded-full px-5 py-2 text-xs font-black uppercase tracking-wide",
+                      plan.badgeClassName,
                     )}
                   >
-                    {plan.tagline}
-                  </p>
-                  {plan.isRecommended ? (
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-purple/30 bg-brand-purple/15 px-3 py-1 text-xs font-medium text-brand-purple">
-                      <Sparkles aria-hidden="true" size={14} />
-                      Más elegido
-                    </span>
-                  ) : null}
-                  {plan.isFounderOffer ? (
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-pink/40 bg-brand-pink/15 px-3 py-1 text-xs font-medium text-brand-pink shadow-[0_0_24px_rgba(217,70,239,0.25)]">
-                      <Crown aria-hidden="true" size={14} />
-                      Oferta limitada
-                    </span>
-                  ) : null}
+                    {plan.badge}
+                  </span>
+                ) : null}
+
+                <div className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-slate-50">
+                  <span
+                    className={cn(
+                      "grid h-16 w-16 place-items-center rounded-full",
+                      plan.iconClassName,
+                    )}
+                  >
+                    <Icon aria-hidden="true" size={31} />
+                  </span>
                 </div>
-                <h2 className="mt-3 text-3xl font-semibold">{plan.name}</h2>
-                <p className="mt-3 min-h-14 text-sm leading-6 text-text-secondary">
+
+                <h2 className="mt-6 text-center text-3xl font-black">
+                  {plan.name}
+                </h2>
+                <p className="mx-auto mt-3 min-h-[64px] max-w-[260px] text-center text-sm leading-6 text-slate-600">
                   {plan.description}
                 </p>
-                {plan.isFounderOffer ? (
-                  <p className="mt-4 rounded-[14px] border border-brand-purple/30 bg-brand-purple/10 px-4 py-3 text-sm leading-6 text-brand-purple">
-                    Disponible solo para los primeros 100 miembros fundadores.
+
+                <div className="mt-6 text-center">
+                  <p
+                    className={cn(
+                      "text-4xl font-black tracking-[-0.04em]",
+                      plan.founder && "text-orange-600",
+                    )}
+                  >
+                    {formatPrice(plan, period)}
                   </p>
-                ) : null}
-                <div className="mt-6">
-                  <p className="text-4xl font-semibold">
-                    {formatPrice(planKey, period)}
-                  </p>
-                  <p className="mt-1 text-sm text-text-muted">
-                    {getPeriodLabel(planKey, period)}
+                  <p className="mt-1 text-sm font-medium text-slate-500">
+                    {periodLabel(plan, period)}
                   </p>
                 </div>
-                <ul className="mt-6 flex-1 space-y-3">
-                  {plan.highlights.map((highlight) => (
-                    <li
-                      className="flex gap-3 text-sm leading-6 text-text-secondary"
-                      key={highlight}
-                    >
-                      <CheckCircle2
-                        aria-hidden="true"
-                        className="mt-0.5 shrink-0 text-success"
-                        size={18}
-                      />
-                      {highlight}
-                    </li>
-                  ))}
+
+                <ul className="mt-7 flex-1 space-y-3">
+                  {plan.features.map((feature) => {
+                    const included = feature.included !== false;
+
+                    return (
+                      <li
+                        className="grid grid-cols-[22px_1fr] gap-3 text-sm leading-6 text-slate-700"
+                        key={feature.label}
+                      >
+                        <span
+                          className={cn(
+                            "mt-1 grid h-5 w-5 place-items-center rounded-full",
+                            included
+                              ? plan.founder
+                                ? "bg-orange-100 text-orange-600"
+                                : "bg-violet-100 text-violet-700"
+                              : "bg-slate-100 text-slate-400",
+                          )}
+                        >
+                          {included ? (
+                            <Check aria-hidden="true" size={14} strokeWidth={3} />
+                          ) : (
+                            <X aria-hidden="true" size={13} strokeWidth={3} />
+                          )}
+                        </span>
+                        {feature.label}
+                      </li>
+                    );
+                  })}
                 </ul>
+
+                {plan.founder ? (
+                  <div className="mt-5 rounded-[14px] border border-orange-200 bg-orange-50 p-4">
+                    <div className="flex items-center justify-between text-sm font-black text-slate-800">
+                      <span>
+                        Quedan {founderSlotsLeft} cupos de {founderSlotsTotal}
+                      </span>
+                    </div>
+                    <div className="mt-3 h-2.5 rounded-full bg-orange-100">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-orange-600 to-orange-400"
+                        style={{ width: `${founderProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                ) : null}
+
                 <ButtonLink
-                  className="mt-7"
+                  className={cn("mt-7 min-h-14 rounded-[14px]", plan.ctaClassName)}
                   href={`/registro?plan=${plan.key}`}
-                  variant={
-                    plan.isRecommended || plan.isFounderOffer ? "primary" : "secondary"
-                  }
+                  variant="secondary"
                 >
-                  {plan.ctaLabel}
+                  {plan.cta}
                 </ButtonLink>
-              </Card>
+
+                <p
+                  className={cn(
+                    "mt-5 inline-flex items-center justify-center gap-2 text-sm font-black",
+                    plan.founder ? "text-orange-600" : "text-violet-700",
+                  )}
+                >
+                  <NoteIcon aria-hidden="true" size={16} />
+                  {plan.note}
+                </p>
+              </article>
             );
           })}
         </div>
       </section>
 
-      <section className="ceoteca-container pb-20">
-        <SectionHeading
-          eyebrow="Comparativa"
-          title="Qué incluye cada plan."
-          description="Compara acceso, audio, CEO y herramientas de aprendizaje antes de elegir."
-        />
-        <Card className="mt-12 overflow-hidden p-0">
-          <div className="grid border-b border-white/10 bg-white/[0.04] p-5 text-sm font-semibold text-text-secondary lg:grid-cols-5">
-            <span>Función</span>
-            {planOrder.map((planKey) => (
-              <span key={planKey}>{plans[planKey].name}</span>
-            ))}
+      <section className="ceoteca-container pb-16">
+        <div className="grid gap-6 rounded-[22px] border border-slate-950/[0.08] bg-white p-7 shadow-[0_20px_60px_rgba(15,23,42,0.05)] md:grid-cols-[180px_1fr] md:items-center">
+          <h2 className="text-2xl font-black leading-tight">
+            Todos los planes incluyen
+          </h2>
+          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-5">
+            {includedItems.map((item) => {
+              const Icon = item.icon;
+
+              return (
+                <div className="flex items-center gap-3" key={item.title}>
+                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] bg-violet-50 text-violet-700">
+                    <Icon aria-hidden="true" size={20} />
+                  </span>
+                  <p className="text-sm font-semibold leading-5 text-slate-700">
+                    {item.title}
+                  </p>
+                </div>
+              );
+            })}
           </div>
-          {pricingFeatureRows.map((row) => (
-            <div
-              className="grid gap-3 border-b border-white/10 p-5 text-sm last:border-b-0 lg:grid-cols-5"
-              key={row.label}
-            >
-              <p className="font-medium text-text-primary">{row.label}</p>
-              {planOrder.map((planKey) => (
-                <p className="text-text-secondary" key={planKey}>
-                  {row.values[planKey]}
-                </p>
-              ))}
-            </div>
-          ))}
-        </Card>
+        </div>
       </section>
 
       <section className="ceoteca-container pb-24">
-        <SectionHeading
-          eyebrow="FAQ"
-          title="Preguntas frecuentes."
-          description="Respuestas claras sobre acceso, audio, CEO, suscripciones y la oferta Fundador."
-        />
-        <div className="mx-auto mt-12 grid max-w-5xl gap-4 md:grid-cols-2">
-          {pricingFaqs.map((faq) => (
-            <Card className="p-6" key={faq.question}>
-              <h3 className="font-semibold">{faq.question}</h3>
-              <p className="mt-3 text-sm leading-7 text-text-secondary">
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="text-xs font-black uppercase tracking-[0.28em] text-violet-700">
+            Preguntas frecuentes
+          </p>
+          <h2 className="mt-3 text-4xl font-black tracking-[-0.035em]">
+            Resolvemos tus dudas
+          </h2>
+        </div>
+        <div className="mx-auto mt-10 grid max-w-6xl gap-5 md:grid-cols-2">
+          {faqs.map((faq) => (
+            <article
+              className="rounded-[20px] border border-slate-950/[0.08] bg-white p-7 shadow-[0_18px_50px_rgba(15,23,42,0.05)]"
+              key={faq.question}
+            >
+              <h3 className="text-lg font-black">{faq.question}</h3>
+              <p className="mt-4 text-sm leading-7 text-slate-600">
                 {faq.answer}
               </p>
-            </Card>
+            </article>
           ))}
         </div>
       </section>

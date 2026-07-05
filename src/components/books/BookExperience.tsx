@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -158,6 +159,21 @@ function MiniCover({ book }: { book: Book }) {
     coverTitle.length > 28
       ? "text-[clamp(1.45rem,8vw,2rem)]"
       : "text-[clamp(1.75rem,9vw,2.4rem)]";
+
+  if (book.cover.imagePath) {
+    return (
+      <div className="relative aspect-[2/3] w-full max-w-[220px] overflow-hidden rounded-md border border-white/20 bg-[#11111e] shadow-[0_24px_70px_rgba(0,0,0,0.45)]">
+        <Image
+          alt={`Portada editorial de ${coverTitle}`}
+          className="object-cover"
+          fill
+          priority
+          sizes="220px"
+          src={book.cover.imagePath}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="relative aspect-[2/3] w-full max-w-[220px] overflow-hidden rounded-md border border-white/20 bg-gradient-to-br from-indigo-400 via-violet-600 to-fuchsia-600 p-5 shadow-[0_24px_70px_rgba(0,0,0,0.45)]">

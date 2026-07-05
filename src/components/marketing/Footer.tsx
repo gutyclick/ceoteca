@@ -6,13 +6,13 @@ import { siteConfig } from "@/config/site";
 const productLinks = [
   { href: "/biblioteca", label: "Biblioteca" },
   { href: "/biblioteca?categoria=all", label: "Categorías" },
-  { href: "/pricing", label: "Precios" },
+  { href: "/precios", label: "Precios" },
   { href: "/registro", label: "Novedades" },
 ] as const;
 
 const resourceLinks = [
   { href: "/biblioteca", label: "Guías" },
-  { href: "/pricing", label: "Plantillas" },
+  { href: "/precios", label: "Plantillas" },
   { href: "/biblioteca", label: "Recomendaciones" },
 ] as const;
 

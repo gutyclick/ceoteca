@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -11,9 +11,7 @@ import { cn } from "@/lib/utils/cn";
 const navigationItems = [
   { href: "/", label: "Inicio" },
   { href: "/biblioteca", label: "Biblioteca" },
-  { href: "/biblioteca?categoria=all", label: "Categorías" },
-  { href: "/pricing", label: "Recursos", hasChevron: true },
-  { href: "/#por-que-ceoteca", label: "Sobre nosotros" },
+  { href: "/precios", label: "Precios" },
 ] as const;
 
 export function HeaderNav() {
@@ -49,14 +47,11 @@ export function HeaderNav() {
         >
           {navigationItems.map((item) => (
             <Link
-              className="inline-flex items-center gap-1.5 whitespace-nowrap text-sm font-bold text-slate-600 transition-colors hover:text-violet-700"
+              className="inline-flex items-center whitespace-nowrap text-sm font-bold text-slate-600 transition-colors hover:text-violet-700"
               href={item.href}
               key={item.label}
             >
               {item.label}
-              {"hasChevron" in item ? (
-                <ChevronDown aria-hidden="true" size={14} />
-              ) : null}
             </Link>
           ))}
         </nav>
