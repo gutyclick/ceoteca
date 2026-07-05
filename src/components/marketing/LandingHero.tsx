@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { ArrowRight, Brain, CheckCircle2 } from "lucide-react";
 
 import { ButtonLink } from "@/components/ui/Button";
@@ -67,20 +68,34 @@ export function LandingHero() {
               <span>En progreso</span>
               <span>{heroBookCover.progress}%</span>
             </div>
-            <div className="mt-5 min-h-[278px] rounded-[1.2rem] bg-gradient-to-br from-violet-600 via-purple-600 to-pink-500 p-7 text-white shadow-[inset_0_0_60px_rgba(255,255,255,0.16)]">
-              <h2 className="max-w-[190px] text-3xl font-black leading-tight">
-                {heroBookCover.title}
-              </h2>
-              <p className="mt-4 text-sm font-semibold text-white/85">
-                {heroBookCover.author}
-              </p>
-              <div className="mt-12 grid place-items-center">
-                <Brain aria-hidden="true" className="text-white/42" size={78} />
-              </div>
-              <div className="mt-8 flex flex-wrap gap-2 text-xs font-bold">
+            <div className="relative mt-5 min-h-[278px] overflow-hidden rounded-[1.2rem] bg-gradient-to-br from-violet-600 via-purple-600 to-pink-500 p-7 text-white shadow-[inset_0_0_60px_rgba(255,255,255,0.16)]">
+              {heroBookCover.imagePath ? (
+                <Image
+                  alt={`Portada editorial de ${heroBookCover.title}`}
+                  className="object-cover"
+                  fill
+                  priority
+                  sizes="330px"
+                  src={heroBookCover.imagePath}
+                />
+              ) : (
+                <>
+                  <h2 className="max-w-[190px] text-3xl font-black leading-tight">
+                    {heroBookCover.title}
+                  </h2>
+                  <p className="mt-4 text-sm font-semibold text-white/85">
+                    {heroBookCover.author}
+                  </p>
+                  <div className="mt-12 grid place-items-center">
+                    <Brain aria-hidden="true" className="text-white/42" size={78} />
+                  </div>
+                </>
+              )}
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-950/55 to-transparent" />
+              <div className="relative z-10 mt-[202px] flex flex-wrap gap-2 text-xs font-bold">
                 {featuredBookFacts.map((fact) => (
                   <span
-                    className="rounded-full bg-slate-950/25 px-3 py-2 backdrop-blur"
+                    className="rounded-full bg-slate-950/35 px-3 py-2 backdrop-blur"
                     key={fact.label}
                   >
                     {fact.label}
@@ -97,7 +112,15 @@ export function LandingHero() {
             <div className="grid gap-4">
               {heroMiniReads.map((book) => (
                 <div className="grid grid-cols-[48px_1fr] gap-3" key={book.title}>
-                  <div className="rounded-lg bg-gradient-to-br from-[#120032] to-[#351071]" />
+                  <div className="relative overflow-hidden rounded-lg bg-gradient-to-br from-[#120032] to-[#351071]">
+                    <Image
+                      alt={`Portada editorial de ${book.title}`}
+                      className="object-cover"
+                      fill
+                      sizes="48px"
+                      src={book.imagePath}
+                    />
+                  </div>
                   <div>
                     <p className="line-clamp-2 text-sm font-black leading-tight text-slate-950">
                       {book.title}

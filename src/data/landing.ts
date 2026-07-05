@@ -117,6 +117,7 @@ export const previewBooks = [
     duration: "10 ideas clave",
     accent: "from-violet-600 via-purple-600 to-pink-500",
     pattern: "brain",
+    imagePath: "/images/PORTADAS%20EN%20PNG/HABITOS%20ATOMICOS.png",
   },
   {
     title: "Padre Rico, Padre Pobre",
@@ -125,6 +126,7 @@ export const previewBooks = [
     duration: "12 ideas clave",
     accent: "from-emerald-950 via-teal-900 to-slate-950",
     pattern: "money",
+    imagePath: "/images/PORTADAS%20EN%20PNG/043_PADRE_RICO_PADRE_POBRE.png",
   },
   {
     title: "La Startup de $100",
@@ -133,6 +135,7 @@ export const previewBooks = [
     duration: "8 ideas clave",
     accent: "from-slate-950 via-blue-950 to-slate-900",
     pattern: "rocket",
+    imagePath: "/images/PORTADAS%20EN%20PNG/EL%20EMPRENDIMIENTO%20DE%20LOS%20100.png",
   },
   {
     title: "Piense y hágase rico",
@@ -141,6 +144,7 @@ export const previewBooks = [
     duration: "10 ideas clave",
     accent: "from-yellow-950 via-amber-900 to-slate-950",
     pattern: "growth",
+    imagePath: "/images/PORTADAS%20EN%20PNG/045_TE_ENSE%C3%91AR%C3%89_A_SER_RICO.png",
   },
   {
     title: "Los 7 hábitos de la gente altamente efectiva",
@@ -149,6 +153,7 @@ export const previewBooks = [
     duration: "10 ideas clave",
     accent: "from-slate-950 via-indigo-950 to-purple-950",
     pattern: "target",
+    imagePath: "/images/PORTADAS%20EN%20PNG/086_LOS_7_H%C3%81BITOS_DE_LA_GENTE_ALTAMENTE_EFECTIVA.png",
   },
 ] as const;
 
@@ -296,15 +301,31 @@ export const heroBadgeAvatars = ["M", "A", "J", "C"] as const;
 export const visualCards = [] as const;
 
 export const heroMiniReads = [
-  { title: "Padre Rico, Padre Pobre", author: "Robert Kiyosaki", progress: 60 },
-  { title: "La Startup de $100", author: "Chris Guillebeau", progress: 40 },
-  { title: "Piense y hágase rico", author: "Napoleon Hill", progress: 20 },
+  {
+    title: "Padre Rico, Padre Pobre",
+    author: "Robert Kiyosaki",
+    progress: 60,
+    imagePath: "/images/PORTADAS%20EN%20PNG/043_PADRE_RICO_PADRE_POBRE.png",
+  },
+  {
+    title: "La Startup de $100",
+    author: "Chris Guillebeau",
+    progress: 40,
+    imagePath: "/images/PORTADAS%20EN%20PNG/EL%20EMPRENDIMIENTO%20DE%20LOS%20100.png",
+  },
+  {
+    title: "Piense y hágase rico",
+    author: "Napoleon Hill",
+    progress: 20,
+    imagePath: "/images/PORTADAS%20EN%20PNG/045_TE_ENSE%C3%91AR%C3%89_A_SER_RICO.png",
+  },
 ] as const;
 
 export const heroBookCover = {
   title: "Hábitos Atómicos",
   author: "James Clear",
   progress: 35,
+  imagePath: "/images/PORTADAS%20EN%20PNG/HABITOS%20ATOMICOS.png",
 } as const;
 
 export const bookIconMap = {
