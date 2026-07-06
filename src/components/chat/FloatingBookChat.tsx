@@ -26,6 +26,7 @@ import type { Book } from "@/types";
 type FloatingBookChatProps = {
   book: Book;
   plan: PlanKey;
+  variant?: "floating" | "panel";
 };
 
 type ChatResponse = {
@@ -78,7 +79,12 @@ function getNextSuggestionSet(currentIndex: number) {
   });
 }
 
-export function FloatingBookChat({ book, plan }: FloatingBookChatProps) {
+export function FloatingBookChat({
+  book,
+  plan,
+  variant = "floating",
+}: FloatingBookChatProps) {
+  const isPanel = variant === "panel";
   const introMessage = useMemo<ChatConversationMessage>(
     () => ({
       role: "assistant",
@@ -86,7 +92,7 @@ export function FloatingBookChat({ book, plan }: FloatingBookChatProps) {
     }),
     [book.title],
   );
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(isPanel);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatConversationMessage[]>([
     introMessage,
@@ -108,6 +114,7 @@ export function FloatingBookChat({ book, plan }: FloatingBookChatProps) {
     hasChatAccess && displayedRemainingQuestions !== null;
 
   const conversation = useMemo(() => prepareChatConversation(messages), [messages]);
+  const isVisible = isPanel || isOpen;
 
   useEffect(() => {
     setMessages([introMessage]);
@@ -116,7 +123,7 @@ export function FloatingBookChat({ book, plan }: FloatingBookChatProps) {
   }, [book.slug, introMessage]);
 
   useEffect(() => {
-    if (!isOpen || !hasChatAccess) {
+    if (!isVisible || !hasChatAccess) {
       return;
     }
 
@@ -193,10 +200,10 @@ export function FloatingBookChat({ book, plan }: FloatingBookChatProps) {
       window.removeEventListener("focus", loadHistory);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [book.slug, hasChatAccess, introMessage, isOpen]);
+  }, [book.slug, hasChatAccess, introMessage, isVisible]);
 
   useEffect(() => {
-    if (!isOpen || !shouldFocusLatestAssistantRef.current) {
+    if (!isVisible || !shouldFocusLatestAssistantRef.current) {
       return;
     }
 
@@ -205,7 +212,7 @@ export function FloatingBookChat({ book, plan }: FloatingBookChatProps) {
       block: "start",
     });
     shouldFocusLatestAssistantRef.current = false;
-  }, [isOpen, messages]);
+  }, [isVisible, messages]);
 
   async function sendMessage(message: string) {
     const trimmed = message.trim();
@@ -268,34 +275,66 @@ export function FloatingBookChat({ book, plan }: FloatingBookChatProps) {
   }
 
   return (
-    <div className="fixed inset-x-3 bottom-4 z-40 flex flex-col items-end gap-3 sm:inset-x-auto sm:right-6">
-      {isOpen ? (
-        <Card className="flex h-[min(760px,calc(100svh-112px))] w-full max-w-[520px] flex-col overflow-hidden rounded-[24px] border-brand-purple/30 bg-[#090a12]/95 p-0 shadow-[0_24px_90px_rgba(0,0,0,0.58)] backdrop-blur-xl sm:w-[520px]">
-          <header className="relative shrink-0 border-b border-white/10 bg-white/[0.025] p-4 pr-14 sm:p-5 sm:pr-14">
+    <div
+      className={cn(
+        isPanel
+          ? "h-full min-h-[620px] w-full"
+          : "fixed inset-x-3 bottom-4 z-40 flex flex-col items-end gap-3 sm:inset-x-auto sm:right-6",
+      )}
+    >
+      {isVisible ? (
+        <Card
+          className={cn(
+            "flex flex-col overflow-hidden p-0 backdrop-blur-xl",
+            isPanel
+              ? "h-full rounded-[24px] border-slate-950/[0.08] bg-white text-slate-950 shadow-[0_24px_70px_rgba(15,23,42,0.08)]"
+              : "h-[min(760px,calc(100svh-112px))] w-full max-w-[520px] rounded-[24px] border-brand-purple/30 bg-[#090a12]/95 shadow-[0_24px_90px_rgba(0,0,0,0.58)] sm:w-[520px]",
+          )}
+        >
+          <header
+            className={cn(
+              "relative shrink-0 border-b p-4 pr-14 sm:p-5 sm:pr-14",
+              isPanel ? "border-slate-950/[0.08] bg-white" : "border-white/10 bg-white/[0.025]",
+            )}
+          >
             <div className="flex min-w-0 gap-3">
-              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-brand-purple/40 bg-brand-purple/20 text-brand-purple shadow-[0_0_32px_rgba(168,85,247,0.35)]">
+              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-brand-purple/40 bg-brand-purple/20 text-brand-purple shadow-[0_0_32px_rgba(168,85,247,0.25)]">
                 <Bot aria-hidden="true" size={24} />
               </span>
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-base font-semibold text-white">CEO</p>
+                  <p
+                    className={cn(
+                      "text-base font-semibold",
+                      isPanel ? "text-slate-950" : "text-white",
+                    )}
+                  >
+                    Pregunta a CEO
+                  </p>
                   <span className="rounded-full border border-success/25 bg-success/10 px-2 py-0.5 text-[11px] font-medium text-success">
                     Contexto del libro
                   </span>
                 </div>
-                <p className="mt-1 line-clamp-2 text-xs leading-5 text-text-secondary">
-                  Pregunta sobre aplicación, ejercicios y próximos pasos de {book.title}.
+                <p
+                  className={cn(
+                    "mt-1 line-clamp-2 text-xs leading-5",
+                    isPanel ? "text-slate-500" : "text-text-secondary",
+                  )}
+                >
+                  Tu asistente para aplicar ideas, ejercicios y próximos pasos de {book.title}.
                 </p>
               </div>
             </div>
-            <button
-              aria-label="Cerrar chat"
-              className="absolute right-3 top-3 z-10 grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.08] text-white shadow-[0_10px_30px_rgba(0,0,0,0.25)] transition hover:border-brand-purple/50 hover:bg-white/[0.14]"
-              onClick={() => setIsOpen(false)}
-              type="button"
-            >
-              <X aria-hidden="true" size={19} />
-            </button>
+            {!isPanel ? (
+              <button
+                aria-label="Cerrar chat"
+                className="absolute right-3 top-3 z-10 grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.08] text-white shadow-[0_10px_30px_rgba(0,0,0,0.25)] transition hover:border-brand-purple/50 hover:bg-white/[0.14]"
+                onClick={() => setIsOpen(false)}
+                type="button"
+              >
+                <X aria-hidden="true" size={19} />
+              </button>
+            ) : null}
           </header>
 
           {hasChatAccess ? (
@@ -305,7 +344,14 @@ export function FloatingBookChat({ book, plan }: FloatingBookChatProps) {
                 ref={scrollAreaRef}
               >
                 {shouldShowQuestionLimit ? (
-                  <p className="mb-4 inline-flex max-w-full items-center gap-2 rounded-full border border-white/10 bg-white/[0.045] px-3 py-1.5 text-xs text-text-secondary">
+                  <p
+                    className={cn(
+                      "mb-4 inline-flex max-w-full items-center gap-2 rounded-full border px-3 py-1.5 text-xs",
+                      isPanel
+                        ? "border-slate-950/[0.08] bg-slate-50 text-slate-500"
+                        : "border-white/10 bg-white/[0.045] text-text-secondary",
+                    )}
+                  >
                     <Sparkles aria-hidden="true" className="shrink-0 text-brand-purple" size={14} />
                     <span className="truncate">
                       {displayedRemainingQuestions} preguntas restantes este mes
@@ -316,7 +362,14 @@ export function FloatingBookChat({ book, plan }: FloatingBookChatProps) {
                 <div className="space-y-4">
                   {isHistoryLoading ? (
                     <div className="flex justify-center">
-                      <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-xs text-text-secondary">
+                      <div
+                        className={cn(
+                          "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs",
+                          isPanel
+                            ? "border-slate-950/[0.08] bg-slate-50 text-slate-500"
+                            : "border-white/10 bg-white/[0.055] text-text-secondary",
+                        )}
+                      >
                         <Loader2 aria-hidden="true" className="animate-spin" size={14} />
                         Cargando historial...
                       </div>
@@ -337,10 +390,12 @@ export function FloatingBookChat({ book, plan }: FloatingBookChatProps) {
                     >
                       <div
                         className={cn(
-                          "min-w-0 max-w-[88%] rounded-[20px] px-4 py-3.5 shadow-[0_14px_40px_rgba(0,0,0,0.22)]",
+                          "min-w-0 max-w-[88%] rounded-[20px] px-4 py-3.5 shadow-[0_14px_40px_rgba(15,23,42,0.10)]",
                           message.role === "user"
                             ? "rounded-br-md bg-brand-gradient text-white"
-                            : "rounded-bl-md border border-white/10 bg-white/[0.065] text-text-primary",
+                            : isPanel
+                              ? "rounded-bl-md border border-slate-950/[0.08] bg-slate-50 text-slate-800"
+                              : "rounded-bl-md border border-white/10 bg-white/[0.065] text-text-primary",
                         )}
                       >
                         {message.role === "assistant" ? (
@@ -355,7 +410,14 @@ export function FloatingBookChat({ book, plan }: FloatingBookChatProps) {
                   ))}
                   {isLoading ? (
                     <div className="flex justify-start">
-                      <div className="inline-flex items-center gap-2 rounded-[18px] border border-white/10 bg-white/[0.055] px-4 py-3 text-sm text-text-secondary">
+                      <div
+                        className={cn(
+                          "inline-flex items-center gap-2 rounded-[18px] border px-4 py-3 text-sm",
+                          isPanel
+                            ? "border-slate-950/[0.08] bg-slate-50 text-slate-500"
+                            : "border-white/10 bg-white/[0.055] text-text-secondary",
+                        )}
+                      >
                         <Loader2 aria-hidden="true" className="animate-spin" size={16} />
                         CEO está pensando...
                       </div>
@@ -364,12 +426,22 @@ export function FloatingBookChat({ book, plan }: FloatingBookChatProps) {
                 </div>
               </div>
 
-              <footer className="shrink-0 border-t border-white/10 bg-[#090a12]/98 p-3 sm:p-4">
+              <footer
+                className={cn(
+                  "shrink-0 border-t p-3 sm:p-4",
+                  isPanel ? "border-slate-950/[0.08] bg-white" : "border-white/10 bg-[#090a12]/98",
+                )}
+              >
                 <div className="mb-3 grid grid-cols-[1fr_36px] items-stretch gap-2">
                   <div className="grid min-w-0 gap-2 sm:grid-cols-3">
                     {visibleSuggestions.map((suggestion) => (
                       <button
-                        className="min-h-10 min-w-0 rounded-full border border-white/10 bg-white/[0.045] px-3 py-2 text-left text-xs leading-5 text-text-secondary transition hover:border-brand-purple/50 hover:text-white"
+                        className={cn(
+                          "min-h-10 min-w-0 rounded-full border px-3 py-2 text-left text-xs leading-5 transition hover:border-brand-purple/50",
+                          isPanel
+                            ? "border-slate-950/[0.08] bg-slate-50 text-slate-600 hover:text-violet-700"
+                            : "border-white/10 bg-white/[0.045] text-text-secondary hover:text-white",
+                        )}
                         key={suggestion}
                         onClick={() => {
                           setInput(suggestion);
@@ -385,7 +457,12 @@ export function FloatingBookChat({ book, plan }: FloatingBookChatProps) {
                   </div>
                   <button
                     aria-label="Ver otras preguntas sugeridas"
-                    className="grid h-full min-h-10 w-9 shrink-0 place-items-center rounded-full border border-white/10 bg-white/[0.055] text-text-secondary transition hover:border-brand-purple/50 hover:text-white"
+                    className={cn(
+                      "grid h-full min-h-10 w-9 shrink-0 place-items-center rounded-full border transition hover:border-brand-purple/50",
+                      isPanel
+                        ? "border-slate-950/[0.08] bg-slate-50 text-slate-500 hover:text-violet-700"
+                        : "border-white/10 bg-white/[0.055] text-text-secondary hover:text-white",
+                    )}
                     onClick={() =>
                       setSuggestionStartIndex(
                         (current) => (current + 3) % bookSuggestions.length,
@@ -402,14 +479,22 @@ export function FloatingBookChat({ book, plan }: FloatingBookChatProps) {
                   </div>
                 ) : null}
                 <form
-                  className="grid grid-cols-[1fr_48px] gap-2 rounded-[18px] border border-white/10 bg-white/[0.045] p-2 focus-within:border-brand-purple/70 focus-within:ring-2 focus-within:ring-brand-purple/25"
+                  className={cn(
+                    "grid grid-cols-[1fr_48px] gap-2 rounded-[18px] border p-2 focus-within:border-brand-purple/70 focus-within:ring-2 focus-within:ring-brand-purple/25",
+                    isPanel
+                      ? "border-slate-950/[0.08] bg-slate-50"
+                      : "border-white/10 bg-white/[0.045]",
+                  )}
                   onSubmit={(event) => {
                     event.preventDefault();
                     void sendMessage(input);
                   }}
                 >
                   <textarea
-                    className="max-h-28 min-h-11 resize-none bg-transparent px-2 py-2 text-sm leading-6 text-white outline-none placeholder:text-text-muted"
+                    className={cn(
+                      "max-h-28 min-h-11 resize-none bg-transparent px-2 py-2 text-sm leading-6 outline-none placeholder:text-text-muted",
+                      isPanel ? "text-slate-900" : "text-white",
+                    )}
                     maxLength={2000}
                     onChange={(event) => setInput(event.target.value)}
                     onKeyDown={(event) => {
@@ -440,10 +525,20 @@ export function FloatingBookChat({ book, plan }: FloatingBookChatProps) {
                 <span className="grid h-12 w-12 place-items-center rounded-2xl bg-brand-purple/20 text-brand-purple">
                   <Lock aria-hidden="true" size={22} />
                 </span>
-                <h2 className="mt-4 text-xl font-semibold text-white">
+                <h2
+                  className={cn(
+                    "mt-4 text-xl font-semibold",
+                    isPanel ? "text-slate-950" : "text-white",
+                  )}
+                >
                   CEO para libros está incluido desde Pro
                 </h2>
-                <p className="mt-2 text-sm leading-6 text-text-secondary">
+                <p
+                  className={cn(
+                    "mt-2 text-sm leading-6",
+                    isPanel ? "text-slate-600" : "text-text-secondary",
+                  )}
+                >
                   Activa preguntas contextuales sobre cada análisis, ejercicios
                   guiados y ayuda para aplicar ideas a tu situación.
                 </p>
@@ -459,19 +554,21 @@ export function FloatingBookChat({ book, plan }: FloatingBookChatProps) {
         </Card>
       ) : null}
 
-      <button
-        aria-label={isOpen ? "Cerrar CEO" : "Abrir CEO del libro"}
-        className="group relative grid h-16 w-16 place-items-center self-end rounded-full border border-brand-purple/50 bg-brand-gradient text-white shadow-[0_18px_55px_rgba(124,58,237,0.45)] transition duration-300 hover:-translate-y-1 hover:brightness-110"
-        onClick={() => setIsOpen((current) => !current)}
-        type="button"
-      >
-        <span className="absolute inset-[-7px] rounded-full border border-brand-purple/25 opacity-0 transition group-hover:opacity-100" />
-        {isOpen ? (
-          <X aria-hidden="true" size={24} />
-        ) : (
-          <MessageCircle aria-hidden="true" size={25} />
-        )}
-      </button>
+      {!isPanel ? (
+        <button
+          aria-label={isOpen ? "Cerrar CEO" : "Abrir CEO del libro"}
+          className="group relative grid h-16 w-16 place-items-center self-end rounded-full border border-brand-purple/50 bg-brand-gradient text-white shadow-[0_18px_55px_rgba(124,58,237,0.45)] transition duration-300 hover:-translate-y-1 hover:brightness-110"
+          onClick={() => setIsOpen((current) => !current)}
+          type="button"
+        >
+          <span className="absolute inset-[-7px] rounded-full border border-brand-purple/25 opacity-0 transition group-hover:opacity-100" />
+          {isOpen ? (
+            <X aria-hidden="true" size={24} />
+          ) : (
+            <MessageCircle aria-hidden="true" size={25} />
+          )}
+        </button>
+      ) : null}
     </div>
   );
 }

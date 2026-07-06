@@ -10,14 +10,17 @@ import {
   BookOpen,
   CheckCircle2,
   ChevronDown,
+  Clock3,
   ExternalLink,
   Heart,
+  Headphones,
   Lock,
   Loader2,
+  MoreHorizontal,
   Pause,
   Play,
   Sparkles,
-  Target,
+  X,
 } from "lucide-react";
 
 import { DashboardSidebar } from "@/components/app/DashboardSidebar";
@@ -40,13 +43,11 @@ const disclaimer =
   "Contenido educativo y editorial propio. Ceoteca no está afiliada al autor ni a la editorial. Este análisis no reemplaza la obra original.";
 
 const articleNav = [
-  { href: "#intro", label: "Intro" },
-  { href: "#tipos", label: "Tipos" },
-  { href: "#sistema", label: "24 pasos" },
-  { href: "#claves", label: "Claves" },
-  { href: "#framework", label: "Framework" },
-  { href: "#plantilla", label: "Plantilla" },
-  { href: "#para-llevar", label: "Para llevar" },
+  { href: "#ideas", label: "Ideas clave" },
+  { href: "#ejercicios", label: "Ejercicios" },
+  { href: "#resena", label: "Reseña" },
+  { href: "#notas", label: "Notas" },
+  { href: "#recursos", label: "Recursos" },
 ] as const;
 
 const disciplinedPhases = [
@@ -200,6 +201,7 @@ function MiniCover({ book }: { book: Book }) {
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Se conserva mientras se migran variantes editoriales anteriores.
 function HeroMetric({
   label,
   value,
@@ -811,6 +813,7 @@ function ActivityArticleCard({ activity }: { activity: BookActivity }) {
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Se conserva mientras se migran variantes editoriales anteriores.
 function DisciplinedArticle({ book }: { book: Book }) {
   return (
     <>
@@ -1027,6 +1030,7 @@ function DisciplinedArticle({ book }: { book: Book }) {
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Se conserva mientras se migran variantes editoriales anteriores.
 function GenericArticle({ book }: { book: Book }) {
   return (
     <>
@@ -1056,6 +1060,7 @@ function GenericArticle({ book }: { book: Book }) {
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Se conserva mientras se migra el panel lateral antiguo.
 function Sidebar({
   book,
   canUseChat,
@@ -1133,6 +1138,130 @@ function getCachedPlan(): PlanKey | null {
   return planKeys.includes(cachedPlan as PlanKey) ? (cachedPlan as PlanKey) : null;
 }
 
+function LightKeyPointCard({
+  point,
+  defaultOpen = false,
+}: {
+  point: KeyPoint;
+  defaultOpen?: boolean;
+}) {
+  return (
+    <details
+      className="group rounded-[18px] border border-slate-950/[0.08] bg-white p-4 shadow-[0_18px_50px_rgba(15,23,42,0.04)]"
+      open={defaultOpen}
+    >
+      <summary className="flex cursor-pointer list-none items-start justify-between gap-4">
+        <div className="flex min-w-0 gap-4">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[12px] bg-violet-100 text-base font-black text-violet-700">
+            {point.number}
+          </span>
+          <div className="min-w-0">
+            <h3 className="font-black leading-6 text-slate-950">{point.title}</h3>
+            <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-500">
+              {point.explanation}
+            </p>
+          </div>
+        </div>
+        <ChevronDown
+          aria-hidden="true"
+          className="mt-2 shrink-0 text-slate-400 transition group-open:rotate-180"
+          size={18}
+        />
+      </summary>
+      <div className="mt-4 grid gap-3 border-t border-slate-950/[0.06] pt-4 text-sm leading-7 text-slate-600 md:grid-cols-3">
+        <p className="rounded-[14px] bg-slate-50 p-3">
+          <span className="block font-black text-slate-950">Ejemplo</span>
+          {point.example}
+        </p>
+        <p className="rounded-[14px] bg-violet-50 p-3">
+          <span className="block font-black text-violet-700">Acción</span>
+          {point.action}
+        </p>
+        <p className="rounded-[14px] bg-slate-50 p-3">
+          <span className="block font-black text-slate-950">Cuidado</span>
+          {point.limitation}
+        </p>
+      </div>
+    </details>
+  );
+}
+
+function LightActivityCard({
+  activity,
+  bookSlug,
+}: {
+  activity: BookActivity;
+  bookSlug: string;
+}) {
+  const reflectionId = `${bookSlug}:${activity.title.toLowerCase().replace(/\s+/g, "-")}`;
+  const [value, setValue] = useState("");
+
+  useEffect(() => {
+    setValue(window.localStorage.getItem(`ceoteca:activity:${reflectionId}`) ?? "");
+  }, [reflectionId]);
+
+  function updateValue(nextValue: string) {
+    setValue(nextValue);
+    window.localStorage.setItem(`ceoteca:activity:${reflectionId}`, nextValue);
+  }
+
+  return (
+    <article className="rounded-[20px] border border-slate-950/[0.08] bg-white p-5 shadow-[0_18px_50px_rgba(15,23,42,0.04)]">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start">
+        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-[16px] bg-violet-100 text-violet-700">
+          <BookOpen aria-hidden="true" size={24} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h3 className="text-lg font-black text-slate-950">{activity.title}</h3>
+          <p className="mt-2 text-sm leading-7 text-slate-600">{activity.prompt}</p>
+          {activity.options ? (
+            <ul className="mt-4 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
+              {activity.options.map((option) => (
+                <li className="flex gap-2" key={option}>
+                  <CheckCircle2
+                    aria-hidden="true"
+                    className="mt-0.5 shrink-0 text-emerald-500"
+                    size={16}
+                  />
+                  {option}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          <textarea
+            className="mt-5 min-h-28 w-full resize-y rounded-[16px] border border-slate-950/[0.08] bg-slate-50 p-4 text-sm leading-7 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-300 focus:ring-4 focus:ring-violet-100"
+            onChange={(event) => updateValue(event.target.value)}
+            placeholder="Escribe tu reflexión, decisión o próximo paso..."
+            value={value}
+          />
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function LightNoteBox({ bookSlug }: { bookSlug: string }) {
+  const storageKey = `ceoteca:notes:${bookSlug}`;
+  const [value, setValue] = useState("");
+
+  useEffect(() => {
+    setValue(window.localStorage.getItem(storageKey) ?? "");
+  }, [storageKey]);
+
+  function updateValue(nextValue: string) {
+    setValue(nextValue);
+    window.localStorage.setItem(storageKey, nextValue);
+  }
+
+  return (
+    <textarea
+      className="min-h-52 w-full resize-y rounded-[20px] border border-slate-950/[0.08] bg-white p-5 text-sm leading-7 text-slate-900 shadow-[0_18px_50px_rgba(15,23,42,0.04)] outline-none transition placeholder:text-slate-400 focus:border-violet-300 focus:ring-4 focus:ring-violet-100"
+      onChange={(event) => updateValue(event.target.value)}
+      placeholder="Guarda aquí tus notas personales sobre este análisis..."
+      value={value}
+    />
+  );
+}
 export function BookExperience({ book }: BookExperienceProps) {
   const router = useRouter();
   const [currentPlan, setCurrentPlan] = useState<PlanKey | null>(() => getCachedPlan());
@@ -1142,10 +1271,9 @@ export function BookExperience({ book }: BookExperienceProps) {
   const [userId, setUserId] = useState<string | null>(null);
   const [readingProgress, setReadingProgress] = useState(0);
   const [activeSection, setActiveSection] = useState<string>(articleNav[0].href);
+  const [isAudioDockOpen, setIsAudioDockOpen] = useState(false);
   const persistedProgressRef = useRef(0);
   const canUseAudio = currentPlan ? canAccessFeature(currentPlan, "audio") : false;
-  const canUseChat = currentPlan ? canAccessFeature(currentPlan, "chat") : false;
-  const isDisciplined = book.slug === "disciplined-entrepreneurship";
 
   useEffect(() => {
     let isMounted = true;
@@ -1407,136 +1535,198 @@ export function BookExperience({ book }: BookExperienceProps) {
   }
 
   return (
-    <main className="min-h-screen overflow-x-clip bg-[#03040b] pb-16 pl-0 text-text-primary transition-[padding] duration-300 ease-out sm:pl-[var(--dashboard-sidebar-offset,84px)]">
-      <DashboardSidebar active="home" />
-      <div className="fixed left-0 right-0 top-0 z-50 h-1 bg-white/5 sm:left-[var(--dashboard-sidebar-offset,84px)]">
+    <main
+      className={cn(
+        "min-h-screen overflow-x-clip bg-[#fbfaf8] pb-24 text-slate-950 transition-[padding] duration-300 ease-out sm:pl-[var(--dashboard-sidebar-offset,84px)]",
+        isAudioDockOpen && "pb-52",
+      )}
+    >
+      <DashboardSidebar active="library" tone="light" />
+      <div className="fixed left-0 right-0 top-0 z-50 h-1 bg-slate-950/[0.06] sm:left-[var(--dashboard-sidebar-offset,84px)]">
         <div
-          className="h-full rounded-r-full bg-gradient-to-r from-brand-purple via-brand-blue to-brand-pink transition-[width] duration-300"
+          className="h-full rounded-r-full bg-gradient-to-r from-violet-700 via-indigo-500 to-fuchsia-500 transition-[width] duration-300"
           style={{ width: `${readingProgress}%` }}
         />
       </div>
-      <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_18%_8%,rgba(124,58,237,0.18),transparent_28%),radial-gradient(circle_at_76%_18%,rgba(79,99,255,0.12),transparent_30%),linear-gradient(180deg,#02030a_0%,#050612_52%,#04040a_100%)]" />
 
-      <section className="mx-auto w-full max-w-[1240px] px-5 pt-7 md:px-8">
-        <div className="relative rounded-[24px] border border-white/10 bg-white/[0.025] p-4 pt-16 shadow-[0_24px_90px_rgba(0,0,0,0.36)] md:p-7 md:pt-16">
-          <div className="absolute left-4 right-4 top-4 flex items-center justify-between md:left-7 md:right-7 md:top-5">
+      <section className="mx-auto grid w-full max-w-[1480px] gap-6 px-4 py-6 md:px-8 lg:grid-cols-[minmax(0,1fr)_380px] xl:px-10">
+        <div className="min-w-0">
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
             <button
-              aria-label="Volver"
-              className="grid h-11 w-11 place-items-center rounded-button border border-white/10 bg-white/[0.045] text-text-primary transition hover:bg-white/[0.08]"
-              onClick={() => router.back()}
+              className="inline-flex h-11 items-center gap-2 rounded-[14px] px-2 text-sm font-bold text-slate-600 transition hover:text-violet-700"
+              onClick={() => router.push("/biblioteca")}
               type="button"
             >
-              <ArrowLeft aria-hidden="true" size={21} />
+              <ArrowLeft aria-hidden="true" size={18} />
+              Volver a biblioteca
             </button>
-            <button
-              aria-label={isFavorite ? "Quitar de favoritos" : "Añadir a favoritos"}
-              className={cn(
-                "grid h-11 w-11 place-items-center rounded-button border text-text-primary transition hover:bg-white/[0.08] hover:text-brand-purple disabled:cursor-not-allowed disabled:opacity-60",
-                isFavorite
-                  ? "border-brand-purple/50 bg-brand-purple/15 text-brand-purple"
-                  : "border-white/10 bg-white/[0.045]",
-              )}
-              disabled={isFavoriteLoading}
-              onClick={() => void toggleFavorite()}
-              type="button"
-            >
-              <Heart aria-hidden="true" fill={isFavorite ? "currentColor" : "none"} size={21} />
-            </button>
-          </div>
-          <div className="grid gap-8 lg:grid-cols-[230px_1fr] lg:items-center">
-            <MiniCover book={book} />
-            <div>
-              <h1 className="text-balance text-5xl font-black leading-none text-white md:text-7xl">
-                {getBookDisplayTitle(book)}
-              </h1>
-              <p className="mt-5 max-w-3xl text-xl leading-8 text-text-primary">
-                {book.description}
-              </p>
-              <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-                <HeroMetric label="Autor" value={book.author} />
-                {isDisciplined ? (
-                  <HeroMetric
-                    label="Obra original"
-                    value="La disciplina de emprender"
-                  />
-                ) : null}
-                <HeroMetric label="Categoría" value={book.category} />
-                <HeroMetric label="Dificultad" value={book.difficulty} />
-                <HeroMetric label="Lectura" value={`${book.readingTime} min`} />
-              </div>
-              <div className="mt-5 max-w-3xl">
-                <AudioPanel
-                  book={book}
-                  isPlanLoading={isPlanLoading && !currentPlan}
-                  locked={!isPlanLoading && !canUseAudio}
-                />
-              </div>
+            <div className="flex items-center gap-2">
+              <button
+                className="inline-flex h-12 items-center gap-2 rounded-[14px] border border-slate-950/[0.08] bg-white px-5 text-sm font-black text-slate-950 shadow-[0_14px_35px_rgba(15,23,42,0.06)] transition hover:border-violet-200 hover:text-violet-700"
+                onClick={() => setIsAudioDockOpen(true)}
+                type="button"
+              >
+                <Headphones aria-hidden="true" size={18} />
+                Escuchar
+              </button>
+              <button
+                aria-label={isFavorite ? "Quitar de favoritos" : "Añadir a favoritos"}
+                className={cn(
+                  "inline-flex h-12 items-center gap-2 rounded-[14px] border bg-white px-4 text-sm font-black shadow-[0_14px_35px_rgba(15,23,42,0.06)] transition hover:border-violet-200 hover:text-violet-700 disabled:cursor-not-allowed disabled:opacity-60",
+                  isFavorite
+                    ? "border-violet-200 text-violet-700"
+                    : "border-slate-950/[0.08] text-slate-700",
+                )}
+                disabled={isFavoriteLoading}
+                onClick={() => void toggleFavorite()}
+                type="button"
+              >
+                <Heart aria-hidden="true" fill={isFavorite ? "currentColor" : "none"} size={18} />
+                Favorito
+              </button>
+              <button
+                aria-label="Más opciones"
+                className="grid h-12 w-12 place-items-center rounded-[14px] border border-slate-950/[0.08] bg-white text-slate-600 shadow-[0_14px_35px_rgba(15,23,42,0.06)] transition hover:border-violet-200 hover:text-violet-700"
+                type="button"
+              >
+                <MoreHorizontal aria-hidden="true" size={19} />
+              </button>
             </div>
           </div>
-        </div>
 
-        <div className="sticky top-4 z-30 mt-6 rounded-[22px] border border-white/10 bg-[#070812]/90 shadow-[0_18px_60px_rgba(0,0,0,0.42)] backdrop-blur-xl transition-all duration-300 lg:mr-[372px]">
-          <nav className="px-3 py-3">
-          <div className="flex min-w-0 flex-wrap items-center gap-2">
-            {articleNav.map((item) => (
-              <a
-                className={cn(
-                  "rounded-full px-3 py-2 text-sm text-text-secondary transition hover:bg-white/[0.06] hover:text-white xl:px-4",
-                  activeSection === item.href &&
-                    "bg-white/[0.08] font-semibold text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]",
-                )}
-                href={item.href}
-                key={item.href}
-              >
-                {item.label}
-              </a>
-            ))}
-          </div>
-          </nav>
-        </div>
-
-        <section className="mt-4 grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
-          <article className="min-w-0 rounded-[24px] border border-white/10 bg-white/[0.025] px-5 py-2 md:px-8">
-            {isDisciplined ? <DisciplinedArticle book={book} /> : <GenericArticle book={book} />}
-
-            <section className="scroll-mt-36 border-t border-white/10 py-10" id="para-llevar">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand-purple">
-                Para llevar
+          <section className="grid gap-8 rounded-[28px] border border-slate-950/[0.08] bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.06)] md:grid-cols-[240px_1fr] md:p-7 lg:p-8">
+            <MiniCover book={book} />
+            <div className="flex min-w-0 flex-col justify-center">
+              <h1 className="text-balance text-4xl font-black tracking-[-0.05em] text-slate-950 md:text-5xl xl:text-6xl">
+                {getBookDisplayTitle(book)}
+              </h1>
+              <p className="mt-3 text-lg font-black text-violet-700">{book.author}</p>
+              <p className="mt-5 max-w-3xl text-base leading-8 text-slate-600 md:text-lg">
+                {book.description}
               </p>
-              <h2 className="mt-3 text-3xl font-semibold text-white">
-                Las ideas que no olvides
-              </h2>
-              <div className="mt-6 grid gap-4 md:grid-cols-2">
-                {book.keyPoints.slice(0, 4).map((point) => (
+              <div className="mt-7 flex flex-wrap gap-3 text-sm font-bold text-slate-600">
+                <span className="inline-flex h-10 items-center gap-2 rounded-full bg-slate-50 px-4">
+                  <Sparkles aria-hidden="true" className="text-violet-600" size={17} />
+                  {book.keyPoints.length} ideas clave
+                </span>
+                <span className="inline-flex h-10 items-center gap-2 rounded-full bg-slate-50 px-4">
+                  <CheckCircle2 aria-hidden="true" className="text-violet-600" size={17} />
+                  {book.activities.length} ejercicios
+                </span>
+                <span className="inline-flex h-10 items-center gap-2 rounded-full bg-slate-50 px-4">
+                  <Clock3 aria-hidden="true" className="text-violet-600" size={17} />
+                  {book.readingTime} min de lectura
+                </span>
+              </div>
+              <div className="mt-7 max-w-2xl">
+                <div className="mb-2 flex items-center justify-between text-sm font-bold text-slate-500">
+                  <span>Tu progreso</span>
+                  <span className="text-slate-950">{readingProgress}%</span>
+                </div>
+                <div className="h-2 rounded-full bg-slate-100">
                   <div
-                    className="rounded-[18px] border border-white/10 bg-white/[0.035] p-5"
-                    key={point.number}
-                  >
-                    <Target
-                      aria-hidden="true"
-                      className="text-brand-purple"
-                      size={22}
-                    />
-                    <h3 className="mt-3 font-semibold text-white">
-                      {point.title}
-                    </h3>
-                    <p className="mt-2 text-sm leading-7 text-text-secondary">
-                      {point.action}
-                    </p>
+                    className="h-full rounded-full bg-gradient-to-r from-violet-700 to-indigo-500 transition-[width] duration-300"
+                    style={{ width: `${readingProgress}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <div className="sticky top-3 z-30 mt-5 rounded-[22px] border border-slate-950/[0.08] bg-white/95 p-2 shadow-[0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur-xl">
+            <nav className="flex min-w-0 gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {articleNav.map((item) => (
+                <a
+                  className={cn(
+                    "shrink-0 rounded-[16px] px-4 py-3 text-sm font-black text-slate-500 transition hover:text-violet-700",
+                    activeSection === item.href && "bg-violet-50 text-violet-700",
+                  )}
+                  href={item.href}
+                  key={item.href}
+                >
+                  {item.label}
+                </a>
+              ))}
+            </nav>
+          </div>
+
+          <article className="mt-6 space-y-6">
+            <section className="scroll-mt-32 rounded-[24px] border border-slate-950/[0.08] bg-white p-5 shadow-[0_18px_55px_rgba(15,23,42,0.04)] md:p-7" id="ideas">
+              <h2 className="text-2xl font-black tracking-[-0.03em] text-slate-950">Ideas clave</h2>
+              <div className="mt-5 grid gap-3">
+                {book.keyPoints.map((point, index) => (
+                  <LightKeyPointCard defaultOpen={index === 0} key={point.number} point={point} />
+                ))}
+              </div>
+            </section>
+            <section className="scroll-mt-32 rounded-[24px] border border-slate-950/[0.08] bg-white p-5 shadow-[0_18px_55px_rgba(15,23,42,0.04)] md:p-7" id="ejercicios">
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-violet-600">Aplicación práctica</p>
+              <h2 className="mt-2 text-2xl font-black tracking-[-0.03em] text-slate-950">Ejercicios para convertir ideas en acción</h2>
+              <div className="mt-5 grid gap-4">
+                {book.activities.map((activity) => (
+                  <LightActivityCard activity={activity} bookSlug={book.slug} key={activity.title} />
+                ))}
+              </div>
+            </section>
+            <section className="scroll-mt-32 rounded-[24px] border border-slate-950/[0.08] bg-white p-5 shadow-[0_18px_55px_rgba(15,23,42,0.04)] md:p-7" id="resena">
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-violet-600">Reseña editorial</p>
+              <h2 className="mt-2 text-2xl font-black tracking-[-0.03em] text-slate-950">Qué propone este análisis</h2>
+              <div className="mt-4 grid gap-4">
+                {book.analysis.map((section) => (
+                  <div className="rounded-[18px] bg-slate-50 p-4" key={section.title}>
+                    <h3 className="font-black text-slate-950">{section.title}</h3>
+                    <p className="mt-2 text-base leading-8 text-slate-600">{section.content}</p>
                   </div>
                 ))}
               </div>
-              <Callout title="Análisis final Ceoteca" tone="purple">
+              <div className="mt-6 rounded-[20px] border border-violet-100 bg-violet-50 p-5 text-sm leading-7 text-violet-950">
+                <strong className="block text-base text-violet-800">Idea para llevar</strong>
                 {book.conclusion}
-              </Callout>
+              </div>
+            </section>
+            <section className="scroll-mt-32 rounded-[24px] border border-slate-950/[0.08] bg-white p-5 shadow-[0_18px_55px_rgba(15,23,42,0.04)] md:p-7" id="notas">
+              <h2 className="text-2xl font-black tracking-[-0.03em] text-slate-950">Tus notas</h2>
+              <p className="mt-2 text-sm leading-7 text-slate-500">Guarda reflexiones, decisiones o preguntas que quieras revisar después.</p>
+              <div className="mt-5">
+                <LightNoteBox bookSlug={book.slug} />
+              </div>
+            </section>
+            <section className="scroll-mt-32 rounded-[24px] border border-slate-950/[0.08] bg-white p-5 shadow-[0_18px_55px_rgba(15,23,42,0.04)] md:p-7" id="recursos">
+              <h2 className="text-2xl font-black tracking-[-0.03em] text-slate-950">Recursos y contexto</h2>
+              <p className="mt-4 text-sm leading-7 text-slate-500">{disclaimer}</p>
+              {book.purchaseUrl ? (
+                <Link className="mt-5 inline-flex h-11 items-center gap-2 rounded-[14px] border border-slate-950/[0.08] bg-white px-4 text-sm font-black text-slate-700 transition hover:border-violet-200 hover:text-violet-700" href={book.purchaseUrl} target="_blank">
+                  Comprar el libro original
+                  <ExternalLink aria-hidden="true" size={15} />
+                </Link>
+              ) : null}
             </section>
           </article>
+        </div>
 
-          <Sidebar book={book} canUseChat={isPlanLoading || canUseChat} />
-        </section>
+        {currentPlan ? (
+          <aside className="hidden lg:sticky lg:top-6 lg:block lg:h-[calc(100svh-3rem)]">
+            <FloatingBookChat book={book} plan={currentPlan} variant="panel" />
+          </aside>
+        ) : null}
       </section>
 
-      {currentPlan ? <FloatingBookChat book={book} plan={currentPlan} /> : null}
+      {currentPlan ? (
+        <div className="lg:hidden">
+          <FloatingBookChat book={book} plan={currentPlan} />
+        </div>
+      ) : null}
+
+      {isAudioDockOpen ? (
+        <div className="fixed inset-x-3 bottom-3 z-50 sm:left-[calc(var(--dashboard-sidebar-offset,84px)+1rem)]">
+          <div className="mx-auto max-w-[1440px] rounded-[24px] border border-slate-950/[0.08] bg-white/96 p-3 shadow-[0_24px_90px_rgba(15,23,42,0.18)] backdrop-blur-xl md:p-4">
+            <button aria-label="Cerrar reproductor" className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-950" onClick={() => setIsAudioDockOpen(false)} type="button">
+              <X aria-hidden="true" size={18} />
+            </button>
+            <AudioPanel book={book} isPlanLoading={isPlanLoading && !currentPlan} locked={!isPlanLoading && !canUseAudio} />
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }
