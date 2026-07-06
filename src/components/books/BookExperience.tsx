@@ -16,6 +16,7 @@ import {
   Headphones,
   Lock,
   Loader2,
+  Maximize2,
   MoreHorizontal,
   Pause,
   Play,
@@ -1277,6 +1278,7 @@ export function BookExperience({ book }: BookExperienceProps) {
   const [readingProgress, setReadingProgress] = useState(0);
   const [activeSection, setActiveSection] = useState<string>(articleNav[0].href);
   const [isAudioDockOpen, setIsAudioDockOpen] = useState(false);
+  const [isReadingMode, setIsReadingMode] = useState(false);
   const persistedProgressRef = useRef(0);
   const canUseAudio = currentPlan ? canAccessFeature(currentPlan, "audio") : false;
 
@@ -1491,6 +1493,25 @@ export function BookExperience({ book }: BookExperienceProps) {
     };
   }, []);
 
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsReadingMode(false);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
+  function enterReadingMode() {
+    setIsAudioDockOpen(false);
+    setIsReadingMode(true);
+  }
+
   async function toggleFavorite() {
     if (isFavoriteLoading) {
       return;
@@ -1543,20 +1564,49 @@ export function BookExperience({ book }: BookExperienceProps) {
     <main
       className={cn(
         "min-h-screen overflow-x-clip bg-[#fbfaf8] pb-24 text-slate-950 transition-[padding] duration-300 ease-out sm:pl-[var(--dashboard-sidebar-offset,84px)]",
+        isReadingMode && "bg-white sm:pl-0",
         isAudioDockOpen && "pb-52",
       )}
     >
-      <DashboardSidebar active="library" showProfile={false} tone="light" />
-      <div className="fixed left-0 right-0 top-0 z-50 h-1 bg-slate-950/[0.06] sm:left-[var(--dashboard-sidebar-offset,84px)]">
+      {!isReadingMode ? (
+        <DashboardSidebar active="library" showProfile={false} tone="light" />
+      ) : null}
+      <div
+        className={cn(
+          "fixed left-0 right-0 top-0 z-50 h-1 bg-slate-950/[0.06] sm:left-[var(--dashboard-sidebar-offset,84px)]",
+          isReadingMode && "sm:left-0",
+        )}
+      >
         <div
           className="h-full rounded-r-full bg-gradient-to-r from-violet-700 via-indigo-500 to-fuchsia-500 transition-[width] duration-300"
           style={{ width: `${readingProgress}%` }}
         />
       </div>
 
-      <section className="mx-auto grid w-full max-w-[1560px] gap-6 px-4 py-6 md:px-8 lg:grid-cols-[minmax(0,1fr)_460px] xl:px-10">
+      {isReadingMode ? (
+        <button
+          className="fixed right-4 top-4 z-50 inline-flex h-11 items-center gap-2 rounded-[14px] border border-slate-950/[0.08] bg-white px-4 text-sm font-black text-slate-700 shadow-[0_12px_30px_rgba(15,23,42,0.08)] transition hover:border-violet-200 hover:text-violet-700"
+          onClick={() => setIsReadingMode(false)}
+          type="button"
+        >
+          <X aria-hidden="true" size={17} />
+          Salir de lectura
+        </button>
+      ) : null}
+
+      <section
+        className={cn(
+          "mx-auto grid w-full max-w-[1560px] gap-6 px-4 py-6 md:px-8 lg:grid-cols-[minmax(0,1fr)_460px] xl:px-10",
+          isReadingMode && "max-w-[980px] grid-cols-1 px-4 py-16 md:px-8 lg:grid-cols-1",
+        )}
+      >
         <div className="min-w-0">
-          <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+          <div
+            className={cn(
+              "mb-5 flex flex-wrap items-center justify-between gap-3",
+              isReadingMode && "hidden",
+            )}
+          >
             <button
               className="inline-flex h-11 items-center gap-2 rounded-[14px] px-2 text-sm font-bold text-slate-600 transition hover:text-violet-700"
               onClick={() => router.push("/biblioteca")}
@@ -1566,6 +1616,14 @@ export function BookExperience({ book }: BookExperienceProps) {
               Volver a biblioteca
             </button>
             <div className="flex items-center gap-2">
+              <button
+                className="inline-flex h-12 items-center gap-2 rounded-[14px] border border-slate-950/[0.08] bg-white px-5 text-sm font-black text-slate-950 shadow-[0_14px_35px_rgba(15,23,42,0.06)] transition hover:border-violet-200 hover:text-violet-700"
+                onClick={enterReadingMode}
+                type="button"
+              >
+                <Maximize2 aria-hidden="true" size={17} />
+                Modo lectura
+              </button>
               <button
                 className="inline-flex h-12 items-center gap-2 rounded-[14px] border border-slate-950/[0.08] bg-white px-5 text-sm font-black text-slate-950 shadow-[0_14px_35px_rgba(15,23,42,0.06)] transition hover:border-violet-200 hover:text-violet-700"
                 onClick={() => setIsAudioDockOpen(true)}
@@ -1599,7 +1657,12 @@ export function BookExperience({ book }: BookExperienceProps) {
             </div>
           </div>
 
-          <section className="grid gap-8 rounded-[28px] border border-slate-950/[0.08] bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.06)] md:grid-cols-[240px_1fr] md:p-7 lg:p-8">
+          <section
+            className={cn(
+              "grid gap-8 rounded-[28px] border border-slate-950/[0.08] bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.06)] md:grid-cols-[240px_1fr] md:p-7 lg:p-8",
+              isReadingMode && "border-transparent shadow-none md:grid-cols-[180px_1fr]",
+            )}
+          >
             <MiniCover book={book} />
             <div className="flex min-w-0 flex-col justify-center">
               <h1 className="text-balance text-4xl font-black tracking-[-0.05em] text-slate-950 md:text-5xl xl:text-6xl">
@@ -1709,20 +1772,20 @@ export function BookExperience({ book }: BookExperienceProps) {
           </article>
         </div>
 
-        {currentPlan ? (
+        {currentPlan && !isReadingMode ? (
           <aside className="hidden lg:sticky lg:top-6 lg:block lg:h-[calc(100svh-3rem)]">
             <FloatingBookChat book={book} plan={currentPlan} variant="panel" />
           </aside>
         ) : null}
       </section>
 
-      {currentPlan ? (
+      {currentPlan && !isReadingMode ? (
         <div className="lg:hidden">
           <FloatingBookChat book={book} plan={currentPlan} />
         </div>
       ) : null}
 
-      {isAudioDockOpen ? (
+      {isAudioDockOpen && !isReadingMode ? (
         <div className="fixed inset-x-3 bottom-3 z-50 sm:left-[calc(var(--dashboard-sidebar-offset,84px)+1rem)]">
           <div className="mx-auto max-w-[1560px] rounded-[22px] border border-slate-950/[0.08] bg-white/96 p-2 shadow-[0_18px_70px_rgba(15,23,42,0.16)] backdrop-blur-xl md:p-3">
             <button aria-label="Cerrar reproductor" className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-950" onClick={() => setIsAudioDockOpen(false)} type="button">
