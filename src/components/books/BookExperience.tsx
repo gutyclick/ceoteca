@@ -18,9 +18,11 @@ import {
   Loader2,
   Maximize2,
   MoreHorizontal,
+  Moon,
   Pause,
   Play,
   Sparkles,
+  Sun,
   X,
 } from "lucide-react";
 
@@ -37,6 +39,8 @@ import type { Book, BookActivity, KeyPoint } from "@/types";
 type BookExperienceProps = {
   book: Book;
 };
+
+type ReadingTheme = "light" | "sepia" | "dark";
 
 const planStorageKey = "ceoteca-current-plan";
 
@@ -1147,13 +1151,25 @@ function getCachedPlan(): PlanKey | null {
 function LightKeyPointCard({
   point,
   defaultOpen = false,
+  readingTheme = "light",
 }: {
   point: KeyPoint;
   defaultOpen?: boolean;
+  readingTheme?: ReadingTheme;
 }) {
+  const isDark = readingTheme === "dark";
+  const isSepia = readingTheme === "sepia";
+
   return (
     <details
-      className="group rounded-[18px] border border-slate-950/[0.08] bg-white p-4 shadow-[0_18px_50px_rgba(15,23,42,0.04)]"
+      className={cn(
+        "group rounded-[18px] border p-4",
+        isDark
+          ? "border-white/10 bg-[#171717] text-stone-100"
+          : isSepia
+            ? "border-amber-950/10 bg-[#fff8e8] text-stone-900"
+            : "border-slate-950/[0.08] bg-white text-slate-950",
+      )}
       open={defaultOpen}
     >
       <summary className="flex cursor-pointer list-none items-start justify-between gap-4">
@@ -1162,8 +1178,10 @@ function LightKeyPointCard({
             {point.number}
           </span>
           <div className="min-w-0">
-            <h3 className="font-black leading-6 text-slate-950">{point.title}</h3>
-            <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-500">
+            <h3 className={cn("font-black leading-6", isDark ? "text-white" : "text-slate-950")}>
+              {point.title}
+            </h3>
+            <p className={cn("mt-1 text-sm leading-6", isDark ? "text-stone-300" : "text-slate-500")}>
               {point.explanation}
             </p>
           </div>
@@ -1174,33 +1192,40 @@ function LightKeyPointCard({
           size={18}
         />
       </summary>
-      <div className="mt-4 grid gap-3 border-t border-slate-950/[0.06] pt-4 text-sm leading-7 text-slate-600 md:grid-cols-3">
-        <p className="rounded-[14px] bg-slate-50 p-3">
-          <span className="block font-black text-slate-950">Ejemplo</span>
+      <div
+        className={cn(
+          "mt-4 grid gap-3 border-t pt-4 text-sm leading-7",
+          isDark ? "border-white/10 text-stone-300" : "border-slate-950/[0.06] text-slate-600",
+        )}
+      >
+        <p className={cn("rounded-[14px] p-3", isDark ? "bg-white/[0.04]" : "bg-slate-50")}>
+          <span className={cn("block font-black", isDark ? "text-white" : "text-slate-950")}>Ejemplo</span>
           {point.example}
         </p>
-        <p className="rounded-[14px] bg-violet-50 p-3">
+        <p className={cn("rounded-[14px] p-3", isDark ? "bg-violet-500/10" : "bg-violet-50")}>
           <span className="block font-black text-violet-700">Acción</span>
           {point.action}
         </p>
-        <p className="rounded-[14px] bg-slate-50 p-3">
-          <span className="block font-black text-slate-950">Cuidado</span>
+        <p className={cn("rounded-[14px] p-3", isDark ? "bg-white/[0.04]" : "bg-slate-50")}>
+          <span className={cn("block font-black", isDark ? "text-white" : "text-slate-950")}>Cuidado</span>
           {point.limitation}
         </p>
       </div>
     </details>
   );
 }
-
 function LightActivityCard({
   activity,
   bookSlug,
+  readingTheme = "light",
 }: {
   activity: BookActivity;
   bookSlug: string;
+  readingTheme?: ReadingTheme;
 }) {
   const reflectionId = `${bookSlug}:${activity.title.toLowerCase().replace(/\s+/g, "-")}`;
   const [value, setValue] = useState("");
+  const isDark = readingTheme === "dark";
 
   useEffect(() => {
     setValue(window.localStorage.getItem(`ceoteca:activity:${reflectionId}`) ?? "");
@@ -1212,16 +1237,21 @@ function LightActivityCard({
   }
 
   return (
-    <article className="rounded-[20px] border border-slate-950/[0.08] bg-white p-5 shadow-[0_18px_50px_rgba(15,23,42,0.04)]">
+    <article
+      className={cn(
+        "rounded-[20px] border p-5",
+        isDark ? "border-white/10 bg-[#171717]" : "border-slate-950/[0.08] bg-white",
+      )}
+    >
       <div className="flex flex-col gap-4 md:flex-row md:items-start">
         <span className="grid h-12 w-12 shrink-0 place-items-center rounded-[16px] bg-violet-100 text-violet-700">
           <BookOpen aria-hidden="true" size={24} />
         </span>
         <div className="min-w-0 flex-1">
-          <h3 className="text-lg font-black text-slate-950">{activity.title}</h3>
-          <p className="mt-2 text-sm leading-7 text-slate-600">{activity.prompt}</p>
+          <h3 className={cn("text-lg font-black", isDark ? "text-white" : "text-slate-950")}>{activity.title}</h3>
+          <p className={cn("mt-2 text-sm leading-7", isDark ? "text-stone-300" : "text-slate-600")}>{activity.prompt}</p>
           {activity.options ? (
-            <ul className="mt-4 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
+            <ul className={cn("mt-4 grid gap-2 text-sm sm:grid-cols-2", isDark ? "text-stone-300" : "text-slate-600")}>
               {activity.options.map((option) => (
                 <li className="flex gap-2" key={option}>
                   <CheckCircle2
@@ -1235,7 +1265,12 @@ function LightActivityCard({
             </ul>
           ) : null}
           <textarea
-            className="mt-5 min-h-28 w-full resize-y rounded-[16px] border border-slate-950/[0.08] bg-slate-50 p-4 text-sm leading-7 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-300 focus:ring-4 focus:ring-violet-100"
+            className={cn(
+              "mt-5 min-h-28 w-full resize-y rounded-[16px] border p-4 text-sm leading-7 outline-none transition placeholder:text-slate-400 focus:border-violet-300 focus:ring-4 focus:ring-violet-100",
+              isDark
+                ? "border-white/10 bg-white/[0.04] text-stone-100"
+                : "border-slate-950/[0.08] bg-slate-50 text-slate-900",
+            )}
             onChange={(event) => updateValue(event.target.value)}
             placeholder="Escribe tu reflexión, decisión o próximo paso..."
             value={value}
@@ -1246,9 +1281,16 @@ function LightActivityCard({
   );
 }
 
-function LightNoteBox({ bookSlug }: { bookSlug: string }) {
+function LightNoteBox({
+  bookSlug,
+  readingTheme = "light",
+}: {
+  bookSlug: string;
+  readingTheme?: ReadingTheme;
+}) {
   const storageKey = `ceoteca:notes:${bookSlug}`;
   const [value, setValue] = useState("");
+  const isDark = readingTheme === "dark";
 
   useEffect(() => {
     setValue(window.localStorage.getItem(storageKey) ?? "");
@@ -1261,7 +1303,12 @@ function LightNoteBox({ bookSlug }: { bookSlug: string }) {
 
   return (
     <textarea
-      className="min-h-52 w-full resize-y rounded-[20px] border border-slate-950/[0.08] bg-white p-5 text-sm leading-7 text-slate-900 shadow-[0_18px_50px_rgba(15,23,42,0.04)] outline-none transition placeholder:text-slate-400 focus:border-violet-300 focus:ring-4 focus:ring-violet-100"
+      className={cn(
+        "min-h-52 w-full resize-y rounded-[20px] border p-5 text-sm leading-7 outline-none transition placeholder:text-slate-400 focus:border-violet-300 focus:ring-4 focus:ring-violet-100",
+        isDark
+          ? "border-white/10 bg-white/[0.04] text-stone-100"
+          : "border-slate-950/[0.08] bg-white text-slate-900",
+      )}
       onChange={(event) => updateValue(event.target.value)}
       placeholder="Guarda aquí tus notas personales sobre este análisis..."
       value={value}
@@ -1279,6 +1326,7 @@ export function BookExperience({ book }: BookExperienceProps) {
   const [activeSection, setActiveSection] = useState<string>(articleNav[0].href);
   const [isAudioDockOpen, setIsAudioDockOpen] = useState(false);
   const [isReadingMode, setIsReadingMode] = useState(false);
+  const [readingTheme, setReadingTheme] = useState<ReadingTheme>("light");
   const persistedProgressRef = useRef(0);
   const canUseAudio = currentPlan ? canAccessFeature(currentPlan, "audio") : false;
 
@@ -1560,11 +1608,39 @@ export function BookExperience({ book }: BookExperienceProps) {
     }
   }
 
+  const isReaderDark = isReadingMode && readingTheme === "dark";
+  const isReaderSepia = isReadingMode && readingTheme === "sepia";
+  const readerSurfaceClass = isReaderDark
+    ? "border-white/10 bg-[#171717] text-stone-100 shadow-none"
+    : isReaderSepia
+      ? "border-amber-950/10 bg-[#fff8e8] text-stone-900 shadow-none"
+      : "border-slate-950/[0.08] bg-white text-slate-950 shadow-none";
+  const readerMutedTextClass = isReaderDark ? "text-stone-300" : "text-slate-600";
+  const readerHeadingClass = isReaderDark ? "text-white" : "text-slate-950";
+  const readerSectionClass = cn(
+    "scroll-mt-32 rounded-[24px] border p-5 md:p-7",
+    isReadingMode
+      ? readerSurfaceClass
+      : "border-slate-950/[0.08] bg-white shadow-[0_18px_55px_rgba(15,23,42,0.04)]",
+  );
+  const readingThemeOptions: Array<{
+    key: ReadingTheme;
+    label: string;
+    icon: typeof Sun;
+  }> = [
+    { key: "light", label: "Claro", icon: Sun },
+    { key: "sepia", label: "Sepia", icon: BookOpen },
+    { key: "dark", label: "Oscuro", icon: Moon },
+  ];
+
   return (
     <main
       className={cn(
         "min-h-screen overflow-x-clip bg-[#fbfaf8] pb-24 text-slate-950 transition-[padding] duration-300 ease-out sm:pl-[var(--dashboard-sidebar-offset,84px)]",
-        isReadingMode && "bg-white sm:pl-0",
+        isReadingMode && "sm:pl-0",
+        isReaderDark && "bg-[#111111] text-stone-100",
+        isReaderSepia && "bg-[#f7ecd8] text-stone-900",
+        isReadingMode && readingTheme === "light" && "bg-[#fbfaf6]",
         isAudioDockOpen && "pb-52",
       )}
     >
@@ -1584,20 +1660,61 @@ export function BookExperience({ book }: BookExperienceProps) {
       </div>
 
       {isReadingMode ? (
-        <button
-          className="fixed right-4 top-4 z-50 inline-flex h-11 items-center gap-2 rounded-[14px] border border-slate-950/[0.08] bg-white px-4 text-sm font-black text-slate-700 shadow-[0_12px_30px_rgba(15,23,42,0.08)] transition hover:border-violet-200 hover:text-violet-700"
-          onClick={() => setIsReadingMode(false)}
-          type="button"
+        <div
+          className={cn(
+            "fixed left-1/2 top-4 z-50 flex w-[calc(100vw-2rem)] max-w-[760px] -translate-x-1/2 flex-wrap items-center justify-between gap-3 rounded-[20px] border p-2",
+            isReaderDark
+              ? "border-white/10 bg-[#171717]/95 text-stone-100"
+              : isReaderSepia
+                ? "border-amber-950/10 bg-[#fff8e8]/95 text-stone-900"
+                : "border-slate-950/[0.08] bg-white/95 text-slate-950",
+          )}
         >
-          <X aria-hidden="true" size={17} />
-          Salir de lectura
-        </button>
+          <div className="flex items-center gap-1">
+            {readingThemeOptions.map((option) => {
+              const Icon = option.icon;
+              const isActive = readingTheme === option.key;
+
+              return (
+                <button
+                  className={cn(
+                    "inline-flex h-10 items-center gap-2 rounded-[14px] px-3 text-sm font-black transition",
+                    isActive
+                      ? "bg-violet-100 text-violet-700"
+                      : isReaderDark
+                        ? "text-stone-300 hover:bg-white/10 hover:text-white"
+                        : "text-slate-500 hover:bg-slate-100 hover:text-slate-950",
+                  )}
+                  key={option.key}
+                  onClick={() => setReadingTheme(option.key)}
+                  type="button"
+                >
+                  <Icon aria-hidden="true" size={16} />
+                  <span className="hidden sm:inline">{option.label}</span>
+                </button>
+              );
+            })}
+          </div>
+          <button
+            className={cn(
+              "inline-flex h-10 items-center gap-2 rounded-[14px] px-3 text-sm font-black transition",
+              isReaderDark
+                ? "text-stone-300 hover:bg-white/10 hover:text-white"
+                : "text-slate-600 hover:bg-slate-100 hover:text-slate-950",
+            )}
+            onClick={() => setIsReadingMode(false)}
+            type="button"
+          >
+            <X aria-hidden="true" size={17} />
+            Salir
+          </button>
+        </div>
       ) : null}
 
       <section
         className={cn(
           "mx-auto grid w-full max-w-[1560px] gap-6 px-4 py-6 md:px-8 lg:grid-cols-[minmax(0,1fr)_460px] xl:px-10",
-          isReadingMode && "max-w-[980px] grid-cols-1 px-4 py-16 md:px-8 lg:grid-cols-1",
+          isReadingMode && "max-w-[900px] grid-cols-1 px-4 pb-16 pt-24 md:px-8 lg:grid-cols-1",
         )}
       >
         <div className="min-w-0">
@@ -1615,61 +1732,68 @@ export function BookExperience({ book }: BookExperienceProps) {
               <ArrowLeft aria-hidden="true" size={18} />
               Volver a biblioteca
             </button>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 rounded-[18px] border border-slate-950/[0.08] bg-white p-1">
               <button
-                className="inline-flex h-12 items-center gap-2 rounded-[14px] border border-slate-950/[0.08] bg-white px-5 text-sm font-black text-slate-950 shadow-[0_14px_35px_rgba(15,23,42,0.06)] transition hover:border-violet-200 hover:text-violet-700"
+                className="inline-flex h-10 items-center gap-2 rounded-[13px] px-3 text-sm font-black text-slate-700 transition hover:bg-violet-50 hover:text-violet-700"
                 onClick={enterReadingMode}
                 type="button"
               >
                 <Maximize2 aria-hidden="true" size={17} />
-                Modo lectura
+                <span className="hidden sm:inline">Lectura</span>
               </button>
               <button
-                className="inline-flex h-12 items-center gap-2 rounded-[14px] border border-slate-950/[0.08] bg-white px-5 text-sm font-black text-slate-950 shadow-[0_14px_35px_rgba(15,23,42,0.06)] transition hover:border-violet-200 hover:text-violet-700"
+                className="inline-flex h-10 items-center gap-2 rounded-[13px] px-3 text-sm font-black text-slate-700 transition hover:bg-violet-50 hover:text-violet-700"
                 onClick={() => setIsAudioDockOpen(true)}
                 type="button"
               >
                 <Headphones aria-hidden="true" size={18} />
-                Escuchar
+                <span className="hidden sm:inline">Escuchar</span>
               </button>
               <button
                 aria-label={isFavorite ? "Quitar de favoritos" : "Añadir a favoritos"}
                 className={cn(
-                  "inline-flex h-12 items-center gap-2 rounded-[14px] border bg-white px-4 text-sm font-black shadow-[0_14px_35px_rgba(15,23,42,0.06)] transition hover:border-violet-200 hover:text-violet-700 disabled:cursor-not-allowed disabled:opacity-60",
-                  isFavorite
-                    ? "border-violet-200 text-violet-700"
-                    : "border-slate-950/[0.08] text-slate-700",
+                  "inline-flex h-10 items-center gap-2 rounded-[13px] px-3 text-sm font-black transition hover:bg-violet-50 hover:text-violet-700 disabled:cursor-not-allowed disabled:opacity-60",
+                  isFavorite ? "bg-violet-50 text-violet-700" : "text-slate-700",
                 )}
                 disabled={isFavoriteLoading}
                 onClick={() => void toggleFavorite()}
                 type="button"
               >
                 <Heart aria-hidden="true" fill={isFavorite ? "currentColor" : "none"} size={18} />
-                Favorito
+                <span className="hidden sm:inline">Favorito</span>
               </button>
               <button
                 aria-label="Más opciones"
-                className="grid h-12 w-12 place-items-center rounded-[14px] border border-slate-950/[0.08] bg-white text-slate-600 shadow-[0_14px_35px_rgba(15,23,42,0.06)] transition hover:border-violet-200 hover:text-violet-700"
+                className="grid h-10 w-10 place-items-center rounded-[13px] text-slate-600 transition hover:bg-violet-50 hover:text-violet-700"
                 type="button"
               >
                 <MoreHorizontal aria-hidden="true" size={19} />
               </button>
-            </div>
-          </div>
+            </div>          </div>
 
           <section
             className={cn(
               "grid gap-8 rounded-[28px] border border-slate-950/[0.08] bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.06)] md:grid-cols-[240px_1fr] md:p-7 lg:p-8",
-              isReadingMode && "border-transparent shadow-none md:grid-cols-[180px_1fr]",
+              isReadingMode && cn(readerSurfaceClass, "md:grid-cols-[160px_1fr]"),
             )}
           >
             <MiniCover book={book} />
             <div className="flex min-w-0 flex-col justify-center">
-              <h1 className="text-balance text-4xl font-black tracking-[-0.05em] text-slate-950 md:text-5xl xl:text-6xl">
+              <h1
+                className={cn(
+                  "text-balance text-4xl font-black tracking-[-0.05em] md:text-5xl xl:text-6xl",
+                  isReadingMode ? readerHeadingClass : "text-slate-950",
+                )}
+              >
                 {getBookDisplayTitle(book)}
               </h1>
               <p className="mt-3 text-lg font-black text-violet-700">{book.author}</p>
-              <p className="mt-5 max-w-3xl text-base leading-8 text-slate-600 md:text-lg">
+              <p
+                className={cn(
+                  "mt-5 max-w-3xl text-base leading-8 md:text-lg",
+                  isReadingMode ? readerMutedTextClass : "text-slate-600",
+                )}
+              >
                 {book.description}
               </p>
               <div className="mt-7 flex flex-wrap gap-3 text-sm font-bold text-slate-600">
@@ -1701,13 +1825,25 @@ export function BookExperience({ book }: BookExperienceProps) {
             </div>
           </section>
 
-          <div className="sticky top-3 z-30 mt-5 rounded-[22px] border border-slate-950/[0.08] bg-white/95 p-2 shadow-[0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur-xl">
+          <div
+            className={cn(
+              "sticky z-30 mt-5 rounded-[22px] border p-2",
+              isReadingMode ? "top-[86px]" : "top-3 shadow-[0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur-xl",
+              isReaderDark
+                ? "border-white/10 bg-[#171717]/95"
+                : isReaderSepia
+                  ? "border-amber-950/10 bg-[#fff8e8]/95"
+                  : "border-slate-950/[0.08] bg-white/95",
+            )}
+          >
             <nav className="flex min-w-0 gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {articleNav.map((item) => (
                 <a
                   className={cn(
                     "shrink-0 rounded-[16px] px-4 py-3 text-sm font-black text-slate-500 transition hover:text-violet-700",
                     activeSection === item.href && "bg-violet-50 text-violet-700",
+                    isReaderDark && "text-stone-400 hover:bg-white/10 hover:text-white",
+                    isReaderDark && activeSection === item.href && "bg-violet-500/15 text-violet-300",
                   )}
                   href={item.href}
                   key={item.href}
@@ -1719,49 +1855,68 @@ export function BookExperience({ book }: BookExperienceProps) {
           </div>
 
           <article className="mt-6 space-y-6">
-            <section className="scroll-mt-32 rounded-[24px] border border-slate-950/[0.08] bg-white p-5 shadow-[0_18px_55px_rgba(15,23,42,0.04)] md:p-7" id="ideas">
-              <h2 className="text-2xl font-black tracking-[-0.03em] text-slate-950">Ideas clave</h2>
+            <section className={readerSectionClass} id="ideas">
+              <h2 className={cn("text-2xl font-black tracking-[-0.03em]", isReadingMode ? readerHeadingClass : "text-slate-950")}>Ideas clave</h2>
               <div className="mt-5 grid gap-3">
                 {book.keyPoints.map((point, index) => (
-                  <LightKeyPointCard defaultOpen={index === 0} key={point.number} point={point} />
+                  <LightKeyPointCard
+                    defaultOpen={index === 0}
+                    key={point.number}
+                    point={point}
+                    readingTheme={isReadingMode ? readingTheme : "light"}
+                  />
                 ))}
               </div>
             </section>
-            <section className="scroll-mt-32 rounded-[24px] border border-slate-950/[0.08] bg-white p-5 shadow-[0_18px_55px_rgba(15,23,42,0.04)] md:p-7" id="ejercicios">
+            <section className={readerSectionClass} id="ejercicios">
               <p className="text-xs font-black uppercase tracking-[0.22em] text-violet-600">Aplicación práctica</p>
-              <h2 className="mt-2 text-2xl font-black tracking-[-0.03em] text-slate-950">Ejercicios para convertir ideas en acción</h2>
+              <h2 className={cn("mt-2 text-2xl font-black tracking-[-0.03em]", isReadingMode ? readerHeadingClass : "text-slate-950")}>Ejercicios para convertir ideas en acción</h2>
               <div className="mt-5 grid gap-4">
                 {book.activities.map((activity) => (
-                  <LightActivityCard activity={activity} bookSlug={book.slug} key={activity.title} />
+                  <LightActivityCard
+                    activity={activity}
+                    bookSlug={book.slug}
+                    key={activity.title}
+                    readingTheme={isReadingMode ? readingTheme : "light"}
+                  />
                 ))}
               </div>
             </section>
-            <section className="scroll-mt-32 rounded-[24px] border border-slate-950/[0.08] bg-white p-5 shadow-[0_18px_55px_rgba(15,23,42,0.04)] md:p-7" id="resena">
+            <section className={readerSectionClass} id="resena">
               <p className="text-xs font-black uppercase tracking-[0.22em] text-violet-600">Reseña editorial</p>
-              <h2 className="mt-2 text-2xl font-black tracking-[-0.03em] text-slate-950">Qué propone este análisis</h2>
+              <h2 className={cn("mt-2 text-2xl font-black tracking-[-0.03em]", isReadingMode ? readerHeadingClass : "text-slate-950")}>Qué propone este análisis</h2>
               <div className="mt-4 grid gap-4">
                 {book.analysis.map((section) => (
-                  <div className="rounded-[18px] bg-slate-50 p-4" key={section.title}>
-                    <h3 className="font-black text-slate-950">{section.title}</h3>
-                    <p className="mt-2 text-base leading-8 text-slate-600">{section.content}</p>
+                  <div
+                    className={cn(
+                      "rounded-[18px] p-4",
+                      isReaderDark ? "bg-white/[0.04]" : "bg-slate-50",
+                    )}
+                    key={section.title}
+                  >
+                    <h3 className={cn("font-black", isReadingMode ? readerHeadingClass : "text-slate-950")}>{section.title}</h3>
+                    <p className={cn("mt-2 text-base leading-8", isReadingMode ? readerMutedTextClass : "text-slate-600")}>{section.content}</p>
                   </div>
                 ))}
               </div>
-              <div className="mt-6 rounded-[20px] border border-violet-100 bg-violet-50 p-5 text-sm leading-7 text-violet-950">
-                <strong className="block text-base text-violet-800">Idea para llevar</strong>
+              <div className={cn("mt-6 rounded-[20px] border p-5 text-sm leading-7", isReaderDark ? "border-violet-400/20 bg-violet-500/10 text-stone-200" : "border-violet-100 bg-violet-50 text-violet-950")}>
+                <strong className="block text-base text-violet-700">Idea para llevar</strong>
                 {book.conclusion}
               </div>
             </section>
-            <section className="scroll-mt-32 rounded-[24px] border border-slate-950/[0.08] bg-white p-5 shadow-[0_18px_55px_rgba(15,23,42,0.04)] md:p-7" id="notas">
-              <h2 className="text-2xl font-black tracking-[-0.03em] text-slate-950">Tus notas</h2>
-              <p className="mt-2 text-sm leading-7 text-slate-500">Guarda reflexiones, decisiones o preguntas que quieras revisar después.</p>
+            <section className={readerSectionClass} id="notas">
+              <h2 className={cn("text-2xl font-black tracking-[-0.03em]", isReadingMode ? readerHeadingClass : "text-slate-950")}>Tus notas</h2>
+              <p className={cn("mt-2 text-sm leading-7", isReadingMode ? readerMutedTextClass : "text-slate-500")}>Guarda reflexiones, decisiones o preguntas que quieras revisar después.</p>
               <div className="mt-5">
-                <LightNoteBox bookSlug={book.slug} />
+                <LightNoteBox
+                  bookSlug={book.slug}
+                  readingTheme={isReadingMode ? readingTheme : "light"}
+                />
               </div>
             </section>
-            <section className="scroll-mt-32 rounded-[24px] border border-slate-950/[0.08] bg-white p-5 shadow-[0_18px_55px_rgba(15,23,42,0.04)] md:p-7" id="recursos">
-              <h2 className="text-2xl font-black tracking-[-0.03em] text-slate-950">Recursos y contexto</h2>
-              <p className="mt-4 text-sm leading-7 text-slate-500">{disclaimer}</p>
+            <section className={readerSectionClass} id="recursos">
+              <h2 className={cn("text-2xl font-black tracking-[-0.03em]", isReadingMode ? readerHeadingClass : "text-slate-950")}>Recursos y contexto</h2>
+              <p className={cn("mt-4 text-sm leading-7", isReadingMode ? readerMutedTextClass : "text-slate-500")}>{disclaimer}</p>
               {book.purchaseUrl ? (
                 <Link className="mt-5 inline-flex h-11 items-center gap-2 rounded-[14px] border border-slate-950/[0.08] bg-white px-4 text-sm font-black text-slate-700 transition hover:border-violet-200 hover:text-violet-700" href={book.purchaseUrl} target="_blank">
                   Comprar el libro original
