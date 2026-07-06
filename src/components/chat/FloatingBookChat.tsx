@@ -285,10 +285,10 @@ export function FloatingBookChat({
       {isVisible ? (
         <Card
           className={cn(
-            "flex flex-col overflow-hidden p-0 backdrop-blur-xl",
+            "flex flex-col overflow-hidden p-0",
             isPanel
-              ? "h-full rounded-[28px] border-slate-950/[0.08] bg-white text-slate-950 shadow-[0_24px_70px_rgba(15,23,42,0.08)]"
-              : "h-[min(760px,calc(100svh-112px))] w-full max-w-[520px] rounded-[24px] border-brand-purple/30 bg-[#090a12]/95 shadow-[0_24px_90px_rgba(0,0,0,0.58)] sm:w-[520px]",
+              ? "h-full rounded-[28px] border-slate-950/[0.08] bg-white text-slate-950 shadow-none"
+              : "h-[min(760px,calc(100svh-112px))] w-full max-w-[520px] rounded-[24px] border-brand-purple/30 bg-[#090a12]/95 shadow-[0_24px_90px_rgba(0,0,0,0.58)] backdrop-blur-xl sm:w-[520px]",
           )}
         >
           <header
@@ -298,7 +298,14 @@ export function FloatingBookChat({
             )}
           >
             <div className="flex min-w-0 gap-3">
-              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-brand-purple/40 bg-brand-purple/20 text-brand-purple shadow-[0_0_32px_rgba(168,85,247,0.25)]">
+              <span
+                className={cn(
+                  "grid h-12 w-12 shrink-0 place-items-center rounded-2xl border text-brand-purple",
+                  isPanel
+                    ? "border-violet-100 bg-violet-50 shadow-none"
+                    : "border-brand-purple/40 bg-brand-purple/20 shadow-[0_0_32px_rgba(168,85,247,0.25)]",
+                )}
+              >
                 <Bot aria-hidden="true" size={24} />
               </span>
               <div className="min-w-0">
@@ -393,13 +400,18 @@ export function FloatingBookChat({
                     >
                       <div
                         className={cn(
-                          "min-w-0 rounded-[20px] px-4 py-3.5 shadow-[0_14px_40px_rgba(15,23,42,0.10)]",
+                          "min-w-0 rounded-[20px] px-4 py-3.5",
                           isPanel ? "max-w-[94%]" : "max-w-[88%]",
                           message.role === "user"
-                            ? "rounded-br-md bg-brand-gradient text-white"
+                            ? cn(
+                                "rounded-br-md text-white",
+                                isPanel
+                                  ? "bg-violet-700 shadow-none"
+                                  : "bg-brand-gradient shadow-[0_14px_40px_rgba(15,23,42,0.10)]",
+                              )
                             : isPanel
-                              ? "rounded-bl-md border border-slate-950/[0.08] bg-slate-50 text-slate-800"
-                              : "rounded-bl-md border border-white/10 bg-white/[0.065] text-text-primary",
+                              ? "rounded-bl-md border border-slate-950/[0.08] bg-slate-50 text-slate-800 shadow-none"
+                              : "rounded-bl-md border border-white/10 bg-white/[0.065] text-text-primary shadow-[0_14px_40px_rgba(15,23,42,0.10)]",
                         )}
                       >
                         {message.role === "assistant" ? (
