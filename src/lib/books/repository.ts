@@ -37,6 +37,71 @@ type SupabaseBookRow = Database["public"]["Tables"]["books"]["Row"] & {
 type SupabaseBookSectionRow =
   Database["public"]["Tables"]["book_sections"]["Row"];
 
+type BookDisplayOverride = {
+  title?: string;
+  cover?: Partial<CoverConfig>;
+};
+
+const bookDisplayOverrides: Record<string, BookDisplayOverride> = {
+  "disciplined-entrepreneurship": {
+    title: "La disciplina de emprender",
+    cover: {
+      imagePath: "/images/PORTADAS%20EN%20PNG/LA%20DISCIPLINA%20DE%20EMPRENDER.png",
+    },
+  },
+  "habitos-atomicos": {
+    title: "Hábitos Atómicos",
+    cover: {
+      imagePath: "/images/PORTADAS%20EN%20PNG/HABITOS%20ATOMICOS.png",
+    },
+  },
+  "padre-rico-padre-pobre": {
+    title: "Padre Rico, Padre Pobre",
+    cover: {
+      imagePath: "/images/PORTADAS%20EN%20PNG/043_PADRE_RICO_PADRE_POBRE.png",
+    },
+  },
+  "startup-100": {
+    title: "La Startup de $100",
+    cover: {
+      imagePath:
+        "/images/PORTADAS%20EN%20PNG/EL%20EMPRENDIMIENTO%20DE%20LOS%20100.png",
+    },
+  },
+  "hombre-rico-babilonia": {
+    title: "El Hombre Más Rico de Babilonia",
+    cover: {
+      imagePath:
+        "/images/PORTADAS%20EN%20PNG/048_EL_HOMBRE_M%C3%81S_RICO_DE_BABILONIA.png",
+    },
+  },
+  "poder-del-ahora": {
+    title: "El Poder del Ahora",
+    cover: {
+      imagePath: "/images/PORTADAS%20EN%20PNG/088_EL_PODER_DEL_AHORA.png",
+    },
+  },
+  "semana-laboral-4-horas": {
+    title: "La Semana Laboral de 4 Horas",
+    cover: {
+      imagePath:
+        "/images/PORTADAS%20EN%20PNG/071_LA_SEMANA_LABORAL_DE_4_HORAS.png",
+    },
+  },
+  mindset: {
+    title: "Mentalidad",
+    cover: {
+      imagePath: "/images/PORTADAS%20EN%20PNG/087_MENTALIDAD.png",
+    },
+  },
+  "inversor-inteligente": {
+    title: "El Inversor Inteligente",
+    cover: {
+      imagePath: "/images/PORTADAS%20EN%20PNG/EL%20INVERSOR%20INTELIGENTE.png",
+    },
+  },
+};
+
 function isCoverConfig(value: Json): value is CoverConfig {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
     return false;
@@ -55,14 +120,16 @@ function isCoverConfig(value: Json): value is CoverConfig {
 }
 
 function mapBook(row: SupabaseBookRow): Book {
+  const displayOverride = bookDisplayOverrides[row.slug];
   const fallbackCover: CoverConfig = {
     variant: "orb",
     gradient: "from-brand-blue via-brand-purple to-brand-pink",
     accent: "text-brand-purple",
   };
-  const cover = isCoverConfig(row.cover_config)
-    ? row.cover_config
-    : fallbackCover;
+  const cover = {
+    ...(isCoverConfig(row.cover_config) ? row.cover_config : fallbackCover),
+    ...(displayOverride?.cover ?? {}),
+  };
 
   const sections = [...(row.book_sections ?? [])].sort(
     (first, second) => first.position - second.position,
@@ -143,7 +210,7 @@ function mapBook(row: SupabaseBookRow): Book {
   return {
     id: row.id,
     slug: row.slug,
-    title: row.title,
+    title: displayOverride?.title ?? row.title,
     author: row.author,
     category: row.category as BookCategory,
     description: row.description,

@@ -15,7 +15,9 @@ import {
 } from "lucide-react";
 
 import { Logo } from "@/components/ui/Logo";
+import type { PlanKey } from "@/config/plans";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
+import { resolvePlanFromSubscriptions } from "@/lib/subscriptions/resolve";
 import { cn } from "@/lib/utils/cn";
 
 type DashboardSection = "home" | "library" | "profile" | "settings";
@@ -58,6 +60,7 @@ export function DashboardSidebar({
     email: "",
     avatarUrl: null as string | null,
   });
+  const [effectivePlan, setEffectivePlan] = useState<PlanKey | null>(null);
 
   useEffect(() => {
     const desktopQuery = window.matchMedia("(min-width: 1024px)");
@@ -106,14 +109,29 @@ export function DashboardSidebar({
         const { data: userData } = await supabase.auth.getUser();
 
         if (!userData.user) {
+          if (isMounted) {
+            setEffectivePlan("free");
+          }
           return;
         }
 
-        const { data } = await supabase
+        const [{ data }, subscriptionResponse] = await Promise.all([
+          supabase
           .from("profiles")
-          .select("full_name,avatar_url")
+          .select("full_name,avatar_url,plan")
           .eq("id", userData.user.id)
-          .maybeSingle();
+          .maybeSingle(),
+          supabase
+            .from("subscriptions")
+            .select("plan,status,updated_at")
+            .eq("user_id", userData.user.id)
+            .order("updated_at", { ascending: false }),
+        ]);
+
+        const plan = resolvePlanFromSubscriptions({
+          profilePlan: data?.plan ?? "free",
+          subscriptions: subscriptionResponse.data ?? [],
+        }).plan;
 
         if (isMounted) {
           setProfile({
@@ -121,6 +139,7 @@ export function DashboardSidebar({
             email: userData.user.email ?? "",
             avatarUrl: data?.avatar_url ?? null,
           });
+          setEffectivePlan(plan);
         }
       } catch {
         if (isMounted) {
@@ -129,6 +148,7 @@ export function DashboardSidebar({
             email: "",
             avatarUrl: null,
           });
+          setEffectivePlan("free");
         }
       }
     }
@@ -156,6 +176,7 @@ export function DashboardSidebar({
   const initials = getInitials(profile.fullName, profile.email);
   const showSidebar = isDesktop || isDrawerOpen;
   const isStatic = isDesktop;
+  const shouldShowUpgrade = effectivePlan === "free";
 
   if (!showSidebar) {
     return (
@@ -264,43 +285,45 @@ export function DashboardSidebar({
         </nav>
 
         <div className="mt-auto space-y-4">
-          <div
-            className={cn(
-              "rounded-[22px] border p-4",
-              isLight
-                ? "border-violet-100 bg-gradient-to-br from-violet-50 to-white shadow-[0_18px_55px_rgba(124,58,237,0.10)]"
-                : "border-white/10 bg-white/[0.035]",
-            )}
-          >
-            <span
+          {shouldShowUpgrade ? (
+            <div
               className={cn(
-                "grid h-11 w-11 place-items-center rounded-[14px]",
+                "rounded-[22px] border p-4",
                 isLight
-                  ? "bg-violet-100 text-violet-700"
-                  : "bg-brand-purple/20 text-brand-purple",
+                  ? "border-violet-100 bg-gradient-to-br from-violet-50 to-white shadow-[0_18px_55px_rgba(124,58,237,0.10)]"
+                  : "border-white/10 bg-white/[0.035]",
               )}
             >
-              <Gem aria-hidden="true" size={22} />
-            </span>
-            <h3 className="mt-4 text-base font-black tracking-[-0.02em]">
-              Mejora a Pro
-            </h3>
-            <p
-              className={cn(
-                "mt-2 text-sm leading-6",
-                isLight ? "text-slate-500" : "text-text-secondary",
-              )}
-            >
-              Accede a más análisis, audio y apoyo de CEO para aplicar ideas.
-            </p>
-            <Link
-              className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-[12px] bg-gradient-to-r from-violet-700 to-fuchsia-500 text-sm font-black text-white shadow-[0_16px_35px_rgba(124,58,237,0.22)]"
-              href="/precios"
-            >
-              Mejorar a Pro
-              <ArrowRight aria-hidden="true" size={16} />
-            </Link>
-          </div>
+              <span
+                className={cn(
+                  "grid h-11 w-11 place-items-center rounded-[14px]",
+                  isLight
+                    ? "bg-violet-100 text-violet-700"
+                    : "bg-brand-purple/20 text-brand-purple",
+                )}
+              >
+                <Gem aria-hidden="true" size={22} />
+              </span>
+              <h3 className="mt-4 text-base font-black tracking-[-0.02em]">
+                Mejora a Pro
+              </h3>
+              <p
+                className={cn(
+                  "mt-2 text-sm leading-6",
+                  isLight ? "text-slate-500" : "text-text-secondary",
+                )}
+              >
+                Accede a más análisis, audio y apoyo de CEO para aplicar ideas.
+              </p>
+              <Link
+                className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-[12px] bg-gradient-to-r from-violet-700 to-fuchsia-500 text-sm font-black text-white shadow-[0_16px_35px_rgba(124,58,237,0.22)]"
+                href="/precios"
+              >
+                Mejorar a Pro
+                <ArrowRight aria-hidden="true" size={16} />
+              </Link>
+            </div>
+          ) : null}
 
           <div className="relative">
             {isProfileOpen ? (

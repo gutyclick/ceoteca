@@ -250,7 +250,7 @@ function createDemoProfileData(): ProfileData {
         started_at: now,
         completed_at: now,
         updated_at: now,
-        bookTitle: "Deep Work",
+        bookTitle: "Trabajo profundo",
         bookCategory: "Productividad",
         bookSlug: "deep-work",
       },

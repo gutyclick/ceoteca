@@ -499,7 +499,7 @@ export const catalogBooks: Book[] = [
   {
     id: "mindset",
     slug: "mindset",
-    title: "Mindset",
+    title: "Mentalidad",
     author: "Carol S. Dweck",
     category: "Desarrollo personal",
     description:
@@ -515,7 +515,7 @@ export const catalogBooks: Book[] = [
     },
     isPublished: true,
     isDemoContent: false,
-    purchaseUrl: "https://www.google.com/search?q=Mindset+Carol+Dweck",
+    purchaseUrl: "https://www.google.com/search?q=Mentalidad+Carol+Dweck",
     analysis: defaultAnalysis,
     keyPoints: defaultKeyPoints,
     activities: defaultActivities,

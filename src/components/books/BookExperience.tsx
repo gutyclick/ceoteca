@@ -139,7 +139,7 @@ const implementationSteps = [
 
 function getBookDisplayTitle(book: Book) {
   if (book.slug === "disciplined-entrepreneurship") {
-    return "Análisis de Disciplined Entrepreneurship";
+    return "Análisis de La disciplina de emprender";
   }
 
   return book.title;
@@ -1457,7 +1457,7 @@ export function BookExperience({ book }: BookExperienceProps) {
                 {isDisciplined ? (
                   <HeroMetric
                     label="Obra original"
-                    value="Disciplined Entrepreneurship"
+                    value="La disciplina de emprender"
                   />
                 ) : null}
                 <HeroMetric label="Categoría" value={book.category} />

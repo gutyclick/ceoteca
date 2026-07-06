@@ -442,24 +442,6 @@ function PublicStat({
   );
 }
 
-function LoadingLibrary() {
-  return (
-    <main className="min-h-screen bg-[#03040b] text-text-primary">
-      <section className="mx-auto flex min-h-screen w-full max-w-6xl items-center justify-center px-5">
-        <Card className="w-full max-w-md rounded-[20px] bg-white/[0.035] p-6 text-center">
-          <div className="mx-auto grid h-14 w-14 animate-pulse place-items-center rounded-2xl bg-brand-purple/20 text-brand-purple">
-            <LibraryBig aria-hidden="true" size={26} />
-          </div>
-          <p className="mt-4 text-lg font-semibold">Preparando biblioteca</p>
-          <p className="mt-2 text-sm text-text-secondary">
-            Estamos ajustando tu experiencia de lectura.
-          </p>
-        </Card>
-      </section>
-    </main>
-  );
-}
-
 function PublicLibrary({ books }: { books: Book[] }) {
   const availableCategories = getBookCategories().filter((category) =>
     books.some((book) => book.category === category),
@@ -1176,10 +1158,6 @@ export function PublicLibraryView({ books }: PublicLibraryViewProps) {
       isMounted = false;
     };
   }, []);
-
-  if (authState === "loading") {
-    return <LoadingLibrary />;
-  }
 
   if (authState === "private") {
     return <PrivateLibrary books={books} />;
