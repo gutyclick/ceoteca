@@ -1,12 +1,19 @@
 import { Fragment } from "react";
 
-function renderInlineText(value: string) {
+import { cn } from "@/lib/utils/cn";
+
+type RichChatMessageTone = "dark" | "light";
+
+function renderInlineText(value: string, tone: RichChatMessageTone) {
   const parts = value.split(/(\*\*[^*]+\*\*)/g);
 
   return parts.map((part, index) => {
     if (part.startsWith("**") && part.endsWith("**")) {
       return (
-        <strong className="font-semibold text-white" key={`${part}-${index}`}>
+        <strong
+          className={cn("font-semibold", tone === "light" ? "text-slate-950" : "text-white")}
+          key={`${part}-${index}`}
+        >
           {part.slice(2, -2)}
         </strong>
       );
@@ -16,7 +23,13 @@ function renderInlineText(value: string) {
   });
 }
 
-export function RichChatMessage({ content }: { content: string }) {
+export function RichChatMessage({
+  content,
+  tone = "dark",
+}: {
+  content: string;
+  tone?: RichChatMessageTone;
+}) {
   const lines = content
     .replace(/\r\n/g, "\n")
     .split("\n")
@@ -28,7 +41,12 @@ export function RichChatMessage({ content }: { content: string }) {
   }
 
   return (
-    <div className="space-y-3 text-[15px] leading-7">
+    <div
+      className={cn(
+        "space-y-3 text-[15px] leading-7",
+        tone === "light" ? "text-slate-700" : "text-text-primary",
+      )}
+    >
       {lines.map((line, index) => {
         const heading = line.match(/^#{1,3}\s+(.+)$/);
         const numbered = line.match(/^(\d+)[.)]\s+(.+)$/);
@@ -37,10 +55,13 @@ export function RichChatMessage({ content }: { content: string }) {
         if (heading) {
           return (
             <h3
-              className="pt-1 text-base font-semibold leading-6 text-white"
+              className={cn(
+                "pt-1 text-base font-semibold leading-6",
+                tone === "light" ? "text-slate-950" : "text-white",
+              )}
               key={`${line}-${index}`}
             >
-              {renderInlineText(heading[1])}
+              {renderInlineText(heading[1], tone)}
             </h3>
           );
         }
@@ -51,7 +72,9 @@ export function RichChatMessage({ content }: { content: string }) {
               <span className="mt-0.5 grid h-7 w-7 place-items-center rounded-full bg-brand-purple/25 text-xs font-semibold text-brand-purple">
                 {numbered[1]}
               </span>
-              <p className="min-w-0 text-text-primary">{renderInlineText(numbered[2])}</p>
+              <p className={cn("min-w-0", tone === "light" ? "text-slate-700" : "text-text-primary")}>
+                {renderInlineText(numbered[2], tone)}
+              </p>
             </div>
           );
         }
@@ -60,14 +83,19 @@ export function RichChatMessage({ content }: { content: string }) {
           return (
             <div className="grid grid-cols-[18px_1fr] gap-3" key={`${line}-${index}`}>
               <span className="mt-3 h-1.5 w-1.5 rounded-full bg-brand-purple" />
-              <p className="min-w-0 text-text-primary">{renderInlineText(bullet[1])}</p>
+              <p className={cn("min-w-0", tone === "light" ? "text-slate-700" : "text-text-primary")}>
+                {renderInlineText(bullet[1], tone)}
+              </p>
             </div>
           );
         }
 
         return (
-          <p className="text-text-primary" key={`${line}-${index}`}>
-            {renderInlineText(line)}
+          <p
+            className={cn(tone === "light" ? "text-slate-700" : "text-text-primary")}
+            key={`${line}-${index}`}
+          >
+            {renderInlineText(line, tone)}
           </p>
         );
       })}

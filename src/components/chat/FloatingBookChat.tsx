@@ -287,7 +287,7 @@ export function FloatingBookChat({
           className={cn(
             "flex flex-col overflow-hidden p-0 backdrop-blur-xl",
             isPanel
-              ? "h-full rounded-[24px] border-slate-950/[0.08] bg-white text-slate-950 shadow-[0_24px_70px_rgba(15,23,42,0.08)]"
+              ? "h-full rounded-[28px] border-slate-950/[0.08] bg-white text-slate-950 shadow-[0_24px_70px_rgba(15,23,42,0.08)]"
               : "h-[min(760px,calc(100svh-112px))] w-full max-w-[520px] rounded-[24px] border-brand-purple/30 bg-[#090a12]/95 shadow-[0_24px_90px_rgba(0,0,0,0.58)] sm:w-[520px]",
           )}
         >
@@ -340,7 +340,10 @@ export function FloatingBookChat({
           {hasChatAccess ? (
             <>
               <div
-                className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5"
+                className={cn(
+                  "min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5",
+                  isPanel && "px-6 py-5",
+                )}
                 ref={scrollAreaRef}
               >
                 {shouldShowQuestionLimit ? (
@@ -390,7 +393,8 @@ export function FloatingBookChat({
                     >
                       <div
                         className={cn(
-                          "min-w-0 max-w-[88%] rounded-[20px] px-4 py-3.5 shadow-[0_14px_40px_rgba(15,23,42,0.10)]",
+                          "min-w-0 rounded-[20px] px-4 py-3.5 shadow-[0_14px_40px_rgba(15,23,42,0.10)]",
+                          isPanel ? "max-w-[94%]" : "max-w-[88%]",
                           message.role === "user"
                             ? "rounded-br-md bg-brand-gradient text-white"
                             : isPanel
@@ -399,7 +403,10 @@ export function FloatingBookChat({
                         )}
                       >
                         {message.role === "assistant" ? (
-                          <RichChatMessage content={message.content} />
+                          <RichChatMessage
+                            content={message.content}
+                            tone={isPanel ? "light" : "dark"}
+                          />
                         ) : (
                           <p className="whitespace-pre-wrap text-[15px] font-medium leading-7">
                             {message.content}
@@ -432,15 +439,20 @@ export function FloatingBookChat({
                   isPanel ? "border-slate-950/[0.08] bg-white" : "border-white/10 bg-[#090a12]/98",
                 )}
               >
-                <div className="mb-3 grid grid-cols-[1fr_36px] items-stretch gap-2">
-                  <div className="grid min-w-0 gap-2 sm:grid-cols-3">
+                <div className="mb-3 grid grid-cols-[1fr_42px] items-stretch gap-2">
+                  <div
+                    className={cn(
+                      "grid min-w-0 gap-2",
+                      isPanel ? "grid-cols-1 xl:grid-cols-3" : "sm:grid-cols-3",
+                    )}
+                  >
                     {visibleSuggestions.map((suggestion) => (
                       <button
                         className={cn(
-                          "min-h-10 min-w-0 rounded-full border px-3 py-2 text-left text-xs leading-5 transition hover:border-brand-purple/50",
+                          "min-h-11 min-w-0 border px-3 py-2 text-left text-xs leading-5 transition hover:border-brand-purple/50",
                           isPanel
-                            ? "border-slate-950/[0.08] bg-slate-50 text-slate-600 hover:text-violet-700"
-                            : "border-white/10 bg-white/[0.045] text-text-secondary hover:text-white",
+                            ? "rounded-[16px] border-slate-950/[0.08] bg-slate-50 text-slate-600 hover:text-violet-700"
+                            : "rounded-full border-white/10 bg-white/[0.045] text-text-secondary hover:text-white",
                         )}
                         key={suggestion}
                         onClick={() => {
@@ -458,7 +470,7 @@ export function FloatingBookChat({
                   <button
                     aria-label="Ver otras preguntas sugeridas"
                     className={cn(
-                      "grid h-full min-h-10 w-9 shrink-0 place-items-center rounded-full border transition hover:border-brand-purple/50",
+                      "grid h-full min-h-11 w-11 shrink-0 place-items-center rounded-[16px] border transition hover:border-brand-purple/50",
                       isPanel
                         ? "border-slate-950/[0.08] bg-slate-50 text-slate-500 hover:text-violet-700"
                         : "border-white/10 bg-white/[0.055] text-text-secondary hover:text-white",

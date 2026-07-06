@@ -398,17 +398,22 @@ function AudioPanel({
   const playbackStatus = isPlaying ? "En reproducción" : currentTimeSeconds > 0 ? "Pausado" : "Listo";
 
   return (
-    <Card className="relative overflow-hidden rounded-[16px] bg-white/[0.04] p-5">
+    <Card className="relative overflow-hidden rounded-[20px] border-slate-950/[0.08] bg-white p-4 shadow-none">
       {locked ? (
         <LockedPremiumOverlay
           description="El audio narrado está incluido desde Pro."
           title="Audio bloqueado"
         />
       ) : null}
-      <div className={cn("grid gap-4 md:grid-cols-[auto_1fr] md:items-center", locked && "select-none blur-sm")}>
+      <div
+        className={cn(
+          "grid gap-3 md:grid-cols-[auto_1fr] md:items-center",
+          locked && "select-none blur-sm",
+        )}
+      >
         <button
           aria-label={isPlaying ? "Pausar audio" : "Reproducir audio"}
-          className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-brand-purple/75 text-white shadow-[0_0_38px_rgba(124,58,237,0.42)] transition hover:bg-brand-purple"
+          className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-violet-700 text-white shadow-[0_14px_30px_rgba(124,58,237,0.22)] transition hover:bg-violet-800"
           disabled={isLoadingAudio || isPlanLoading}
           onClick={() => void toggleAudio()}
           type="button"
@@ -423,8 +428,8 @@ function AudioPanel({
         </button>
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="font-semibold text-white">Escucha el análisis</h2>
-            <span className="rounded-full border border-white/10 bg-white/[0.05] px-2 py-1 text-xs text-text-secondary">
+            <h2 className="font-black text-slate-950">Escucha el análisis</h2>
+            <span className="rounded-full border border-slate-950/[0.08] bg-slate-50 px-2 py-1 text-xs text-slate-500">
               {durationLabel}
             </span>
             <span
@@ -432,7 +437,7 @@ function AudioPanel({
                 "inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-xs",
                 isPlaying
                   ? "border-success/25 bg-success/10 text-success"
-                  : "border-white/10 bg-white/[0.04] text-text-secondary",
+                  : "border-slate-950/[0.08] bg-slate-50 text-slate-500",
               )}
             >
               <span
@@ -446,23 +451,23 @@ function AudioPanel({
           </div>
           <div
             aria-hidden="true"
-            className="mt-4 grid h-14 grid-cols-[repeat(40,minmax(2px,1fr))] items-center gap-1 overflow-hidden rounded-[16px] border border-white/10 bg-white/[0.035] px-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+            className="mt-3 grid h-10 grid-cols-[repeat(48,minmax(2px,1fr))] items-center gap-1 overflow-hidden rounded-[14px] border border-slate-950/[0.08] bg-slate-50 px-3"
           >
-            {Array.from({ length: 40 }).map((_, index) => {
-              const barStart = (index / 40) * 100;
-              const barEnd = ((index + 1) / 40) * 100;
+            {Array.from({ length: 48 }).map((_, index) => {
+              const barStart = (index / 48) * 100;
+              const barEnd = ((index + 1) / 48) * 100;
               const fillPercent =
                 progressPercent <= barStart
                   ? 0
                   : progressPercent >= barEnd
                     ? 100
                     : ((progressPercent - barStart) / (barEnd - barStart)) * 100;
-              const height = 18 + ((index * 11) % 32);
+              const height = 10 + ((index * 11) % 24);
 
               return (
                 <span
                   className={cn(
-                    "relative mx-auto w-full max-w-[5px] overflow-hidden rounded-full bg-white/20 transition-transform duration-300",
+                    "relative mx-auto w-full max-w-[5px] overflow-hidden rounded-full bg-slate-200 transition-transform duration-300",
                     isPlaying && fillPercent > 0 && "scale-y-110",
                   )}
                   key={index}
@@ -476,10 +481,10 @@ function AudioPanel({
               );
             })}
           </div>
-          <div className="mt-4">
+          <div className="mt-3">
             <input
               aria-label="Progreso del audio"
-              className="h-2 w-full cursor-pointer appearance-none rounded-full bg-white/10 accent-brand-purple disabled:cursor-not-allowed disabled:opacity-50"
+              className="h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-100 accent-brand-purple disabled:cursor-not-allowed disabled:opacity-50"
               disabled={!displayDurationSeconds || isLoadingAudio}
               max={displayDurationSeconds ?? 0}
               min={0}
@@ -488,7 +493,7 @@ function AudioPanel({
               type="range"
               value={Math.min(currentTimeSeconds, displayDurationSeconds ?? currentTimeSeconds)}
             />
-            <div className="mt-2 flex items-center justify-between text-xs text-text-secondary">
+            <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
               <span>{formatAudioTime(currentTimeSeconds)}</span>
               <span>{totalTimeLabel}</span>
             </div>
@@ -498,7 +503,7 @@ function AudioPanel({
               {audioError}
             </div>
           ) : (
-            <p className="mt-2 text-xs leading-5 text-text-secondary">
+            <p className="mt-2 text-xs leading-5 text-slate-500">
               Audio editorial generado desde el análisis autorizado de Ceoteca.
             </p>
           )}
@@ -1541,7 +1546,7 @@ export function BookExperience({ book }: BookExperienceProps) {
         isAudioDockOpen && "pb-52",
       )}
     >
-      <DashboardSidebar active="library" tone="light" />
+      <DashboardSidebar active="library" showProfile={false} tone="light" />
       <div className="fixed left-0 right-0 top-0 z-50 h-1 bg-slate-950/[0.06] sm:left-[var(--dashboard-sidebar-offset,84px)]">
         <div
           className="h-full rounded-r-full bg-gradient-to-r from-violet-700 via-indigo-500 to-fuchsia-500 transition-[width] duration-300"
@@ -1549,7 +1554,7 @@ export function BookExperience({ book }: BookExperienceProps) {
         />
       </div>
 
-      <section className="mx-auto grid w-full max-w-[1480px] gap-6 px-4 py-6 md:px-8 lg:grid-cols-[minmax(0,1fr)_380px] xl:px-10">
+      <section className="mx-auto grid w-full max-w-[1560px] gap-6 px-4 py-6 md:px-8 lg:grid-cols-[minmax(0,1fr)_460px] xl:px-10">
         <div className="min-w-0">
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
             <button
@@ -1719,7 +1724,7 @@ export function BookExperience({ book }: BookExperienceProps) {
 
       {isAudioDockOpen ? (
         <div className="fixed inset-x-3 bottom-3 z-50 sm:left-[calc(var(--dashboard-sidebar-offset,84px)+1rem)]">
-          <div className="mx-auto max-w-[1440px] rounded-[24px] border border-slate-950/[0.08] bg-white/96 p-3 shadow-[0_24px_90px_rgba(15,23,42,0.18)] backdrop-blur-xl md:p-4">
+          <div className="mx-auto max-w-[1560px] rounded-[22px] border border-slate-950/[0.08] bg-white/96 p-2 shadow-[0_18px_70px_rgba(15,23,42,0.16)] backdrop-blur-xl md:p-3">
             <button aria-label="Cerrar reproductor" className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-950" onClick={() => setIsAudioDockOpen(false)} type="button">
               <X aria-hidden="true" size={18} />
             </button>

@@ -25,6 +25,7 @@ type DashboardSection = "home" | "library" | "profile" | "settings";
 type DashboardSidebarProps = {
   active: DashboardSection;
   tone?: "dark" | "light";
+  showProfile?: boolean;
 };
 
 const menuItems = [
@@ -47,6 +48,7 @@ function getInitials(name: string, email: string) {
 export function DashboardSidebar({
   active,
   tone = "dark",
+  showProfile = true,
 }: DashboardSidebarProps) {
   const router = useRouter();
   const isLight = tone === "light";
@@ -176,7 +178,7 @@ export function DashboardSidebar({
   const initials = getInitials(profile.fullName, profile.email);
   const showSidebar = isDesktop || isDrawerOpen;
   const isStatic = isDesktop;
-  const shouldShowUpgrade = effectivePlan === "free";
+  const shouldShowUpgrade = showProfile && effectivePlan === "free";
 
   if (!showSidebar) {
     return (
@@ -284,7 +286,8 @@ export function DashboardSidebar({
           })}
         </nav>
 
-        <div className="mt-auto space-y-4">
+        {showProfile ? (
+          <div className="mt-auto space-y-4">
           {shouldShowUpgrade ? (
             <div
               className={cn(
@@ -325,7 +328,7 @@ export function DashboardSidebar({
             </div>
           ) : null}
 
-          <div className="relative">
+            <div className="relative">
             {isProfileOpen ? (
               <div
                 className={cn(
@@ -383,8 +386,9 @@ export function DashboardSidebar({
                 </span>
               </span>
             </button>
+            </div>
           </div>
-        </div>
+        ) : null}
       </aside>
     </>
   );
