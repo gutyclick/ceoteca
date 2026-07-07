@@ -22,7 +22,6 @@ import {
   Pause,
   Play,
   Sparkles,
-  Sun,
   X,
 } from "lucide-react";
 
@@ -1181,7 +1180,7 @@ function LightKeyPointCard({
             <h3 className={cn("font-black leading-6", isDark ? "text-white" : "text-slate-950")}>
               {point.title}
             </h3>
-            <p className={cn("mt-1 text-sm leading-6", isDark ? "text-stone-300" : "text-slate-500")}>
+            <p className={cn("mt-1 text-sm leading-6", isDark ? "text-stone-300" : isSepia ? "text-stone-700" : "text-slate-500")}>
               {point.explanation}
             </p>
           </div>
@@ -1195,18 +1194,22 @@ function LightKeyPointCard({
       <div
         className={cn(
           "mt-4 grid gap-3 border-t pt-4 text-sm leading-7",
-          isDark ? "border-white/10 text-stone-300" : "border-slate-950/[0.06] text-slate-600",
+          isDark
+            ? "border-white/10 text-stone-300"
+            : isSepia
+              ? "border-amber-950/10 text-stone-700"
+              : "border-slate-950/[0.06] text-slate-600",
         )}
       >
-        <p className={cn("rounded-[14px] p-3", isDark ? "bg-white/[0.04]" : "bg-slate-50")}>
+        <p className={cn("rounded-[14px] p-3", isDark ? "bg-white/[0.04]" : isSepia ? "bg-[#fffaf0]" : "bg-slate-50")}>
           <span className={cn("block font-black", isDark ? "text-white" : "text-slate-950")}>Ejemplo</span>
           {point.example}
         </p>
-        <p className={cn("rounded-[14px] p-3", isDark ? "bg-violet-500/10" : "bg-violet-50")}>
+        <p className={cn("rounded-[14px] p-3", isDark ? "bg-violet-500/10" : isSepia ? "bg-violet-500/10" : "bg-violet-50")}>
           <span className="block font-black text-violet-700">Acción</span>
           {point.action}
         </p>
-        <p className={cn("rounded-[14px] p-3", isDark ? "bg-white/[0.04]" : "bg-slate-50")}>
+        <p className={cn("rounded-[14px] p-3", isDark ? "bg-white/[0.04]" : isSepia ? "bg-[#fffaf0]" : "bg-slate-50")}>
           <span className={cn("block font-black", isDark ? "text-white" : "text-slate-950")}>Cuidado</span>
           {point.limitation}
         </p>
@@ -1226,6 +1229,7 @@ function LightActivityCard({
   const reflectionId = `${bookSlug}:${activity.title.toLowerCase().replace(/\s+/g, "-")}`;
   const [value, setValue] = useState("");
   const isDark = readingTheme === "dark";
+  const isSepia = readingTheme === "sepia";
 
   useEffect(() => {
     setValue(window.localStorage.getItem(`ceoteca:activity:${reflectionId}`) ?? "");
@@ -1240,7 +1244,11 @@ function LightActivityCard({
     <article
       className={cn(
         "rounded-[20px] border p-5",
-        isDark ? "border-white/10 bg-[#171717]" : "border-slate-950/[0.08] bg-white",
+        isDark
+          ? "border-white/10 bg-[#171717]"
+          : isSepia
+            ? "border-amber-950/10 bg-[#fff8e8]"
+            : "border-slate-950/[0.08] bg-white",
       )}
     >
       <div className="flex flex-col gap-4 md:flex-row md:items-start">
@@ -1269,7 +1277,9 @@ function LightActivityCard({
               "mt-5 min-h-28 w-full resize-y rounded-[16px] border p-4 text-sm leading-7 outline-none transition placeholder:text-slate-400 focus:border-violet-300 focus:ring-4 focus:ring-violet-100",
               isDark
                 ? "border-white/10 bg-white/[0.04] text-stone-100"
-                : "border-slate-950/[0.08] bg-slate-50 text-slate-900",
+                : isSepia
+                  ? "border-amber-950/10 bg-[#fffaf0] text-stone-900"
+                  : "border-slate-950/[0.08] bg-slate-50 text-slate-900",
             )}
             onChange={(event) => updateValue(event.target.value)}
             placeholder="Escribe tu reflexión, decisión o próximo paso..."
@@ -1291,6 +1301,7 @@ function LightNoteBox({
   const storageKey = `ceoteca:notes:${bookSlug}`;
   const [value, setValue] = useState("");
   const isDark = readingTheme === "dark";
+  const isSepia = readingTheme === "sepia";
 
   useEffect(() => {
     setValue(window.localStorage.getItem(storageKey) ?? "");
@@ -1307,7 +1318,9 @@ function LightNoteBox({
         "min-h-52 w-full resize-y rounded-[20px] border p-5 text-sm leading-7 outline-none transition placeholder:text-slate-400 focus:border-violet-300 focus:ring-4 focus:ring-violet-100",
         isDark
           ? "border-white/10 bg-white/[0.04] text-stone-100"
-          : "border-slate-950/[0.08] bg-white text-slate-900",
+          : isSepia
+            ? "border-amber-950/10 bg-[#fff8e8] text-stone-900"
+            : "border-slate-950/[0.08] bg-white text-slate-900",
       )}
       onChange={(event) => updateValue(event.target.value)}
       placeholder="Guarda aquí tus notas personales sobre este análisis..."
@@ -1626,11 +1639,10 @@ export function BookExperience({ book }: BookExperienceProps) {
   const readingThemeOptions: Array<{
     key: ReadingTheme;
     label: string;
-    icon: typeof Sun;
   }> = [
-    { key: "light", label: "Claro", icon: Sun },
-    { key: "sepia", label: "Sepia", icon: BookOpen },
-    { key: "dark", label: "Oscuro", icon: Moon },
+    { key: "light", label: "Claro" },
+    { key: "sepia", label: "Sepia" },
+    { key: "dark", label: "Oscuro" },
   ];
 
   return (
@@ -1670,30 +1682,37 @@ export function BookExperience({ book }: BookExperienceProps) {
                 : "border-slate-950/[0.08] bg-white/95 text-slate-950",
           )}
         >
-          <div className="flex items-center gap-1">
-            {readingThemeOptions.map((option) => {
-              const Icon = option.icon;
-              const isActive = readingTheme === option.key;
-
-              return (
-                <button
-                  className={cn(
-                    "inline-flex h-10 items-center gap-2 rounded-[14px] px-3 text-sm font-black transition",
-                    isActive
-                      ? "bg-violet-100 text-violet-700"
-                      : isReaderDark
-                        ? "text-stone-300 hover:bg-white/10 hover:text-white"
-                        : "text-slate-500 hover:bg-slate-100 hover:text-slate-950",
-                  )}
-                  key={option.key}
-                  onClick={() => setReadingTheme(option.key)}
-                  type="button"
-                >
-                  <Icon aria-hidden="true" size={16} />
-                  <span className="hidden sm:inline">{option.label}</span>
-                </button>
-              );
-            })}
+          <div
+            className={cn(
+              "flex h-10 items-center gap-2 rounded-[14px] border px-3",
+              isReaderDark
+                ? "border-white/10 bg-white/[0.04]"
+                : "border-slate-950/[0.08] bg-slate-50",
+            )}
+          >
+            <Moon
+              aria-hidden="true"
+              className={isReaderDark ? "text-violet-300" : "text-violet-700"}
+              size={16}
+            />
+            <label className="sr-only" htmlFor="reading-theme">
+              Tema de lectura
+            </label>
+            <select
+              className={cn(
+                "h-8 bg-transparent pr-7 text-sm font-black outline-none",
+                isReaderDark ? "text-stone-100" : "text-slate-800",
+              )}
+              id="reading-theme"
+              onChange={(event) => setReadingTheme(event.target.value as ReadingTheme)}
+              value={readingTheme}
+            >
+              {readingThemeOptions.map((option) => (
+                <option key={option.key} value={option.key}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
           </div>
           <button
             className={cn(
@@ -1713,8 +1732,10 @@ export function BookExperience({ book }: BookExperienceProps) {
 
       <section
         className={cn(
-          "mx-auto grid w-full max-w-[1560px] gap-6 px-4 py-6 md:px-8 lg:grid-cols-[minmax(0,1fr)_460px] xl:px-10",
-          isReadingMode && "max-w-[900px] grid-cols-1 px-4 pb-16 pt-24 md:px-8 lg:grid-cols-1",
+          "mx-auto grid w-full gap-6 px-4 py-6 md:px-8 xl:px-10",
+          isReadingMode
+            ? "max-w-[1440px] grid-cols-1 pb-16 pt-24 md:px-10 xl:px-12"
+            : "max-w-[1560px] lg:grid-cols-[minmax(0,1fr)_460px]",
         )}
       >
         <div className="min-w-0">
@@ -1769,20 +1790,27 @@ export function BookExperience({ book }: BookExperienceProps) {
               >
                 <MoreHorizontal aria-hidden="true" size={19} />
               </button>
-            </div>          </div>
+            </div>
+          </div>
 
           <section
             className={cn(
-              "grid gap-8 rounded-[28px] border border-slate-950/[0.08] bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.06)] md:grid-cols-[240px_1fr] md:p-7 lg:p-8",
-              isReadingMode && cn(readerSurfaceClass, "md:grid-cols-[160px_1fr]"),
+              "grid gap-8 rounded-[28px] border p-5 md:p-7 lg:p-8",
+              isReadingMode
+                ? cn(
+                    readerSurfaceClass,
+                    "items-center md:grid-cols-[240px_minmax(0,1fr)] lg:grid-cols-[300px_minmax(0,1fr)]",
+                  )
+                : "border-slate-950/[0.08] bg-white shadow-[0_24px_80px_rgba(15,23,42,0.06)] md:grid-cols-[240px_1fr]",
             )}
           >
             <MiniCover book={book} />
             <div className="flex min-w-0 flex-col justify-center">
               <h1
                 className={cn(
-                  "text-balance text-4xl font-black tracking-[-0.05em] md:text-5xl xl:text-6xl",
+                  "text-balance text-4xl font-black tracking-[-0.05em]",
                   isReadingMode ? readerHeadingClass : "text-slate-950",
+                  isReadingMode ? "max-w-[980px] leading-[0.98] md:text-5xl xl:text-6xl" : "md:text-5xl xl:text-6xl",
                 )}
               >
                 {getBookDisplayTitle(book)}
@@ -1796,26 +1824,56 @@ export function BookExperience({ book }: BookExperienceProps) {
               >
                 {book.description}
               </p>
-              <div className="mt-7 flex flex-wrap gap-3 text-sm font-bold text-slate-600">
-                <span className="inline-flex h-10 items-center gap-2 rounded-full bg-slate-50 px-4">
+              <div
+                className={cn(
+                  "mt-7 flex flex-wrap gap-3 text-sm font-bold",
+                  isReaderDark ? "text-stone-300" : "text-slate-600",
+                )}
+              >
+                <span
+                  className={cn(
+                    "inline-flex h-10 items-center gap-2 rounded-full px-4",
+                    isReaderDark ? "bg-white/[0.06]" : isReaderSepia ? "bg-amber-950/[0.04]" : "bg-slate-50",
+                  )}
+                >
                   <Sparkles aria-hidden="true" className="text-violet-600" size={17} />
                   {book.keyPoints.length} ideas clave
                 </span>
-                <span className="inline-flex h-10 items-center gap-2 rounded-full bg-slate-50 px-4">
+                <span
+                  className={cn(
+                    "inline-flex h-10 items-center gap-2 rounded-full px-4",
+                    isReaderDark ? "bg-white/[0.06]" : isReaderSepia ? "bg-amber-950/[0.04]" : "bg-slate-50",
+                  )}
+                >
                   <CheckCircle2 aria-hidden="true" className="text-violet-600" size={17} />
                   {book.activities.length} ejercicios
                 </span>
-                <span className="inline-flex h-10 items-center gap-2 rounded-full bg-slate-50 px-4">
+                <span
+                  className={cn(
+                    "inline-flex h-10 items-center gap-2 rounded-full px-4",
+                    isReaderDark ? "bg-white/[0.06]" : isReaderSepia ? "bg-amber-950/[0.04]" : "bg-slate-50",
+                  )}
+                >
                   <Clock3 aria-hidden="true" className="text-violet-600" size={17} />
                   {book.readingTime} min de lectura
                 </span>
               </div>
               <div className="mt-7 max-w-2xl">
-                <div className="mb-2 flex items-center justify-between text-sm font-bold text-slate-500">
+                <div
+                  className={cn(
+                    "mb-2 flex items-center justify-between text-sm font-bold",
+                    isReadingMode ? readerMutedTextClass : "text-slate-500",
+                  )}
+                >
                   <span>Tu progreso</span>
-                  <span className="text-slate-950">{readingProgress}%</span>
+                  <span className={isReadingMode ? readerHeadingClass : "text-slate-950"}>{readingProgress}%</span>
                 </div>
-                <div className="h-2 rounded-full bg-slate-100">
+                <div
+                  className={cn(
+                    "h-2 rounded-full",
+                    isReaderDark ? "bg-white/10" : isReaderSepia ? "bg-amber-950/10" : "bg-slate-100",
+                  )}
+                >
                   <div
                     className="h-full rounded-full bg-gradient-to-r from-violet-700 to-indigo-500 transition-[width] duration-300"
                     style={{ width: `${readingProgress}%` }}
@@ -1844,6 +1902,8 @@ export function BookExperience({ book }: BookExperienceProps) {
                     activeSection === item.href && "bg-violet-50 text-violet-700",
                     isReaderDark && "text-stone-400 hover:bg-white/10 hover:text-white",
                     isReaderDark && activeSection === item.href && "bg-violet-500/15 text-violet-300",
+                    isReaderSepia && "text-stone-600 hover:bg-amber-950/[0.04] hover:text-violet-700",
+                    isReaderSepia && activeSection === item.href && "bg-violet-500/10 text-violet-700",
                   )}
                   href={item.href}
                   key={item.href}
@@ -1890,7 +1950,7 @@ export function BookExperience({ book }: BookExperienceProps) {
                   <div
                     className={cn(
                       "rounded-[18px] p-4",
-                      isReaderDark ? "bg-white/[0.04]" : "bg-slate-50",
+                      isReaderDark ? "bg-white/[0.04]" : isReaderSepia ? "bg-[#fffaf0]" : "bg-slate-50",
                     )}
                     key={section.title}
                   >
@@ -1899,7 +1959,16 @@ export function BookExperience({ book }: BookExperienceProps) {
                   </div>
                 ))}
               </div>
-              <div className={cn("mt-6 rounded-[20px] border p-5 text-sm leading-7", isReaderDark ? "border-violet-400/20 bg-violet-500/10 text-stone-200" : "border-violet-100 bg-violet-50 text-violet-950")}>
+              <div
+                className={cn(
+                  "mt-6 rounded-[20px] border p-5 text-sm leading-7",
+                  isReaderDark
+                    ? "border-violet-400/20 bg-violet-500/10 text-stone-200"
+                    : isReaderSepia
+                      ? "border-violet-500/15 bg-violet-500/10 text-stone-800"
+                      : "border-violet-100 bg-violet-50 text-violet-950",
+                )}
+              >
                 <strong className="block text-base text-violet-700">Idea para llevar</strong>
                 {book.conclusion}
               </div>
@@ -1918,7 +1987,18 @@ export function BookExperience({ book }: BookExperienceProps) {
               <h2 className={cn("text-2xl font-black tracking-[-0.03em]", isReadingMode ? readerHeadingClass : "text-slate-950")}>Recursos y contexto</h2>
               <p className={cn("mt-4 text-sm leading-7", isReadingMode ? readerMutedTextClass : "text-slate-500")}>{disclaimer}</p>
               {book.purchaseUrl ? (
-                <Link className="mt-5 inline-flex h-11 items-center gap-2 rounded-[14px] border border-slate-950/[0.08] bg-white px-4 text-sm font-black text-slate-700 transition hover:border-violet-200 hover:text-violet-700" href={book.purchaseUrl} target="_blank">
+                <Link
+                  className={cn(
+                    "mt-5 inline-flex h-11 items-center gap-2 rounded-[14px] border px-4 text-sm font-black transition hover:border-violet-200 hover:text-violet-700",
+                    isReaderDark
+                      ? "border-white/10 bg-white/[0.04] text-stone-200"
+                      : isReaderSepia
+                        ? "border-amber-950/10 bg-[#fffaf0] text-stone-800"
+                        : "border-slate-950/[0.08] bg-white text-slate-700",
+                  )}
+                  href={book.purchaseUrl}
+                  target="_blank"
+                >
                   Comprar el libro original
                   <ExternalLink aria-hidden="true" size={15} />
                 </Link>
