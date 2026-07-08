@@ -21,6 +21,7 @@ import {
   Moon,
   Pause,
   Play,
+  Rows3,
   Sparkles,
   Sun,
   X,
@@ -1178,7 +1179,11 @@ function LightKeyPointCard({
           <span
             className={cn(
               "grid h-10 w-10 shrink-0 place-items-center rounded-[12px] text-base font-black",
-              isDark ? "bg-violet-500/15 text-violet-200" : "bg-violet-100 text-violet-700",
+              isDark
+                ? "bg-violet-500/15 text-violet-200"
+                : isSepia
+                  ? "bg-amber-900/10 text-amber-950"
+                  : "bg-violet-100 text-violet-700",
             )}
           >
             {point.number}
@@ -1212,8 +1217,8 @@ function LightKeyPointCard({
           <span className={cn("block font-black", isDark ? "text-white" : "text-slate-950")}>Ejemplo</span>
           {point.example}
         </p>
-        <p className={cn("rounded-[14px] p-3", isDark ? "bg-violet-500/10" : isSepia ? "bg-violet-500/10" : "bg-violet-50")}>
-          <span className={cn("block font-black", isDark ? "text-violet-200" : "text-violet-700")}>Acción</span>
+        <p className={cn("rounded-[14px] p-3", isDark ? "bg-violet-500/10" : isSepia ? "bg-amber-900/10" : "bg-violet-50")}>
+          <span className={cn("block font-black", isDark ? "text-violet-200" : isSepia ? "text-amber-950" : "text-violet-700")}>Acción</span>
           {point.action}
         </p>
         <p className={cn("rounded-[14px] p-3", isDark ? "bg-white/[0.04]" : isSepia ? "bg-[#fffaf0]" : "bg-slate-50")}>
@@ -1262,7 +1267,11 @@ function LightActivityCard({
         <span
           className={cn(
             "grid h-12 w-12 shrink-0 place-items-center rounded-[16px]",
-            isDark ? "bg-violet-500/15 text-violet-200" : "bg-violet-100 text-violet-700",
+            isDark
+              ? "bg-violet-500/15 text-violet-200"
+              : isSepia
+                ? "bg-amber-900/10 text-amber-950"
+                : "bg-violet-100 text-violet-700",
           )}
         >
           <BookOpen aria-hidden="true" size={24} />
@@ -1286,12 +1295,12 @@ function LightActivityCard({
           ) : null}
           <textarea
             className={cn(
-              "mt-5 min-h-28 w-full resize-y rounded-[16px] border p-4 text-sm leading-7 outline-none transition placeholder:text-slate-400 focus:border-violet-300 focus:ring-4 focus:ring-violet-100",
+              "mt-5 min-h-28 w-full resize-y rounded-[16px] border p-4 text-sm leading-7 outline-none transition placeholder:text-slate-400 focus:ring-4",
               isDark
-                ? "border-white/10 bg-white/[0.04] text-stone-100"
+                ? "border-white/10 bg-white/[0.04] text-stone-100 focus:border-violet-300 focus:ring-violet-500/15"
                 : isSepia
-                  ? "border-amber-950/10 bg-[#fffaf0] text-stone-900"
-                  : "border-slate-950/[0.08] bg-slate-50 text-slate-900",
+                  ? "border-amber-950/10 bg-[#fffaf0] text-stone-900 focus:border-amber-700/40 focus:ring-amber-900/10"
+                  : "border-slate-950/[0.08] bg-slate-50 text-slate-900 focus:border-violet-300 focus:ring-violet-100",
             )}
             onChange={(event) => updateValue(event.target.value)}
             placeholder="Escribe tu reflexión, decisión o próximo paso..."
@@ -1327,12 +1336,12 @@ function LightNoteBox({
   return (
     <textarea
       className={cn(
-        "min-h-52 w-full resize-y rounded-[20px] border p-5 text-sm leading-7 outline-none transition placeholder:text-slate-400 focus:border-violet-300 focus:ring-4 focus:ring-violet-100",
+        "min-h-52 w-full resize-y rounded-[20px] border p-5 text-sm leading-7 outline-none transition placeholder:text-slate-400 focus:ring-4",
         isDark
-          ? "border-white/10 bg-white/[0.04] text-stone-100"
+          ? "border-white/10 bg-white/[0.04] text-stone-100 focus:border-violet-300 focus:ring-violet-500/15"
           : isSepia
-            ? "border-amber-950/10 bg-[#fff8e8] text-stone-900"
-            : "border-slate-950/[0.08] bg-white text-slate-900",
+            ? "border-amber-950/10 bg-[#fff8e8] text-stone-900 focus:border-amber-700/40 focus:ring-amber-900/10"
+            : "border-slate-950/[0.08] bg-white text-slate-900 focus:border-violet-300 focus:ring-violet-100",
       )}
       onChange={(event) => updateValue(event.target.value)}
       placeholder="Guarda aquí tus notas personales sobre este análisis..."
@@ -1353,6 +1362,7 @@ export function BookExperience({ book }: BookExperienceProps) {
   const [isReadingMode, setIsReadingMode] = useState(false);
   const [readingTheme, setReadingTheme] = useState<ReadingTheme>("light");
   const [isReadingThemeMenuOpen, setIsReadingThemeMenuOpen] = useState(false);
+  const [isReadingIndexOpen, setIsReadingIndexOpen] = useState(false);
   const persistedProgressRef = useRef(0);
   const canUseAudio = currentPlan ? canAccessFeature(currentPlan, "audio") : false;
 
@@ -1572,6 +1582,7 @@ export function BookExperience({ book }: BookExperienceProps) {
       if (event.key === "Escape") {
         setIsReadingMode(false);
         setIsReadingThemeMenuOpen(false);
+        setIsReadingIndexOpen(false);
       }
     }
 
@@ -1585,11 +1596,13 @@ export function BookExperience({ book }: BookExperienceProps) {
   function enterReadingMode() {
     setIsAudioDockOpen(false);
     setIsReadingThemeMenuOpen(false);
+    setIsReadingIndexOpen(false);
     setIsReadingMode(true);
   }
 
   function exitReadingMode() {
     setIsReadingThemeMenuOpen(false);
+    setIsReadingIndexOpen(false);
     setIsReadingMode(false);
   }
 
@@ -1656,8 +1669,13 @@ export function BookExperience({ book }: BookExperienceProps) {
         faint: "text-stone-400",
         hover: "hover:bg-white/10 hover:text-white",
         active: "bg-violet-500/[0.18] text-violet-200",
+        accent: "text-violet-200",
+        accentIcon: "text-violet-300",
+        accentSoft: "bg-violet-500/10",
+        focus: "focus:ring-violet-500/20",
         control: "border-white/10 bg-[#191918]/96 text-stone-100",
         progress: "bg-white/10",
+        progressFill: "bg-gradient-to-r from-violet-500 via-indigo-400 to-fuchsia-400",
       }
     : isReaderSepia
       ? {
@@ -1670,10 +1688,15 @@ export function BookExperience({ book }: BookExperienceProps) {
           heading: "text-stone-950",
           muted: "text-stone-700",
           faint: "text-stone-500",
-          hover: "hover:bg-amber-950/[0.055] hover:text-violet-700",
-          active: "bg-violet-500/12 text-violet-800",
+          hover: "hover:bg-amber-950/[0.055] hover:text-amber-950",
+          active: "bg-amber-900/10 text-amber-950",
+          accent: "text-amber-950",
+          accentIcon: "text-amber-800",
+          accentSoft: "bg-amber-900/10",
+          focus: "focus:ring-amber-900/10",
           control: "border-amber-950/10 bg-[#fff5df]/96 text-stone-900",
           progress: "bg-amber-950/10",
+          progressFill: "bg-gradient-to-r from-amber-800 via-orange-500 to-amber-600",
         }
       : {
           page: "bg-[#fbfaf6] text-slate-950",
@@ -1687,8 +1710,13 @@ export function BookExperience({ book }: BookExperienceProps) {
           faint: "text-slate-500",
           hover: "hover:bg-slate-100 hover:text-slate-950",
           active: "bg-violet-50 text-violet-700",
+          accent: "text-violet-700",
+          accentIcon: "text-violet-600",
+          accentSoft: "bg-violet-50",
+          focus: "focus:ring-violet-500/20",
           control: "border-slate-950/[0.08] bg-white/96 text-slate-950",
           progress: "bg-slate-100",
+          progressFill: "bg-gradient-to-r from-violet-700 via-indigo-500 to-fuchsia-500",
         };
   const readerSurfaceClass = readerPalette.surface;
   const readerMutedTextClass = isReadingMode ? readerPalette.muted : "text-slate-600";
@@ -1756,7 +1784,7 @@ export function BookExperience({ book }: BookExperienceProps) {
         )}
       >
         <div
-          className="h-full rounded-r-full bg-gradient-to-r from-violet-700 via-indigo-500 to-fuchsia-500 transition-[width] duration-300"
+          className={cn("h-full rounded-r-full transition-[width] duration-300", isReadingMode ? readerPalette.progressFill : "bg-gradient-to-r from-violet-700 via-indigo-500 to-fuchsia-500")}
           style={{ width: `${readingProgress}%` }}
         />
       </div>
@@ -1768,18 +1796,69 @@ export function BookExperience({ book }: BookExperienceProps) {
         >
           <div className="relative">
             <button
-              aria-expanded={isReadingThemeMenuOpen}
-              aria-label={`Tema de lectura: ${activeReadingTheme.label}`}
+              aria-expanded={isReadingIndexOpen}
+              aria-label="Abrir índice de lectura"
               className={cn(
-                "grid h-12 w-12 place-items-center rounded-full border transition focus:outline-none focus:ring-4 focus:ring-violet-500/20",
+                "inline-flex h-12 items-center gap-2 rounded-full border px-4 text-sm font-black transition focus:outline-none focus:ring-4",
+                readerPalette.focus,
                 readerPalette.control,
                 readerPalette.hover,
               )}
-              onClick={() => setIsReadingThemeMenuOpen((isOpen) => !isOpen)}
+              onClick={() => {
+                setIsReadingIndexOpen((isOpen) => !isOpen);
+                setIsReadingThemeMenuOpen(false);
+              }}
+              type="button"
+            >
+              <Rows3 aria-hidden="true" className={readerPalette.accentIcon} size={18} />
+              <span className="hidden sm:inline">Secciones</span>
+            </button>
+            {isReadingIndexOpen ? (
+              <nav
+                className={cn(
+                  "absolute right-0 mt-2 grid w-56 gap-1 rounded-[18px] border p-2",
+                  readerPalette.control,
+                )}
+                aria-label="Secciones del análisis"
+              >
+                {articleNav.map((item) => {
+                  const isActive = activeSection === item.href;
+
+                  return (
+                    <a
+                      className={cn(
+                        "rounded-[14px] px-4 py-3 text-sm font-black transition",
+                        isActive ? readerPalette.active : cn(readerPalette.faint, readerPalette.hover),
+                      )}
+                      href={item.href}
+                      key={item.href}
+                      onClick={() => setIsReadingIndexOpen(false)}
+                    >
+                      {item.label}
+                    </a>
+                  );
+                })}
+              </nav>
+            ) : null}
+          </div>
+          <div className="relative">
+            <button
+              aria-expanded={isReadingThemeMenuOpen}
+              aria-label={`Tema de lectura: ${activeReadingTheme.label}`}
+              className={cn(
+                "grid h-12 w-12 place-items-center rounded-full border transition focus:outline-none focus:ring-4",
+                readerPalette.focus,
+                readerPalette.control,
+                readerPalette.hover,
+              )}
+              onClick={() => {
+                setIsReadingThemeMenuOpen((isOpen) => !isOpen);
+                setIsReadingIndexOpen(false);
+              }}
               title={`Tema: ${activeReadingTheme.label}`}
               type="button"
             >
-              <ActiveReadingThemeIcon aria-hidden="true" className="text-violet-600" size={20} />
+              <ActiveReadingThemeIcon aria-hidden="true" className={readerPalette.accentIcon} size={20} />
             </button>
             {isReadingThemeMenuOpen ? (
               <div
@@ -1796,7 +1875,8 @@ export function BookExperience({ book }: BookExperienceProps) {
                     <button
                       aria-label={`Usar tema ${option.label}`}
                       className={cn(
-                        "grid h-11 w-11 place-items-center rounded-[14px] transition focus:outline-none focus:ring-4 focus:ring-violet-500/20",
+                        "grid h-11 w-11 place-items-center rounded-[14px] transition focus:outline-none focus:ring-4",
+                        readerPalette.focus,
                         isActive ? readerPalette.active : cn(readerPalette.faint, readerPalette.hover),
                       )}
                       key={option.key}
@@ -1816,7 +1896,8 @@ export function BookExperience({ book }: BookExperienceProps) {
           </div>
           <button
             className={cn(
-              "inline-flex h-12 items-center gap-2 rounded-full border px-4 text-sm font-black transition focus:outline-none focus:ring-4 focus:ring-violet-500/20",
+              "inline-flex h-12 items-center gap-2 rounded-full border px-4 text-sm font-black transition focus:outline-none focus:ring-4",
+              readerPalette.focus,
               readerPalette.control,
               readerPalette.hover,
             )}
@@ -1914,7 +1995,7 @@ export function BookExperience({ book }: BookExperienceProps) {
               >
                 {getBookDisplayTitle(book)}
               </h1>
-              <p className="mt-3 text-lg font-black text-violet-700">{book.author}</p>
+              <p className={cn("mt-3 text-lg font-black", isReadingMode ? readerPalette.accent : "text-violet-700")}>{book.author}</p>
               <p
                 className={cn(
                   "mt-5 max-w-3xl text-base leading-8 md:text-lg",
@@ -1935,7 +2016,7 @@ export function BookExperience({ book }: BookExperienceProps) {
                     isReadingMode ? readerPalette.soft : "bg-slate-50",
                   )}
                 >
-                  <Sparkles aria-hidden="true" className="text-violet-600" size={17} />
+                  <Sparkles aria-hidden="true" className={isReadingMode ? readerPalette.accentIcon : "text-violet-600"} size={17} />
                   {book.keyPoints.length} ideas clave
                 </span>
                 <span
@@ -1944,7 +2025,7 @@ export function BookExperience({ book }: BookExperienceProps) {
                     isReadingMode ? readerPalette.soft : "bg-slate-50",
                   )}
                 >
-                  <CheckCircle2 aria-hidden="true" className="text-violet-600" size={17} />
+                  <CheckCircle2 aria-hidden="true" className={isReadingMode ? readerPalette.accentIcon : "text-violet-600"} size={17} />
                   {book.activities.length} ejercicios
                 </span>
                 <span
@@ -1953,7 +2034,7 @@ export function BookExperience({ book }: BookExperienceProps) {
                     isReadingMode ? readerPalette.soft : "bg-slate-50",
                   )}
                 >
-                  <Clock3 aria-hidden="true" className="text-violet-600" size={17} />
+                  <Clock3 aria-hidden="true" className={isReadingMode ? readerPalette.accentIcon : "text-violet-600"} size={17} />
                   {book.readingTime} min de lectura
                 </span>
               </div>
@@ -1974,7 +2055,7 @@ export function BookExperience({ book }: BookExperienceProps) {
                   )}
                 >
                   <div
-                    className="h-full rounded-full bg-gradient-to-r from-violet-700 to-indigo-500 transition-[width] duration-300"
+                    className={cn("h-full rounded-full transition-[width] duration-300", isReadingMode ? readerPalette.progressFill : "bg-gradient-to-r from-violet-700 to-indigo-500")}
                     style={{ width: `${readingProgress}%` }}
                   />
                 </div>
@@ -1982,30 +2063,24 @@ export function BookExperience({ book }: BookExperienceProps) {
             </div>
           </section>
 
-          <div
-            className={cn(
-              "sticky z-30 mt-5 rounded-[22px] border p-2",
-              isReadingMode ? "top-[86px]" : "top-3 shadow-[0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur-xl",
-              isReadingMode ? readerPalette.control : "border-slate-950/[0.08] bg-white/95",
-            )}
-          >
-            <nav className="flex min-w-0 gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {articleNav.map((item) => (
-                <a
-                  className={cn(
-                    "shrink-0 rounded-[16px] px-4 py-3 text-sm font-black text-slate-500 transition hover:text-violet-700",
-                    activeSection === item.href && "bg-violet-50 text-violet-700",
-                    isReadingMode && cn(readerPalette.faint, readerPalette.hover),
-                    isReadingMode && activeSection === item.href && readerPalette.active,
-                  )}
-                  href={item.href}
-                  key={item.href}
-                >
-                  {item.label}
-                </a>
-              ))}
-            </nav>
-          </div>
+          {!isReadingMode ? (
+            <div className="sticky top-3 z-30 mt-5 rounded-[22px] border border-slate-950/[0.08] bg-white/95 p-2 shadow-[0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur-xl">
+              <nav className="flex min-w-0 gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {articleNav.map((item) => (
+                  <a
+                    className={cn(
+                      "shrink-0 rounded-[16px] px-4 py-3 text-sm font-black text-slate-500 transition hover:text-violet-700",
+                      activeSection === item.href && "bg-violet-50 text-violet-700",
+                    )}
+                    href={item.href}
+                    key={item.href}
+                  >
+                    {item.label}
+                  </a>
+                ))}
+              </nav>
+            </div>
+          ) : null}
 
           <article className="mt-6 space-y-6">
             <section className={readerSectionClass} id="ideas">
@@ -2022,7 +2097,7 @@ export function BookExperience({ book }: BookExperienceProps) {
               </div>
             </section>
             <section className={readerSectionClass} id="ejercicios">
-              <p className="text-xs font-black uppercase tracking-[0.22em] text-violet-600">Aplicación práctica</p>
+              <p className={cn("text-xs font-black uppercase tracking-[0.22em]", isReadingMode ? readerPalette.accent : "text-violet-600")}>Aplicación práctica</p>
               <h2 className={cn("mt-2 text-2xl font-black tracking-[-0.03em]", isReadingMode ? readerHeadingClass : "text-slate-950")}>Ejercicios para convertir ideas en acción</h2>
               <div className="mt-5 grid gap-4">
                 {book.activities.map((activity) => (
@@ -2036,7 +2111,7 @@ export function BookExperience({ book }: BookExperienceProps) {
               </div>
             </section>
             <section className={readerSectionClass} id="resena">
-              <p className="text-xs font-black uppercase tracking-[0.22em] text-violet-600">Reseña editorial</p>
+              <p className={cn("text-xs font-black uppercase tracking-[0.22em]", isReadingMode ? readerPalette.accent : "text-violet-600")}>Reseña editorial</p>
               <h2 className={cn("mt-2 text-2xl font-black tracking-[-0.03em]", isReadingMode ? readerHeadingClass : "text-slate-950")}>Qué propone este análisis</h2>
               <div className="mt-4 grid gap-4">
                 {book.analysis.map((section) => (
@@ -2056,11 +2131,11 @@ export function BookExperience({ book }: BookExperienceProps) {
                 className={cn(
                   "mt-6 rounded-[20px] border p-5 text-sm leading-7",
                   isReadingMode
-                    ? cn(readerPalette.border, "bg-violet-500/10", isReaderDark ? "text-stone-200" : readerPalette.muted)
+                    ? cn(readerPalette.border, readerPalette.accentSoft, isReaderDark ? "text-stone-200" : readerPalette.muted)
                     : "border-violet-100 bg-violet-50 text-violet-950",
                 )}
               >
-                <strong className={cn("block text-base", isReaderDark ? "text-violet-200" : "text-violet-700")}>Idea para llevar</strong>
+                <strong className={cn("block text-base", isReadingMode ? readerPalette.accent : "text-violet-700")}>Idea para llevar</strong>
                 {book.conclusion}
               </div>
             </section>
