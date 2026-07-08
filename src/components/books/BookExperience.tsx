@@ -1674,6 +1674,8 @@ export function BookExperience({ book }: BookExperienceProps) {
         accentSoft: "bg-violet-500/10",
         focus: "focus:ring-violet-500/20",
         control: "border-white/10 bg-[#191918]/96 text-stone-100",
+        popoverColor: "#191918",
+        popoverShadow: "0 18px 55px rgba(0, 0, 0, 0.35)",
         progress: "bg-white/10",
         progressFill: "bg-gradient-to-r from-violet-500 via-indigo-400 to-fuchsia-400",
       }
@@ -1695,6 +1697,8 @@ export function BookExperience({ book }: BookExperienceProps) {
           accentSoft: "bg-amber-900/10",
           focus: "focus:ring-amber-900/10",
           control: "border-amber-950/10 bg-[#fff5df]/96 text-stone-900",
+          popoverColor: "#fff5df",
+          popoverShadow: "0 18px 55px rgba(120, 53, 15, 0.16)",
           progress: "bg-amber-950/10",
           progressFill: "bg-gradient-to-r from-amber-800 via-orange-500 to-amber-600",
         }
@@ -1715,6 +1719,8 @@ export function BookExperience({ book }: BookExperienceProps) {
           accentSoft: "bg-violet-50",
           focus: "focus:ring-violet-500/20",
           control: "border-slate-950/[0.08] bg-white/96 text-slate-950",
+          popoverColor: "#ffffff",
+          popoverShadow: "0 18px 55px rgba(15, 23, 42, 0.12)",
           progress: "bg-slate-100",
           progressFill: "bg-gradient-to-r from-violet-700 via-indigo-500 to-fuchsia-500",
         };
@@ -1816,10 +1822,14 @@ export function BookExperience({ book }: BookExperienceProps) {
             {isReadingIndexOpen ? (
               <nav
                 className={cn(
-                  "absolute right-0 mt-2 grid w-56 gap-1 rounded-[18px] border p-2",
+                  "absolute right-0 z-[90] mt-2 grid w-56 gap-1 rounded-[18px] border p-2",
                   readerPalette.control,
                 )}
                 aria-label="Secciones del análisis"
+                style={{
+                  backgroundColor: readerPalette.popoverColor,
+                  boxShadow: readerPalette.popoverShadow,
+                }}
               >
                 {articleNav.map((item) => {
                   const isActive = activeSection === item.href;
@@ -1863,9 +1873,13 @@ export function BookExperience({ book }: BookExperienceProps) {
             {isReadingThemeMenuOpen ? (
               <div
                 className={cn(
-                  "absolute right-0 mt-2 grid grid-cols-1 gap-1 rounded-[18px] border p-1",
+                  "absolute right-0 z-[90] mt-2 grid grid-cols-1 gap-1 rounded-[18px] border p-1",
                   readerPalette.control,
                 )}
+                style={{
+                  backgroundColor: readerPalette.popoverColor,
+                  boxShadow: readerPalette.popoverShadow,
+                }}
               >
                 {readingThemeOptions.map((option) => {
                   const Icon = option.icon;
