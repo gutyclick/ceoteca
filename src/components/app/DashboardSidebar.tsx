@@ -48,7 +48,7 @@ function getInitials(name: string, email: string) {
 export function DashboardSidebar({
   active,
   tone = "dark",
-  showProfile = true,
+  showProfile = false,
 }: DashboardSidebarProps) {
   const router = useRouter();
   const isLight = tone === "light";
