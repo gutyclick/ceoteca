@@ -14,6 +14,7 @@ import type { PlanKey } from "@/config/plans";
 import { createAuthProvider } from "@/lib/auth/provider";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { signInSchema, signUpSchema } from "@/lib/validation/auth";
+import { cn } from "@/lib/utils/cn";
 
 type AuthMode = "login" | "register";
 
@@ -363,8 +364,15 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
   }
 
   return (
-    <main className="min-h-screen bg-[#fbfaf8] text-slate-950">
-      <section className="ceoteca-container relative grid min-h-screen gap-8 py-8 sm:py-10 md:py-12 lg:grid-cols-[0.9fr_1fr] lg:items-center">
+    <main className="bg-[#fbfaf8] text-slate-950">
+      <section
+        className={cn(
+          "ceoteca-container relative grid min-h-[calc(100svh-118px)] gap-6 lg:grid-cols-[0.9fr_1fr]",
+          isRegister
+            ? "py-4 sm:py-5 lg:items-start"
+            : "py-8 sm:py-10 lg:items-center",
+        )}
+      >
         <div className="absolute left-0 top-20 -z-10 h-80 w-80 rounded-full bg-violet-100/80 blur-3xl" />
         <div className="max-w-xl">
           <SectionHeading
@@ -380,23 +388,28 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
                 : "Ingresa con email y contraseña para continuar tu progreso."
             }
           />
-          <div className="mt-8 hidden rounded-[1.5rem] border border-slate-950/[0.08] bg-white p-6 shadow-[0_20px_60px_rgba(15,23,42,0.06)] lg:block">
+          <div className="mt-6 hidden rounded-[1.5rem] border border-slate-950/[0.08] bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)] lg:block">
             <p className="text-sm font-black uppercase tracking-[0.22em] text-violet-600">
               Ceoteca
             </p>
-            <h2 className="mt-4 text-3xl font-black leading-tight">
+            <h2 className="mt-3 text-[clamp(1.7rem,2.3vw,2.4rem)] font-black leading-tight">
               Aprende ideas clave y conviértelas en acción.
             </h2>
-            <p className="mt-4 text-sm leading-7 text-slate-600">
+            <p className="mt-3 text-sm leading-7 text-slate-600">
               Análisis editoriales, ejercicios prácticos y recomendaciones para
               complementar tus lecturas sin reemplazar la obra original.
             </p>
           </div>
         </div>
 
-        <Card className="mx-auto w-full max-w-xl border-slate-950/[0.08] bg-white p-5 text-slate-950 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:p-6 md:p-7">
+        <Card
+          className={cn(
+            "mx-auto w-full max-w-xl border-slate-950/[0.08] bg-white text-slate-950 shadow-[0_24px_80px_rgba(15,23,42,0.08)]",
+            isRegister ? "p-4 sm:p-5" : "p-5 sm:p-6 md:p-7",
+          )}
+        >
           <button
-            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-button border border-slate-950/10 bg-white px-5 text-sm font-bold text-slate-900 shadow-sm transition duration-200 hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-purple"
+            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-button border border-slate-950/10 bg-white px-5 text-sm font-bold text-slate-900 shadow-sm transition duration-200 hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-purple"
             onClick={handleGoogleAuth}
             type="button"
           >
@@ -417,19 +430,22 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
             </p>
           ) : null}
 
-          <div className="my-5 flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-slate-400">
+          <div className="my-4 flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-slate-400">
             <span className="h-px flex-1 bg-slate-200" />
             o con email
             <span className="h-px flex-1 bg-slate-200" />
           </div>
 
-          <form className="space-y-3.5" onSubmit={handleSubmit(onSubmit)}>
+          <form
+            className={cn(isRegister ? "space-y-3" : "space-y-3.5")}
+            onSubmit={handleSubmit(onSubmit)}
+          >
             {isRegister ? (
               <label className="grid gap-2 text-sm">
                 Nombre
                 <input
                   autoComplete="name"
-                  className="min-h-12 rounded-button border border-slate-950/10 bg-white px-4 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
+                  className="min-h-11 rounded-button border border-slate-950/10 bg-white px-4 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
                   placeholder="Tu nombre"
                   {...register("fullName")}
                 />
@@ -445,7 +461,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
               Email
               <input
                 autoComplete="email"
-                className="min-h-12 rounded-button border border-slate-950/10 bg-white px-4 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
+                className="min-h-11 rounded-button border border-slate-950/10 bg-white px-4 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
                 placeholder="tu@email.com"
                 type="email"
                 {...register("email")}
@@ -459,7 +475,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
               Contraseña
               <span className="relative">
                 <input
-                  className="min-h-12 w-full rounded-button border border-slate-950/10 bg-white px-4 pr-12 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
+                  className="min-h-11 w-full rounded-button border border-slate-950/10 bg-white px-4 pr-12 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
                   placeholder={isRegister ? "Mínimo 10 caracteres" : "Tu contraseña"}
                   type={showPassword ? "text" : "password"}
                   {...passwordRegistration}
@@ -524,7 +540,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
                 <label className="grid gap-2 text-sm">
                   Confirmar contraseña
                   <input
-                    className="min-h-12 rounded-button border border-slate-950/10 bg-white px-4 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
+                    className="min-h-11 rounded-button border border-slate-950/10 bg-white px-4 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
                     placeholder="Repite tu contraseña"
                     type="password"
                     {...register("confirmPassword")}
@@ -600,7 +616,11 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
               </div>
             ) : null}
 
-            <Button className="w-full shadow-[0_18px_42px_rgba(124,58,237,0.22)]" disabled={isSubmitting} type="submit">
+            <Button
+              className="min-h-11 w-full shadow-[0_18px_42px_rgba(124,58,237,0.22)]"
+              disabled={isSubmitting}
+              type="submit"
+            >
               {isSubmitting ? (
                 <Loader2 aria-hidden="true" className="animate-spin" size={18} />
               ) : null}
