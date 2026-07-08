@@ -1,6 +1,6 @@
 "use client";
 
-import { Chrome, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Check, Chrome, Eye, EyeOff, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -363,8 +363,8 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
   }
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#fbfaf8] text-slate-950">
-      <section className="ceoteca-container relative grid gap-10 py-16 md:py-24 lg:grid-cols-[0.9fr_1fr] lg:items-center">
+    <main className="min-h-screen bg-[#fbfaf8] text-slate-950">
+      <section className="ceoteca-container relative grid min-h-screen gap-8 py-8 sm:py-10 md:py-12 lg:grid-cols-[0.9fr_1fr] lg:items-center">
         <div className="absolute left-0 top-20 -z-10 h-80 w-80 rounded-full bg-violet-100/80 blur-3xl" />
         <div className="max-w-xl">
           <SectionHeading
@@ -380,7 +380,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
                 : "Ingresa con email y contraseña para continuar tu progreso."
             }
           />
-          <div className="mt-10 hidden rounded-[1.5rem] border border-slate-950/[0.08] bg-white p-6 shadow-[0_20px_60px_rgba(15,23,42,0.06)] lg:block">
+          <div className="mt-8 hidden rounded-[1.5rem] border border-slate-950/[0.08] bg-white p-6 shadow-[0_20px_60px_rgba(15,23,42,0.06)] lg:block">
             <p className="text-sm font-black uppercase tracking-[0.22em] text-violet-600">
               Ceoteca
             </p>
@@ -394,7 +394,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
           </div>
         </div>
 
-        <Card className="mx-auto w-full max-w-xl border-slate-950/[0.08] bg-white p-6 text-slate-950 shadow-[0_24px_80px_rgba(15,23,42,0.08)] md:p-8">
+        <Card className="mx-auto w-full max-w-xl border-slate-950/[0.08] bg-white p-5 text-slate-950 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:p-6 md:p-7">
           <button
             className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-button border border-slate-950/10 bg-white px-5 text-sm font-bold text-slate-900 shadow-sm transition duration-200 hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-purple"
             onClick={handleGoogleAuth}
@@ -417,17 +417,18 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
             </p>
           ) : null}
 
-          <div className="my-6 flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-slate-400">
+          <div className="my-5 flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-slate-400">
             <span className="h-px flex-1 bg-slate-200" />
             o con email
             <span className="h-px flex-1 bg-slate-200" />
           </div>
 
-          <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
+          <form className="space-y-3.5" onSubmit={handleSubmit(onSubmit)}>
             {isRegister ? (
               <label className="grid gap-2 text-sm">
                 Nombre
                 <input
+                  autoComplete="name"
                   className="min-h-12 rounded-button border border-slate-950/10 bg-white px-4 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
                   placeholder="Tu nombre"
                   {...register("fullName")}
@@ -443,6 +444,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
             <label className="grid gap-2 text-sm">
               Email
               <input
+                autoComplete="email"
                 className="min-h-12 rounded-button border border-slate-950/10 bg-white px-4 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
                 placeholder="tu@email.com"
                 type="email"
@@ -533,12 +535,15 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
                     </span>
                   ) : null}
                 </label>
-                <label className="flex items-start gap-3 text-sm leading-6 text-slate-600">
+                <label className="group flex items-start gap-3 text-sm leading-6 text-slate-600">
                   <input
-                    className="mt-1 h-4 w-4 shrink-0 rounded border border-slate-300 bg-white accent-violet-600 shadow-sm"
+                    className="peer sr-only"
                     type="checkbox"
                     {...register("acceptedTerms")}
                   />
+                  <span className="mt-1 grid h-5 w-5 shrink-0 place-items-center rounded-[6px] border border-slate-300 bg-white text-white shadow-sm transition peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-brand-purple peer-checked:border-violet-600 peer-checked:bg-violet-600 group-hover:border-violet-300">
+                    <Check aria-hidden="true" size={14} strokeWidth={3} />
+                  </span>
                   <span>
                     Acepto{" "}
                     <Link className="text-brand-purple" href="/terminos">
