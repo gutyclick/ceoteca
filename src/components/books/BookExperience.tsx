@@ -1731,12 +1731,20 @@ export function BookExperience({ book }: BookExperienceProps) {
   return (
     <main
       className={cn(
-        "min-h-screen overflow-x-clip bg-[#fbfaf8] pb-24 text-slate-950 transition-[padding] duration-300 ease-out sm:pl-[var(--dashboard-sidebar-offset,84px)]",
+        "relative isolate min-h-screen overflow-x-clip bg-[#fbfaf8] pb-24 text-slate-950 transition-[padding] duration-300 ease-out sm:pl-[var(--dashboard-sidebar-offset,84px)]",
         isReadingMode && "sm:pl-0",
         isReadingMode && readerPalette.page,
         isAudioDockOpen && "pb-52",
       )}
+      style={isReadingMode ? { backgroundColor: readerPalette.pageColor } : undefined}
     >
+      {isReadingMode ? (
+        <div
+          aria-hidden="true"
+          className="fixed inset-0 -z-10"
+          style={{ backgroundColor: readerPalette.pageColor }}
+        />
+      ) : null}
       {!isReadingMode ? (
         <DashboardSidebar active="library" showProfile={false} tone="light" />
       ) : null}
@@ -1755,10 +1763,8 @@ export function BookExperience({ book }: BookExperienceProps) {
 
       {isReadingMode ? (
         <div
-          className={cn(
-            "fixed right-4 top-4 z-50 flex items-center gap-2 sm:right-6",
-            isReadingThemeMenuOpen && "z-[60]",
-          )}
+          className="fixed inset-x-0 top-0 z-[70] flex justify-end gap-2 px-4 py-4 sm:px-6"
+          style={{ backgroundColor: readerPalette.pageColor }}
         >
           <div className="relative">
             <button
