@@ -1646,6 +1646,7 @@ export function BookExperience({ book }: BookExperienceProps) {
   const readerPalette = isReaderDark
     ? {
         page: "bg-[#10100f] text-stone-100",
+        pageColor: "#10100f",
         surface: "border-white/10 bg-[#191918] text-stone-100 shadow-none",
         elevated: "border-white/10 bg-[#22211f] text-stone-100",
         soft: "bg-white/[0.055]",
@@ -1661,6 +1662,7 @@ export function BookExperience({ book }: BookExperienceProps) {
     : isReaderSepia
       ? {
           page: "bg-[#f4ead8] text-stone-900",
+          pageColor: "#f4ead8",
           surface: "border-amber-950/10 bg-[#fff5df] text-stone-900 shadow-none",
           elevated: "border-amber-950/10 bg-[#fff9ed] text-stone-900",
           soft: "bg-amber-950/[0.045]",
@@ -1675,6 +1677,7 @@ export function BookExperience({ book }: BookExperienceProps) {
         }
       : {
           page: "bg-[#fbfaf6] text-slate-950",
+          pageColor: "#fbfaf6",
           surface: "border-slate-950/[0.08] bg-white text-slate-950 shadow-none",
           elevated: "border-slate-950/[0.08] bg-white text-slate-950",
           soft: "bg-slate-50",
@@ -1707,6 +1710,23 @@ export function BookExperience({ book }: BookExperienceProps) {
   ];
   const activeReadingTheme = readingThemeOptions.find((option) => option.key === readingTheme) ?? readingThemeOptions[0];
   const ActiveReadingThemeIcon = activeReadingTheme.icon;
+
+  useEffect(() => {
+    if (!isReadingMode) {
+      return;
+    }
+
+    const previousBodyBackground = document.body.style.backgroundColor;
+    const previousHtmlBackground = document.documentElement.style.backgroundColor;
+
+    document.body.style.backgroundColor = readerPalette.pageColor;
+    document.documentElement.style.backgroundColor = readerPalette.pageColor;
+
+    return () => {
+      document.body.style.backgroundColor = previousBodyBackground;
+      document.documentElement.style.backgroundColor = previousHtmlBackground;
+    };
+  }, [isReadingMode, readerPalette.pageColor]);
 
   return (
     <main
@@ -1758,7 +1778,7 @@ export function BookExperience({ book }: BookExperienceProps) {
             {isReadingThemeMenuOpen ? (
               <div
                 className={cn(
-                  "absolute right-0 mt-2 grid grid-cols-3 gap-1 rounded-[18px] border p-1",
+                  "absolute right-0 mt-2 grid grid-cols-1 gap-1 rounded-[18px] border p-1",
                   readerPalette.control,
                 )}
               >
