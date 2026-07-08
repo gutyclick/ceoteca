@@ -395,15 +395,14 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
         </div>
 
         <Card className="mx-auto w-full max-w-xl border-slate-950/[0.08] bg-white p-6 text-slate-950 shadow-[0_24px_80px_rgba(15,23,42,0.08)] md:p-8">
-          <Button
-            className="w-full border-slate-950/10 bg-white text-slate-950 shadow-sm hover:bg-violet-50"
+          <button
+            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-button border border-slate-950/10 bg-white px-5 text-sm font-bold text-slate-900 shadow-sm transition duration-200 hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-purple"
             onClick={handleGoogleAuth}
             type="button"
-            variant="secondary"
           >
             <Chrome aria-hidden="true" size={18} />
             Continuar con Google
-          </Button>
+          </button>
           {isRegister ? (
             <p className="mt-3 text-center text-xs leading-5 text-slate-500">
               Al continuar con Google aceptas nuestros{" "}
@@ -429,7 +428,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
               <label className="grid gap-2 text-sm">
                 Nombre
                 <input
-                  className="min-h-12 rounded-button border border-slate-950/10 bg-white px-4 text-slate-950 outline-none transition focus:border-brand-purple"
+                  className="min-h-12 rounded-button border border-slate-950/10 bg-white px-4 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
                   placeholder="Tu nombre"
                   {...register("fullName")}
                 />
@@ -444,7 +443,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
             <label className="grid gap-2 text-sm">
               Email
               <input
-                className="min-h-12 rounded-button border border-slate-950/10 bg-white px-4 text-slate-950 outline-none transition focus:border-brand-purple"
+                className="min-h-12 rounded-button border border-slate-950/10 bg-white px-4 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
                 placeholder="tu@email.com"
                 type="email"
                 {...register("email")}
@@ -458,7 +457,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
               Contraseña
               <span className="relative">
                 <input
-                  className="min-h-12 w-full rounded-button border border-slate-950/10 bg-white px-4 pr-12 text-slate-950 outline-none transition focus:border-brand-purple"
+                  className="min-h-12 w-full rounded-button border border-slate-950/10 bg-white px-4 pr-12 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
                   placeholder={isRegister ? "Mínimo 10 caracteres" : "Tu contraseña"}
                   type={showPassword ? "text" : "password"}
                   {...passwordRegistration}
@@ -523,7 +522,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
                 <label className="grid gap-2 text-sm">
                   Confirmar contraseña
                   <input
-                    className="min-h-12 rounded-button border border-slate-950/10 bg-white px-4 text-slate-950 outline-none transition focus:border-brand-purple"
+                    className="min-h-12 rounded-button border border-slate-950/10 bg-white px-4 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
                     placeholder="Repite tu contraseña"
                     type="password"
                     {...register("confirmPassword")}
@@ -536,7 +535,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
                 </label>
                 <label className="flex items-start gap-3 text-sm leading-6 text-slate-600">
                   <input
-                    className="mt-1 h-4 w-4 rounded border-slate-300 bg-white"
+                    className="mt-1 h-4 w-4 shrink-0 rounded border border-slate-300 bg-white accent-violet-600 shadow-sm"
                     type="checkbox"
                     {...register("acceptedTerms")}
                   />
