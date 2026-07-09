@@ -4,46 +4,47 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
-  Bell,
+  BookOpen,
   CheckCircle2,
-  ChevronLeft,
   ChevronRight,
+  Clock3,
   CreditCard,
   Download,
-  HelpCircle,
+  Flame,
+  Globe,
   KeyRound,
+  Languages,
   Loader2,
   Mail,
-  Settings,
+  Phone,
+  Search,
   ShieldCheck,
+  SlidersHorizontal,
   Trash2,
+  Trophy,
   User,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { DashboardSidebar } from "@/components/app/DashboardSidebar";
 import { NotificationBell } from "@/components/app/NotificationBell";
-import { Card } from "@/components/ui/Card";
 import { plans, type PlanKey } from "@/config/plans";
-import { siteConfig } from "@/config/site";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { resolvePlanFromSubscriptions } from "@/lib/subscriptions/resolve";
 import { cn } from "@/lib/utils/cn";
 
 type SettingsSectionKey =
   | "profile"
+  | "preferences"
   | "security"
   | "billing"
-  | "notifications"
-  | "privacy"
-  | "support";
+  | "privacy";
 
 type SettingsItem = {
   key: SettingsSectionKey;
   title: string;
   description: string;
   icon: LucideIcon;
-  tone?: "purple" | "cyan" | "blue" | "danger";
 };
 
 type AccountForm = {
@@ -64,41 +65,33 @@ type MfaSetup = {
 const settingsItems: SettingsItem[] = [
   {
     key: "profile",
-    title: "Perfil",
-    description: "Nombre, correo y datos personales",
+    title: "Mi cuenta",
+    description: "Información personal y perfil",
     icon: User,
+  },
+  {
+    key: "preferences",
+    title: "Preferencias",
+    description: "Lectura, idioma y experiencia",
+    icon: SlidersHorizontal,
   },
   {
     key: "security",
     title: "Seguridad",
-    description: "Contraseña, 2FA y privacidad de acceso",
+    description: "Contraseña y verificación",
     icon: ShieldCheck,
   },
   {
     key: "billing",
-    title: "Suscripción y pagos",
+    title: "Suscripción",
     description: "Plan, pagos y comprobantes",
     icon: CreditCard,
-  },
-  {
-    key: "notifications",
-    title: "Notificaciones",
-    description: "Recordatorios, correo y actividad",
-    icon: Bell,
   },
   {
     key: "privacy",
     title: "Datos y privacidad",
     description: "Exportación y control de datos",
     icon: Download,
-    tone: "cyan",
-  },
-  {
-    key: "support",
-    title: "Ayuda y soporte",
-    description: "Centro de ayuda y contacto",
-    icon: HelpCircle,
-    tone: "blue",
   },
 ];
 
@@ -131,53 +124,30 @@ function Field({
   hint?: string;
 }) {
   return (
-    <label className="grid gap-2 text-sm">
-      <span className="font-medium text-text-secondary">{label}</span>
+    <label className="grid gap-2 text-sm font-bold text-slate-950">
+      {label}
       {children}
-      {hint ? <span className="text-xs leading-5 text-text-muted">{hint}</span> : null}
+      {hint ? <span className="text-xs leading-5 text-slate-500">{hint}</span> : null}
     </label>
   );
 }
 
-function Toggle({
-  label,
-  description,
-  enabled,
-  onChange,
-  disabled = false,
+function InputShell({
+  icon: Icon,
+  children,
 }: {
-  label: string;
-  description: string;
-  enabled: boolean;
-  onChange: () => void;
-  disabled?: boolean;
+  icon: LucideIcon;
+  children: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-[12px] border border-white/10 bg-white/[0.025] p-3.5">
-      <div>
-        <p className="text-sm font-medium">{label}</p>
-        <p className="mt-1 text-sm leading-6 text-text-secondary">{description}</p>
-      </div>
-      <button
-        aria-pressed={enabled}
-        className={cn(
-          "h-7 w-12 rounded-full border p-1 transition disabled:cursor-not-allowed disabled:opacity-60",
-          enabled
-            ? "border-brand-purple/50 bg-brand-purple/35"
-            : "border-white/10 bg-white/[0.04]",
-        )}
-        disabled={disabled}
-        onClick={onChange}
-        type="button"
-      >
-        <span
-          className={cn(
-            "block h-5 w-5 rounded-full bg-white transition",
-            enabled && "translate-x-5",
-          )}
-        />
-      </button>
-    </div>
+    <span className="relative block">
+      <Icon
+        aria-hidden="true"
+        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+        size={18}
+      />
+      {children}
+    </span>
   );
 }
 
@@ -195,10 +165,10 @@ function StatusMessage({
   return (
     <div
       className={cn(
-        "rounded-card border p-3 text-sm leading-6",
-        type === "success" && "border-success/30 bg-success/10 text-success",
-        type === "error" && "border-danger/30 bg-danger/10 text-danger",
-        type === "info" && "border-brand-purple/30 bg-brand-purple/10 text-brand-purple",
+        "rounded-[14px] border px-4 py-3 text-sm leading-6",
+        type === "success" && "border-emerald-200 bg-emerald-50 text-emerald-700",
+        type === "error" && "border-red-200 bg-red-50 text-red-700",
+        type === "info" && "border-violet-200 bg-violet-50 text-violet-700",
       )}
     >
       {message}
@@ -206,50 +176,65 @@ function StatusMessage({
   );
 }
 
-function SettingsRow({
-  item,
-  active,
-  onClick,
+function Toggle({
+  label,
+  description,
+  enabled,
+  onChange,
 }: {
-  item: SettingsItem;
-  active: boolean;
-  onClick: () => void;
+  label: string;
+  description: string;
+  enabled: boolean;
+  onChange: () => void;
 }) {
-  const Icon = item.icon;
-  const iconClass = {
-    purple: "bg-brand-purple/15 text-brand-purple border-brand-purple/20",
-    cyan: "bg-cyan-400/12 text-cyan-300 border-cyan-300/20",
-    blue: "bg-blue-400/12 text-blue-300 border-blue-300/20",
-    danger: "bg-danger/12 text-danger border-danger/25",
-  }[item.tone ?? "purple"];
-
   return (
-    <button
-      className={cn(
-        "flex w-full items-center gap-3 rounded-[12px] border px-3 py-3 text-left transition",
-        active
-          ? "border-brand-purple/55 bg-brand-purple/15 text-white"
-          : "border-transparent hover:border-white/10 hover:bg-white/[0.035] hover:text-brand-purple",
-      )}
-      onClick={onClick}
-      type="button"
-    >
-      <span
+    <div className="flex items-center justify-between gap-4 rounded-[16px] border border-slate-950/[0.08] bg-white p-4">
+      <div>
+        <p className="text-sm font-black text-slate-950">{label}</p>
+        <p className="mt-1 text-sm leading-6 text-slate-600">{description}</p>
+      </div>
+      <button
+        aria-pressed={enabled}
         className={cn(
-          "grid h-10 w-10 shrink-0 place-items-center rounded-[10px] border",
-          iconClass,
+          "h-7 w-12 rounded-full border p-1 transition",
+          enabled
+            ? "border-violet-500 bg-violet-600"
+            : "border-slate-200 bg-slate-100",
         )}
+        onClick={onChange}
+        type="button"
       >
-        <Icon aria-hidden="true" size={19} />
+        <span
+          className={cn(
+            "block h-5 w-5 rounded-full bg-white transition",
+            enabled && "translate-x-5",
+          )}
+        />
+      </button>
+    </div>
+  );
+}
+
+function MetricRow({
+  icon: Icon,
+  title,
+  value,
+}: {
+  icon: LucideIcon;
+  title: string;
+  value: string;
+}) {
+  return (
+    <div className="flex items-center gap-4 border-b border-slate-950/[0.06] py-4 last:border-b-0">
+      <span className="grid h-12 w-12 place-items-center rounded-[14px] bg-violet-50 text-violet-700">
+        <Icon aria-hidden="true" size={23} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-sm font-semibold">{item.title}</span>
-        <span className="mt-0.5 block text-xs leading-5 text-text-secondary">
-          {item.description}
-        </span>
+        <span className="block text-sm font-black text-slate-950">{title}</span>
+        <span className="mt-1 block text-sm text-slate-500">{value}</span>
       </span>
-      <ChevronRight aria-hidden="true" className="text-text-secondary" size={17} />
-    </button>
+      <ChevronRight aria-hidden="true" className="text-slate-400" size={18} />
+    </div>
   );
 }
 
@@ -279,7 +264,7 @@ export function SettingsView() {
   const [mfaSetup, setMfaSetup] = useState<MfaSetup | null>(null);
   const [mfaCode, setMfaCode] = useState("");
   const [isMfaLoading, setIsMfaLoading] = useState(false);
-  const [notifications, setNotifications] = useState({
+  const [preferences, setPreferences] = useState({
     reminders: true,
     weeklySummary: false,
     productNews: false,
@@ -402,7 +387,7 @@ export function SettingsView() {
           }
 
           setProfileMessage(
-            "Datos guardados. Te enviaremos una verificación al nuevo correo para completar el cambio.",
+            "Datos guardados. Revisa tu nuevo correo para confirmar el cambio.",
           );
         } else {
           setProfileMessage("Perfil actualizado correctamente.");
@@ -542,9 +527,7 @@ export function SettingsView() {
   function downloadAccountData() {
     const payload = {
       profile: accountForm,
-      preferences: {
-        notifications,
-      },
+      preferences,
       exportedAt: new Date().toISOString(),
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], {
@@ -558,194 +541,200 @@ export function SettingsView() {
     URL.revokeObjectURL(url);
   }
 
-  const selectedItem =
-    settingsItems.find((item) => item.key === activeSection) ?? settingsItems[0];
-  const SelectedIcon = selectedItem.icon;
   const initials = getInitials(accountForm.fullName, accountForm.email);
-
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#03040b] pb-16 pl-0 text-text-primary transition-[padding] duration-300 ease-out sm:pl-[var(--dashboard-sidebar-offset,84px)]">
-      <DashboardSidebar active="settings" />
-      <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_18%_8%,rgba(124,58,237,0.18),transparent_28%),radial-gradient(circle_at_76%_18%,rgba(79,99,255,0.12),transparent_30%),linear-gradient(180deg,#02030a_0%,#050612_52%,#04040a_100%)]" />
+    <main className="min-h-screen overflow-x-hidden bg-[#fbfaf8] pb-12 pl-0 text-slate-950 transition-[padding] duration-300 ease-out sm:pl-[var(--dashboard-sidebar-offset,240px)]">
+      <DashboardSidebar active="settings" tone="light" />
 
-      <section className="w-full max-w-[1500px] px-5 pt-4 md:px-8 xl:px-10">
-        <header className="flex items-center justify-end">
-          <NotificationBell />
+      <section className="mx-auto w-full max-w-[1380px] px-5 pt-8 sm:px-7 lg:px-10">
+        <header className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(420px,auto)] lg:items-start">
+          <div>
+            <h1 className="text-4xl font-black tracking-[-0.04em] text-slate-950">
+              Ajustes
+            </h1>
+            <p className="mt-2 text-base text-slate-600">
+              Administra tu cuenta, preferencias y seguridad.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3 lg:justify-end">
+            <label className="relative hidden w-[340px] sm:block">
+              <span className="sr-only">Buscar en Ceoteca</span>
+              <Search
+                aria-hidden="true"
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                size={19}
+              />
+              <input
+                className="min-h-12 w-full rounded-[14px] border border-slate-950/[0.10] bg-white pl-12 pr-4 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-violet-300 focus:ring-4 focus:ring-violet-100"
+                placeholder="Buscar libros, autores o temas..."
+                type="search"
+              />
+            </label>
+            <NotificationBell />
+          </div>
         </header>
 
-        <section className="mt-10 grid gap-8 lg:grid-cols-[1fr_320px] lg:items-center">
-          <div className="flex items-start gap-5">
-            <button
-              aria-label="Volver"
-              className="mt-2 grid h-11 w-11 place-items-center rounded-button border border-white/10 bg-white/[0.035] text-brand-purple transition hover:text-white"
-              onClick={() => router.back()}
-              type="button"
-            >
-              <ChevronLeft aria-hidden="true" size={24} />
-            </button>
-            <div>
-              <h1 className="text-4xl font-semibold md:text-5xl">Ajustes</h1>
-              <p className="mt-3 text-base text-text-secondary md:text-lg">
-                Administra tu cuenta y preferencias
-              </p>
-            </div>
-          </div>
+        <nav
+          aria-label="Secciones de ajustes"
+          className="mt-8 flex gap-8 overflow-x-auto border-b border-slate-950/[0.08]"
+        >
+          {settingsItems.map((item) => {
+            const Icon = item.icon;
 
-          <div className="relative hidden min-h-36 lg:block">
-            <div className="absolute right-12 top-6 h-20 w-20 rotate-12 rounded-[22px] bg-brand-gradient shadow-[0_0_45px_rgba(124,58,237,0.48)]" />
-            <div className="absolute right-0 top-12 h-20 w-48 rounded-[22px] border border-white/10 bg-white/[0.055]" />
-            <div className="absolute right-12 top-16 h-5 w-20 rounded-full bg-black/50">
-              <span className="ml-auto block h-5 w-5 rounded-full bg-brand-purple" />
-            </div>
-            <Settings
-              aria-hidden="true"
-              className="absolute right-[86px] top-9 text-white drop-shadow-[0_0_20px_rgba(124,58,237,0.65)]"
-              size={66}
-            />
-          </div>
-        </section>
+            return (
+              <button
+                className={cn(
+                  "inline-flex min-h-14 shrink-0 items-center gap-2 border-b-2 px-1 text-sm font-black transition",
+                  activeSection === item.key
+                    ? "border-violet-600 text-violet-700"
+                    : "border-transparent text-slate-600 hover:text-violet-700",
+                )}
+                key={item.key}
+                onClick={() => setActiveSection(item.key)}
+                type="button"
+              >
+                <Icon aria-hidden="true" size={19} />
+                {item.title}
+              </button>
+            );
+          })}
+        </nav>
 
-        <section className="mt-8 grid gap-6 lg:grid-cols-[300px_1fr]">
-          <Card className="h-fit rounded-[18px] bg-white/[0.035] p-3 lg:sticky lg:top-6">
-            <nav aria-label="Secciones de configuracion" className="grid gap-1.5">
-              {settingsItems.map((item) => (
-                <SettingsRow
-                  active={activeSection === item.key}
-                  item={item}
-                  key={item.key}
-                  onClick={() => setActiveSection(item.key)}
-                />
-              ))}
-            </nav>
-          </Card>
-
-          <Card className="rounded-[18px] bg-white/[0.035] p-5 md:p-6">
-            <div className="flex items-start gap-3 border-b border-white/10 pb-5">
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[12px] border border-brand-purple/25 bg-brand-purple/15 text-brand-purple">
-                <SelectedIcon aria-hidden="true" size={21} />
-              </span>
-              <div>
-                <h2 className="text-2xl font-semibold">{selectedItem.title}</h2>
-                <p className="mt-1 text-sm leading-6 text-text-secondary">
-                  {selectedItem.description}
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-6">
-              {activeSection === "profile" ? (
-                <section className="grid gap-6">
-                  <div className="grid gap-6 rounded-[16px] border border-white/10 bg-white/[0.025] p-5 lg:grid-cols-[220px_1fr]">
+        <section className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
+          <div className="grid gap-6">
+            {activeSection === "profile" ? (
+              <>
+                <section className="rounded-[18px] border border-slate-950/[0.08] bg-white p-6">
+                  <div className="grid gap-7 xl:grid-cols-[minmax(0,1fr)_260px]">
                     <div>
-                      <p className="text-sm font-medium text-text-secondary">
-                        Imagen de perfil
-                      </p>
-                      <div className="mt-4 flex items-center gap-4 lg:block">
-                        <div className="grid h-24 w-24 shrink-0 place-items-center overflow-hidden rounded-[24px] border border-brand-purple/40 bg-brand-purple/15 text-2xl font-semibold text-white shadow-[0_0_38px_rgba(124,58,237,0.28)]">
-                          {accountForm.avatarUrl ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              alt=""
-                              className="h-full w-full object-cover"
-                              src={accountForm.avatarUrl}
+                      <h2 className="text-xl font-black text-slate-950">
+                        Información personal
+                      </h2>
+                      <div className="mt-6 grid gap-4">
+                        <Field label="Nombre completo">
+                          <InputShell icon={User}>
+                            <input
+                              className="min-h-11 w-full rounded-[12px] border border-slate-950/[0.10] bg-white pl-12 pr-4 text-slate-800 outline-none focus:border-violet-300 focus:ring-4 focus:ring-violet-100"
+                              disabled={isLoadingAccount}
+                              onChange={(event) =>
+                                setAccountForm((current) => ({
+                                  ...current,
+                                  fullName: event.target.value,
+                                }))
+                              }
+                              placeholder="Tu nombre"
+                              value={accountForm.fullName}
                             />
-                          ) : (
-                            initials
-                          )}
-                        </div>
-                        <p className="max-w-xs text-sm leading-6 text-text-secondary lg:mt-4">
-                          Elige una imagen preseleccionada para mantener una
-                          experiencia visual cuidada y consistente.
-                        </p>
+                          </InputShell>
+                        </Field>
+                        <Field
+                          hint="Si cambias tu correo, te enviaremos una verificación para proteger tu cuenta."
+                          label="Correo electrónico"
+                        >
+                          <InputShell icon={Mail}>
+                            <input
+                              className="min-h-11 w-full rounded-[12px] border border-slate-950/[0.10] bg-white pl-12 pr-4 text-slate-800 outline-none focus:border-violet-300 focus:ring-4 focus:ring-violet-100"
+                              disabled={isLoadingAccount}
+                              onChange={(event) =>
+                                setAccountForm((current) => ({
+                                  ...current,
+                                  email: event.target.value,
+                                }))
+                              }
+                              placeholder="tu@email.com"
+                              type="email"
+                              value={accountForm.email}
+                            />
+                          </InputShell>
+                        </Field>
+                        <Field label="Teléfono (opcional)">
+                          <InputShell icon={Phone}>
+                            <input
+                              className="min-h-11 w-full rounded-[12px] border border-slate-950/[0.10] bg-white pl-12 pr-4 text-slate-800 outline-none focus:border-violet-300 focus:ring-4 focus:ring-violet-100"
+                              placeholder="+57 300 123 4567"
+                              type="tel"
+                            />
+                          </InputShell>
+                        </Field>
+                        <Field
+                          hint="Opcional. Lo usamos para mejorar recomendaciones y comunicaciones."
+                          label="Fecha de nacimiento"
+                        >
+                          <input
+                            className="min-h-11 w-full rounded-[12px] border border-slate-950/[0.10] bg-white px-4 text-slate-800 outline-none focus:border-violet-300 focus:ring-4 focus:ring-violet-100"
+                            disabled={isLoadingAccount}
+                            onChange={(event) =>
+                              setAccountForm((current) => ({
+                                ...current,
+                                birthDate: event.target.value,
+                              }))
+                            }
+                            type="date"
+                            value={accountForm.birthDate}
+                          />
+                        </Field>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
-                      {avatarOptions.map((avatarUrl) => (
-                        <button
-                          aria-label="Seleccionar imagen de perfil"
-                          className={cn(
-                            "aspect-square overflow-hidden rounded-[16px] border bg-white/[0.04] transition hover:-translate-y-0.5 hover:border-brand-purple/70",
-                            accountForm.avatarUrl === avatarUrl
-                              ? "border-brand-purple shadow-[0_0_24px_rgba(124,58,237,0.35)]"
-                              : "border-white/10",
-                          )}
-                          disabled={isLoadingAccount}
-                          key={avatarUrl}
-                          onClick={() =>
-                            setAccountForm((current) => ({
-                              ...current,
-                              avatarUrl,
-                            }))
-                          }
-                          type="button"
-                        >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <div className="text-center">
+                      <div className="mx-auto grid h-28 w-28 place-items-center overflow-hidden rounded-full bg-violet-100 text-2xl font-black text-violet-700">
+                        {accountForm.avatarUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
                           <img
                             alt=""
                             className="h-full w-full object-cover"
-                            src={avatarUrl}
+                            src={accountForm.avatarUrl}
                           />
-                        </button>
-                      ))}
+                        ) : (
+                          initials
+                        )}
+                      </div>
+                      <p className="mt-4 font-black text-slate-950">
+                        Foto de perfil
+                      </p>
+                      <p className="mt-1 text-sm text-slate-500">
+                        Elige una imagen prealojada.
+                      </p>
+                      <div className="mt-4 grid grid-cols-3 gap-2">
+                        {avatarOptions.slice(0, 6).map((avatarUrl) => (
+                          <button
+                            aria-label="Seleccionar imagen de perfil"
+                            className={cn(
+                              "aspect-square overflow-hidden rounded-full border bg-white",
+                              accountForm.avatarUrl === avatarUrl
+                                ? "border-violet-600"
+                                : "border-slate-200",
+                            )}
+                            disabled={isLoadingAccount}
+                            key={avatarUrl}
+                            onClick={() =>
+                              setAccountForm((current) => ({
+                                ...current,
+                                avatarUrl,
+                              }))
+                            }
+                            type="button"
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              alt=""
+                              className="h-full w-full object-cover"
+                              src={avatarUrl}
+                            />
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
 
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <Field label="Nombre completo">
-                      <input
-                        className="min-h-12 rounded-button border border-white/10 bg-white/[0.035] px-4 outline-none transition focus:border-brand-purple/60"
-                        disabled={isLoadingAccount}
-                        onChange={(event) =>
-                          setAccountForm((current) => ({
-                            ...current,
-                            fullName: event.target.value,
-                          }))
-                        }
-                        placeholder="Tu nombre"
-                        value={accountForm.fullName}
-                      />
-                    </Field>
-                    <Field
-                      hint="Si actualizas tu correo, te enviaremos una verificación para proteger la cuenta."
-                      label="Correo electrónico"
-                    >
-                      <input
-                        className="min-h-12 rounded-button border border-white/10 bg-white/[0.035] px-4 outline-none transition focus:border-brand-purple/60"
-                        disabled={isLoadingAccount}
-                        onChange={(event) =>
-                          setAccountForm((current) => ({
-                            ...current,
-                            email: event.target.value,
-                          }))
-                        }
-                        placeholder="tu@email.com"
-                        type="email"
-                        value={accountForm.email}
-                      />
-                    </Field>
-                    <Field
-                      hint="Campo opcional. Nos ayuda a personalizar recomendaciones y comunicaciones."
-                      label="Fecha de nacimiento"
-                    >
-                      <input
-                        className="min-h-12 rounded-button border border-white/10 bg-white/[0.035] px-4 outline-none transition focus:border-brand-purple/60"
-                        disabled={isLoadingAccount}
-                        onChange={(event) =>
-                          setAccountForm((current) => ({
-                            ...current,
-                            birthDate: event.target.value,
-                          }))
-                        }
-                        type="date"
-                        value={accountForm.birthDate}
-                      />
-                    </Field>
+                  <div className="mt-6 grid gap-3">
+                    <StatusMessage message={profileMessage} type="success" />
+                    <StatusMessage message={profileError} type="error" />
                   </div>
-                  <StatusMessage message={profileMessage} type="success" />
-                  <StatusMessage message={profileError} type="error" />
+
                   <button
-                    className="inline-flex min-h-12 w-fit items-center justify-center gap-2 rounded-button bg-brand-gradient px-5 text-sm font-medium text-white transition hover:brightness-110 disabled:opacity-60"
+                    className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-[12px] bg-gradient-to-r from-violet-600 to-fuchsia-500 px-5 text-sm font-black text-white transition hover:brightness-105 disabled:opacity-60"
                     disabled={isSavingProfile || isLoadingAccount}
                     onClick={() => void saveProfile()}
                     type="button"
@@ -755,256 +744,283 @@ export function SettingsView() {
                     ) : (
                       <CheckCircle2 aria-hidden="true" size={18} />
                     )}
-                    Guardar perfil
+                    Guardar cambios
                   </button>
                 </section>
-              ) : null}
+              </>
+            ) : null}
 
-              {activeSection === "security" ? (
-                <section className="grid gap-6">
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <Field label="Nueva contraseña">
-                      <input
-                        className="min-h-12 rounded-button border border-white/10 bg-white/[0.035] px-4 outline-none transition focus:border-brand-purple/60"
-                        onChange={(event) =>
-                          setPasswordForm((current) => ({
-                            ...current,
-                            password: event.target.value,
-                          }))
-                        }
-                        type="password"
-                        value={passwordForm.password}
-                      />
-                    </Field>
-                    <Field label="Confirmar contraseña">
-                      <input
-                        className="min-h-12 rounded-button border border-white/10 bg-white/[0.035] px-4 outline-none transition focus:border-brand-purple/60"
-                        onChange={(event) =>
-                          setPasswordForm((current) => ({
-                            ...current,
-                            confirmPassword: event.target.value,
-                          }))
-                        }
-                        type="password"
-                        value={passwordForm.confirmPassword}
-                      />
-                    </Field>
-                  </div>
-                  <button
-                    className="inline-flex min-h-12 w-fit items-center justify-center gap-2 rounded-button bg-brand-gradient px-5 text-sm font-medium text-white transition hover:brightness-110 disabled:opacity-60"
-                    disabled={isSavingPassword}
-                    onClick={() => void savePassword()}
-                    type="button"
-                  >
-                    <KeyRound aria-hidden="true" size={18} />
-                    Guardar nueva contraseña
-                  </button>
-
-                  <div className="rounded-[14px] border border-white/10 bg-white/[0.025] p-4">
-                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                      <div>
-                        <h3 className="text-lg font-semibold">
-                          Autenticación en dos pasos
-                        </h3>
-                        <p className="mt-2 text-sm leading-6 text-text-secondary">
-                          Refuerza el acceso a tu cuenta con un código temporal
-                          desde tu app autenticadora.
-                        </p>
-                      </div>
-                      <button
-                        className="inline-flex min-h-11 items-center justify-center rounded-button border border-brand-purple/40 bg-brand-purple/15 px-4 text-sm text-brand-purple transition hover:border-brand-purple"
-                        disabled={isMfaLoading}
-                        onClick={() => void startMfaEnrollment()}
-                        type="button"
-                      >
-                        Activar 2FA
-                      </button>
-                    </div>
-
-                    {mfaSetup ? (
-                      <div className="mt-5 grid gap-5 md:grid-cols-[180px_1fr]">
-                        <div className="rounded-card bg-white p-3">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            alt="Código QR para activar 2FA"
-                            className="h-full w-full"
-                            src={mfaSetup.qrCode}
-                          />
-                        </div>
-                        <div className="grid gap-3">
-                          <p className="text-sm leading-6 text-text-secondary">
-                            Escanea el código QR o guarda la clave de respaldo:
-                          </p>
-                          <code className="rounded-card border border-white/10 bg-white/[0.035] p-3 text-sm text-brand-purple">
-                            {mfaSetup.secret}
-                          </code>
-                          <Field label="Código de 6 dígitos">
-                            <input
-                              className="min-h-12 rounded-button border border-white/10 bg-white/[0.035] px-4 outline-none transition focus:border-brand-purple/60"
-                              inputMode="numeric"
-                              maxLength={6}
-                              onChange={(event) => setMfaCode(event.target.value)}
-                              value={mfaCode}
-                            />
-                          </Field>
-                          <button
-                            className="inline-flex min-h-11 w-fit items-center justify-center rounded-button bg-brand-gradient px-4 text-sm font-medium text-white"
-                            disabled={isMfaLoading || mfaCode.length < 6}
-                            onClick={() => void verifyMfa()}
-                            type="button"
-                          >
-                            Verificar y activar
-                          </button>
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
-                  <StatusMessage message={securityMessage} type="success" />
-                  <StatusMessage message={securityError} type="error" />
-                </section>
-              ) : null}
-
-              {activeSection === "billing" ? (
-                <section className="grid gap-5">
-                  <div className="rounded-card border border-brand-purple/35 bg-brand-purple/10 p-5">
-                    <p className="text-sm text-text-secondary">Tu suscripción</p>
-                    <p className="mt-2 text-2xl font-semibold">
-                      {plans[accountForm.plan].name}
-                    </p>
-                    <p className="mt-2 text-sm leading-6 text-text-secondary">
-                      {plans[accountForm.plan].description}
-                    </p>
-                  </div>
-                  <div className="grid gap-3 md:grid-cols-2">
-                    <Link
-                      className="flex min-h-14 items-center justify-center rounded-button bg-brand-gradient px-5 text-sm font-medium text-white"
-                      href="/planes"
-                    >
-                      Cambiar plan
-                    </Link>
-                    <button
-                      className="min-h-14 rounded-button border border-white/10 bg-white/[0.035] px-5 text-sm text-text-muted"
-                      disabled
-                      type="button"
-                    >
-                      Gestión de método de pago
-                    </button>
-                  </div>
-                  <div className="rounded-card border border-dashed border-white/15 bg-white/[0.025] p-5 text-sm leading-6 text-text-secondary">
-                    Tus facturas y comprobantes apareceran aqui cuando tengas
-                    movimientos de suscripción.
-                  </div>
-                </section>
-              ) : null}
-
-              {activeSection === "notifications" ? (
-                <section className="grid gap-3">
+            {activeSection === "preferences" ? (
+              <section className="rounded-[18px] border border-slate-950/[0.08] bg-white p-6">
+                <h2 className="text-xl font-black text-slate-950">
+                  Preferencias
+                </h2>
+                <div className="mt-6 grid gap-4 md:grid-cols-2">
+                  <Field label="Zona horaria">
+                    <InputShell icon={Globe}>
+                      <select className="min-h-11 w-full rounded-[12px] border border-slate-950/[0.10] bg-white pl-12 pr-4 text-slate-800 outline-none focus:border-violet-300">
+                        <option>(GMT-05:00) Bogotá, Lima, Quito</option>
+                        <option>(GMT-04:00) Caracas, La Paz</option>
+                        <option>(GMT-06:00) Ciudad de México</option>
+                      </select>
+                    </InputShell>
+                  </Field>
+                  <Field label="Idioma">
+                    <InputShell icon={Languages}>
+                      <select className="min-h-11 w-full rounded-[12px] border border-slate-950/[0.10] bg-white pl-12 pr-4 text-slate-800 outline-none focus:border-violet-300">
+                        <option>Español</option>
+                      </select>
+                    </InputShell>
+                  </Field>
+                </div>
+                <div className="mt-6 grid gap-3">
                   <Toggle
-                    description="Recibe avisos ?tiles para retomar libros pendientes."
-                    enabled={notifications.reminders}
+                    description="Recibe avisos útiles para retomar análisis pendientes."
+                    enabled={preferences.reminders}
                     label="Recordatorios de aprendizaje"
                     onChange={() =>
-                      setNotifications((current) => ({
+                      setPreferences((current) => ({
                         ...current,
                         reminders: !current.reminders,
                       }))
                     }
                   />
                   <Toggle
-                    description="Recibe un informe semanal con progreso, logros y recomendaciones."
-                    enabled={notifications.weeklySummary}
-                    label="Resumen semanal por correo"
+                    description="Recibe un resumen con progreso, logros y recomendaciones."
+                    enabled={preferences.weeklySummary}
+                    label="Resumen semanal"
                     onChange={() =>
-                      setNotifications((current) => ({
+                      setPreferences((current) => ({
                         ...current,
                         weeklySummary: !current.weeklySummary,
                       }))
                     }
                   />
                   <Toggle
-                    description="Enterate de nuevas colecciones, mejoras y lanzamientos importantes."
-                    enabled={notifications.productNews}
+                    description="Entérate de nuevas colecciones y mejoras importantes."
+                    enabled={preferences.productNews}
                     label="Novedades de Ceoteca"
                     onChange={() =>
-                      setNotifications((current) => ({
+                      setPreferences((current) => ({
                         ...current,
                         productNews: !current.productNews,
                       }))
                     }
                   />
-                </section>
-              ) : null}
+                </div>
+              </section>
+            ) : null}
 
-              {activeSection === "privacy" ? (
-                <section className="grid gap-4">
-                  <button
-                    className="flex min-h-14 w-fit items-center gap-2 rounded-button border border-cyan-300/25 bg-cyan-300/10 px-5 text-sm text-cyan-300"
-                    onClick={downloadAccountData}
-                    type="button"
-                  >
-                    <Download aria-hidden="true" size={18} />
-                    Exportar mis datos
-                  </button>
-                  <div className="rounded-card border border-danger/25 bg-danger/10 p-5">
-                    <div className="flex gap-4">
-                      <Trash2 aria-hidden="true" className="mt-1 text-danger" size={22} />
-                      <div>
-                        <h3 className="font-semibold text-danger">
-                          Eliminar cuenta
-                        </h3>
-                        <p className="mt-2 text-sm leading-6 text-text-secondary">
-                          Para proteger tu información, la eliminación de cuenta
-                          requiere una verificación adicional con soporte.
+            {activeSection === "security" ? (
+              <section className="rounded-[18px] border border-slate-950/[0.08] bg-white p-6">
+                <h2 className="text-xl font-black text-slate-950">Seguridad</h2>
+                <div className="mt-6 grid gap-4 md:grid-cols-2">
+                  <Field label="Nueva contraseña">
+                    <input
+                      className="min-h-11 rounded-[12px] border border-slate-950/[0.10] bg-white px-4 text-slate-800 outline-none focus:border-violet-300 focus:ring-4 focus:ring-violet-100"
+                      onChange={(event) =>
+                        setPasswordForm((current) => ({
+                          ...current,
+                          password: event.target.value,
+                        }))
+                      }
+                      type="password"
+                      value={passwordForm.password}
+                    />
+                  </Field>
+                  <Field label="Confirmar contraseña">
+                    <input
+                      className="min-h-11 rounded-[12px] border border-slate-950/[0.10] bg-white px-4 text-slate-800 outline-none focus:border-violet-300 focus:ring-4 focus:ring-violet-100"
+                      onChange={(event) =>
+                        setPasswordForm((current) => ({
+                          ...current,
+                          confirmPassword: event.target.value,
+                        }))
+                      }
+                      type="password"
+                      value={passwordForm.confirmPassword}
+                    />
+                  </Field>
+                </div>
+                <button
+                  className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-[12px] bg-gradient-to-r from-violet-600 to-fuchsia-500 px-5 text-sm font-black text-white transition hover:brightness-105 disabled:opacity-60"
+                  disabled={isSavingPassword}
+                  onClick={() => void savePassword()}
+                  type="button"
+                >
+                  <KeyRound aria-hidden="true" size={18} />
+                  Guardar contraseña
+                </button>
+
+                <div className="mt-6 rounded-[16px] border border-slate-950/[0.08] bg-slate-50 p-5">
+                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <h3 className="font-black text-slate-950">
+                        Autenticación en dos pasos
+                      </h3>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
+                        Refuerza el acceso a tu cuenta con un código temporal
+                        desde tu app autenticadora.
+                      </p>
+                    </div>
+                    <button
+                      className="inline-flex min-h-11 items-center justify-center rounded-[12px] border border-violet-200 bg-white px-4 text-sm font-black text-violet-700 transition hover:bg-violet-50"
+                      disabled={isMfaLoading}
+                      onClick={() => void startMfaEnrollment()}
+                      type="button"
+                    >
+                      Activar 2FA
+                    </button>
+                  </div>
+
+                  {mfaSetup ? (
+                    <div className="mt-5 grid gap-5 md:grid-cols-[180px_1fr]">
+                      <div className="rounded-[14px] bg-white p-3">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          alt="Código QR para activar 2FA"
+                          className="h-full w-full"
+                          src={mfaSetup.qrCode}
+                        />
+                      </div>
+                      <div className="grid gap-3">
+                        <p className="text-sm leading-6 text-slate-600">
+                          Escanea el código QR o guarda la clave de respaldo:
                         </p>
+                        <code className="rounded-[12px] border border-slate-950/[0.08] bg-white p-3 text-sm text-violet-700">
+                          {mfaSetup.secret}
+                        </code>
+                        <Field label="Código de 6 dígitos">
+                          <input
+                            className="min-h-11 rounded-[12px] border border-slate-950/[0.10] bg-white px-4 text-slate-800 outline-none focus:border-violet-300"
+                            inputMode="numeric"
+                            maxLength={6}
+                            onChange={(event) => setMfaCode(event.target.value)}
+                            value={mfaCode}
+                          />
+                        </Field>
+                        <button
+                          className="inline-flex min-h-11 w-fit items-center justify-center rounded-[12px] bg-gradient-to-r from-violet-600 to-fuchsia-500 px-4 text-sm font-black text-white"
+                          disabled={isMfaLoading || mfaCode.length < 6}
+                          onClick={() => void verifyMfa()}
+                          type="button"
+                        >
+                          Verificar y activar
+                        </button>
                       </div>
                     </div>
-                  </div>
-                </section>
-              ) : null}
+                  ) : null}
+                </div>
+                <div className="mt-5 grid gap-3">
+                  <StatusMessage message={securityMessage} type="success" />
+                  <StatusMessage message={securityError} type="error" />
+                </div>
+              </section>
+            ) : null}
 
-              {activeSection === "support" ? (
-                <section className="grid gap-4">
+            {activeSection === "billing" ? (
+              <section className="rounded-[18px] border border-slate-950/[0.08] bg-white p-6">
+                <h2 className="text-xl font-black text-slate-950">
+                  Suscripción
+                </h2>
+                <div className="mt-6 rounded-[16px] border border-violet-100 bg-violet-50 p-5">
+                  <p className="text-sm text-violet-700">Plan actual</p>
+                  <p className="mt-2 text-3xl font-black text-slate-950">
+                    {plans[accountForm.plan].name}
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    {plans[accountForm.plan].description}
+                  </p>
+                </div>
+                <div className="mt-5 grid gap-3 md:grid-cols-2">
                   <Link
-                    className="flex min-h-14 w-fit items-center gap-2 rounded-button bg-brand-gradient px-5 text-sm font-medium text-white"
-                    href={`mailto:${siteConfig.supportEmail}`}
+                    className="flex min-h-12 items-center justify-center rounded-[12px] bg-gradient-to-r from-violet-600 to-fuchsia-500 px-5 text-sm font-black text-white"
+                    href="/planes"
                   >
-                    <Mail aria-hidden="true" size={18} />
-                    Contactar soporte
+                    Cambiar plan
                   </Link>
-                  <div className="rounded-card border border-white/10 bg-white/[0.025] p-5 text-sm leading-6 text-text-secondary">
-                    Nuestro equipo te respondera desde {siteConfig.supportEmail}.
-                  </div>
-                </section>
-              ) : null}
-            </div>
-          </Card>
-        </section>
+                  <button
+                    className="min-h-12 rounded-[12px] border border-slate-950/[0.10] bg-white px-5 text-sm font-bold text-slate-500"
+                    disabled
+                    type="button"
+                  >
+                    Método de pago
+                  </button>
+                </div>
+                <div className="mt-5 rounded-[16px] border border-dashed border-slate-950/[0.12] bg-slate-50 p-5 text-sm leading-6 text-slate-600">
+                  Tus facturas y comprobantes aparecerán aquí cuando tengas
+                  movimientos de suscripción.
+                </div>
+              </section>
+            ) : null}
 
-        <footer className="mt-10 border-t border-white/10 py-8 text-sm text-text-muted">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <p>© 2026 Ceoteca. Todos los derechos reservados.</p>
-            <nav
-              aria-label="Legal de configuracion"
-              className="flex flex-wrap gap-x-5 gap-y-2"
-            >
-              <Link className="transition hover:text-text-primary" href="/terminos">
-                Términos
-              </Link>
-              <Link
-                className="transition hover:text-text-primary"
-                href="/privacidad"
-              >
-                Privacidad
-              </Link>
-              <Link
-                className="transition hover:text-text-primary"
-                href={`mailto:${siteConfig.supportEmail}`}
-              >
-                Soporte
-              </Link>
-            </nav>
+            {activeSection === "privacy" ? (
+              <section className="rounded-[18px] border border-slate-950/[0.08] bg-white p-6">
+                <h2 className="text-xl font-black text-slate-950">
+                  Datos y privacidad
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  Controla tu información personal y descarga una copia de tus
+                  datos cuando lo necesites.
+                </p>
+                <button
+                  className="mt-6 inline-flex min-h-12 items-center gap-2 rounded-[12px] border border-violet-200 bg-white px-5 text-sm font-black text-violet-700 transition hover:bg-violet-50"
+                  onClick={downloadAccountData}
+                  type="button"
+                >
+                  <Download aria-hidden="true" size={18} />
+                  Exportar mis datos
+                </button>
+                <div className="mt-6 rounded-[16px] border border-red-200 bg-red-50 p-5">
+                  <div className="flex gap-4">
+                    <Trash2 aria-hidden="true" className="mt-1 text-red-600" size={22} />
+                    <div>
+                      <h3 className="font-black text-red-700">Eliminar cuenta</h3>
+                      <p className="mt-2 text-sm leading-6 text-red-700/80">
+                        Para proteger tu información, la eliminación de cuenta
+                        requiere verificación adicional con soporte.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            ) : null}
           </div>
-        </footer>
+
+          <aside className="grid h-fit gap-5">
+            <section className="rounded-[18px] border border-slate-950/[0.08] bg-white p-6">
+              <h2 className="font-black text-slate-950">Resumen de tu cuenta</h2>
+              <div className="mt-5">
+                <MetricRow icon={BookOpen} title="Análisis iniciados" value="12 análisis" />
+                <MetricRow icon={Clock3} title="Minutos de lectura" value="281 min esta semana" />
+                <MetricRow icon={Flame} title="Días de racha" value="5 días" />
+                <MetricRow icon={Trophy} title="Logros obtenidos" value="3 logros" />
+              </div>
+            </section>
+
+            <section className="rounded-[18px] border border-red-100 bg-white p-6">
+              <h2 className="font-black text-slate-950">Zona de peligro</h2>
+              <p className="mt-2 text-sm text-slate-600">
+                Acciones permanentes que no se pueden deshacer.
+              </p>
+              <button
+                className="mt-5 flex w-full items-center justify-between rounded-[14px] border border-red-200 bg-red-50 px-4 py-4 text-left text-sm text-red-700"
+                type="button"
+              >
+                <span className="flex items-center gap-3">
+                  <Trash2 aria-hidden="true" size={19} />
+                  <span>
+                    <span className="block font-black">Eliminar cuenta</span>
+                    <span className="mt-1 block text-xs text-red-700/75">
+                      Se eliminarán tus datos y actividad.
+                    </span>
+                  </span>
+                </span>
+                <ChevronRight aria-hidden="true" size={18} />
+              </button>
+            </section>
+          </aside>
+        </section>
       </section>
     </main>
   );
