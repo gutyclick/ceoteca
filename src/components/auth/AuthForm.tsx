@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Chrome, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Check, Chrome, Eye, EyeOff, Loader2, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -10,6 +10,7 @@ import type { ZodError } from "zod";
 import { SectionHeading } from "@/components/marketing/SectionHeading";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { Logo } from "@/components/ui/Logo";
 import type { PlanKey } from "@/config/plans";
 import { createAuthProvider } from "@/lib/auth/provider";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
@@ -364,17 +365,30 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
   }
 
   return (
-    <main className="bg-[#fbfaf8] text-slate-950">
+    <main className="min-h-screen overflow-x-hidden bg-[#fbfaf8] text-slate-950">
       <section
         className={cn(
-          "ceoteca-container relative grid min-h-[calc(100svh-118px)] gap-6 lg:grid-cols-[0.9fr_1fr]",
+          "ceoteca-container relative grid min-h-screen gap-8 py-6 sm:py-8 lg:grid-cols-[0.9fr_1fr] lg:items-center",
           isRegister
-            ? "py-4 sm:py-5 lg:items-start"
-            : "py-8 sm:py-10 lg:items-center",
+            ? "lg:gap-10"
+            : "lg:gap-14",
         )}
       >
         <div className="absolute left-0 top-20 -z-10 h-80 w-80 rounded-full bg-violet-100/80 blur-3xl" />
-        <div className="max-w-xl">
+        <div className="absolute bottom-0 right-0 -z-10 h-96 w-96 rounded-full bg-fuchsia-100/80 blur-3xl" />
+        <div className="mx-auto w-full max-w-xl">
+          <div className="mb-8 flex items-center justify-between gap-4">
+            <Logo
+              className="text-slate-950 [&>span]:text-slate-950"
+              useBrandAsset
+            />
+            <Link
+              className="rounded-full border border-slate-950/[0.08] bg-white px-4 py-2 text-sm font-bold text-slate-600 shadow-sm transition hover:border-violet-200 hover:text-violet-700"
+              href="/"
+            >
+              Inicio
+            </Link>
+          </div>
           <SectionHeading
             eyebrow={isRegister ? "Registro" : "Inicio de sesión"}
             title={
@@ -388,8 +402,9 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
                 : "Ingresa con email y contraseña para continuar tu progreso."
             }
           />
-          <div className="mt-6 hidden rounded-[1.5rem] border border-slate-950/[0.08] bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)] lg:block">
-            <p className="text-sm font-black uppercase tracking-[0.22em] text-violet-600">
+          <div className="mt-6 hidden overflow-hidden rounded-[1.5rem] border border-slate-950/[0.08] bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)] lg:block">
+            <p className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-[0.22em] text-violet-600">
+              <Sparkles aria-hidden="true" size={16} />
               Ceoteca
             </p>
             <h2 className="mt-3 text-[clamp(1.7rem,2.3vw,2.4rem)] font-black leading-tight">
