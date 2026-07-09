@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  BookOpen,
   Check,
   Chrome,
   Eye,
@@ -9,13 +8,7 @@ import {
   Loader2,
   LockKeyhole,
   Mail,
-  MessageSquareText,
-  ShieldCheck,
-  Star,
-  TrendingUp,
   User,
-  XCircle,
-  Zap,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -30,7 +23,6 @@ import type { PlanKey } from "@/config/plans";
 import { createAuthProvider } from "@/lib/auth/provider";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { signInSchema, signUpSchema } from "@/lib/validation/auth";
-import { cn } from "@/lib/utils/cn";
 
 type AuthMode = "login" | "register";
 
@@ -113,47 +105,6 @@ function getPasswordLabel(score: number) {
 
   return "Fuerte";
 }
-
-const authBenefits = [
-  {
-    title: "Aprende más en menos tiempo",
-    description: "Análisis claros y accionables para complementar tus lecturas.",
-    icon: BookOpen,
-  },
-  {
-    title: "Aplica lo que aprendes",
-    description: "Ejercicios prácticos y estrategias concretas para avanzar.",
-    icon: Zap,
-  },
-  {
-    title: "Pregúntale a CEO",
-    description: "Recibe guía contextual según cada análisis disponible.",
-    icon: MessageSquareText,
-  },
-  {
-    title: "Crece cada día",
-    description: "Guarda progreso y convierte ideas en resultados visibles.",
-    icon: TrendingUp,
-  },
-];
-
-const authTrustItems = [
-  {
-    title: "Seguro y privado",
-    description: "Tus datos están protegidos",
-    icon: ShieldCheck,
-  },
-  {
-    title: "Acceso inmediato",
-    description: "Empieza a aprender hoy",
-    icon: Zap,
-  },
-  {
-    title: "Sin riesgos",
-    description: "Cancela cuando quieras",
-    icon: XCircle,
-  },
-];
 
 export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
   const router = useRouter();
@@ -421,104 +372,26 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
   }
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#fbfaf8] text-slate-950">
-      <section
-        className={cn(
-          "ceoteca-container relative grid min-h-screen gap-6 py-5 sm:py-6 lg:grid-cols-[0.9fr_1fr] lg:items-center",
-          isRegister ? "lg:gap-8 xl:gap-10" : "lg:gap-12",
-        )}
-      >
-        <div className="absolute left-0 top-16 -z-10 h-64 w-64 rounded-full bg-violet-100/80 blur-3xl" />
-        <div className="absolute bottom-0 right-0 -z-10 h-72 w-72 rounded-full bg-fuchsia-100/75 blur-3xl" />
-        <div className="absolute right-0 top-5 hidden items-center gap-2 text-sm text-slate-500 lg:flex">
-          <span>{isRegister ? "¿Ya tienes cuenta?" : "¿No tienes cuenta?"}</span>
-          <Link
-            className="font-black text-violet-700 transition hover:text-fuchsia-600"
-            href={isRegister ? "/login" : "/registro"}
-          >
-            {isRegister ? "Inicia sesión" : "Regístrate"}
-          </Link>
-        </div>
-        <div className="mx-auto w-full max-w-[520px]">
-          <div className="mb-8 flex items-center justify-between gap-4 xl:mb-10">
+    <main className="min-h-screen overflow-hidden bg-[#fbfaf8] text-slate-950">
+      <section className="relative grid min-h-screen place-items-center px-5 py-6">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-violet-100/55 to-transparent" />
+        <div className="pointer-events-none absolute left-1/2 top-1/2 h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-fuchsia-100/70 blur-3xl" />
+
+        <div className="relative z-10 grid w-full max-w-[520px] gap-5">
+          <div className="flex justify-center">
             <Logo
               className="text-slate-950 [&>span]:text-lg [&>span]:font-black [&>span]:text-slate-950"
               useBrandAsset={false}
             />
-            <Link
-              className="rounded-full border border-slate-950/[0.08] bg-white px-4 py-2 text-sm font-bold text-slate-600 shadow-sm transition hover:border-violet-200 hover:text-violet-700 lg:hidden"
-              href="/"
-            >
-              Inicio
-            </Link>
-          </div>
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-violet-600">
-            {isRegister ? "Únete a Ceoteca" : "Accede a Ceoteca"}
-          </p>
-          <h1 className="mt-4 text-balance text-[clamp(2.2rem,4.2vw,3.55rem)] font-black leading-[1.02] tracking-[-0.045em] text-slate-950">
-            {isRegister
-              ? "Crea tu cuenta y empieza a aprender sin límites."
-              : "Vuelve a tus ideas, notas y progreso."}
-          </h1>
-          <p className="mt-5 max-w-lg text-base leading-7 text-slate-600">
-            {isRegister
-              ? "Accede a análisis de libros de negocios, desarrollo personal e inversión, con el apoyo de CEO."
-              : "Continúa aprendiendo con análisis editoriales, ejercicios prácticos y recomendaciones personalizadas."}
-          </p>
-          <div className="mt-7 rounded-[1.35rem] border border-violet-100 bg-gradient-to-br from-violet-50 via-white to-fuchsia-50 p-5 shadow-[0_18px_54px_rgba(124,58,237,0.07)]">
-            <div className="grid gap-4">
-              {authBenefits.map((item) => {
-                const Icon = item.icon;
-
-                return (
-                  <div className="flex items-start gap-3" key={item.title}>
-                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-violet-100 text-violet-700">
-                      <Icon aria-hidden="true" size={20} />
-                    </span>
-                    <span>
-                      <span className="block text-sm font-black text-slate-950">
-                        {item.title}
-                      </span>
-                      <span className="mt-0.5 block text-sm leading-5 text-slate-600">
-                        {item.description}
-                      </span>
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
           </div>
 
-          <div className="mt-6 hidden items-center gap-4 lg:flex">
-            <div className="flex -space-x-2">
-              {["A", "M", "S", "G"].map((initial) => (
-                <span
-                  className="grid h-9 w-9 place-items-center rounded-full border-2 border-white bg-gradient-to-br from-violet-600 to-fuchsia-500 text-xs font-black text-white"
-                  key={initial}
-                >
-                  {initial}
-                </span>
-              ))}
+          <Card className="rounded-[1.35rem] border-slate-950/[0.08] bg-white/95 p-5 text-slate-950 shadow-[0_24px_80px_rgba(15,23,42,0.10)] backdrop-blur sm:p-6">
+            <div className="mb-5 text-center">
+              <h1 className="text-2xl font-black tracking-[-0.03em] text-slate-950 sm:text-[1.75rem]">
+                {isRegister ? "Crea tu cuenta" : "Inicia sesión"}
+              </h1>
             </div>
-            <div>
-              <div className="flex gap-1 text-amber-400">
-                {Array.from({ length: 5 }, (_, index) => (
-                  <Star aria-hidden="true" fill="currentColor" key={index} size={16} />
-                ))}
-              </div>
-              <p className="mt-1.5 max-w-sm text-xs leading-5 text-slate-600">
-                &ldquo;Ceoteca me ayuda a convertir ideas de libros en acciones concretas.&rdquo;
-              </p>
-            </div>
-          </div>
-        </div>
 
-        <Card
-          className={cn(
-            "mx-auto w-full max-w-[590px] rounded-[1.45rem] border-slate-950/[0.08] bg-white text-slate-950 shadow-[0_22px_72px_rgba(15,23,42,0.10)]",
-            isRegister ? "p-5 sm:p-6 lg:p-7" : "p-5 sm:p-6 lg:p-7",
-          )}
-        >
           <button
             className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[0.85rem] border border-violet-500 bg-white px-5 text-sm font-black text-slate-950 shadow-sm transition duration-200 hover:bg-violet-50 hover:text-violet-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-purple"
             onClick={handleGoogleAuth}
@@ -768,38 +641,17 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
             </Button>
           </form>
 
-          <div className="mt-5 grid gap-3 sm:grid-cols-3">
-            {authTrustItems.map((item) => {
-              const Icon = item.icon;
-
-              return (
-                <div className="flex items-start gap-3" key={item.title}>
-                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-500">
-                    <Icon aria-hidden="true" size={17} />
-                  </span>
-                  <span>
-                    <span className="block text-xs font-black text-slate-950">
-                      {item.title}
-                    </span>
-                    <span className="mt-0.5 block text-[11px] leading-4 text-slate-500">
-                      {item.description}
-                    </span>
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-
-          <p className="mt-4 text-center text-sm text-slate-600 lg:hidden">
+          <p className="mt-5 text-center text-sm text-slate-600">
             {isRegister ? "¿Ya tienes cuenta?" : "¿No tienes cuenta?"}{" "}
             <Link
-              className="font-medium text-brand-purple"
+              className="font-black text-brand-purple transition hover:text-fuchsia-600"
               href={isRegister ? "/login" : "/registro"}
             >
               {isRegister ? "Inicia sesión" : "Regístrate"}
             </Link>
           </p>
         </Card>
+        </div>
       </section>
     </main>
   );
