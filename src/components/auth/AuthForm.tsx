@@ -373,11 +373,8 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
 
   return (
     <main className="min-h-screen overflow-hidden bg-[#fbfaf8] text-slate-950">
-      <section className="relative grid min-h-screen place-items-center px-5 py-6">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-violet-100/55 to-transparent" />
-        <div className="pointer-events-none absolute left-1/2 top-1/2 h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-fuchsia-100/70 blur-3xl" />
-
-        <div className="relative z-10 grid w-full max-w-[520px] gap-5">
+      <section className="relative grid min-h-screen place-items-center px-5 py-5">
+        <div className="relative z-10 grid w-full max-w-[460px] gap-4">
           <div className="flex justify-center">
             <Logo
               className="text-slate-950 [&>span]:text-lg [&>span]:font-black [&>span]:text-slate-950"
@@ -385,15 +382,15 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
             />
           </div>
 
-          <Card className="rounded-[1.35rem] border-slate-950/[0.08] bg-white/95 p-5 text-slate-950 shadow-[0_24px_80px_rgba(15,23,42,0.10)] backdrop-blur sm:p-6">
-            <div className="mb-5 text-center">
-              <h1 className="text-2xl font-black tracking-[-0.03em] text-slate-950 sm:text-[1.75rem]">
+          <Card className="rounded-[1.15rem] border-slate-950/[0.10] bg-white p-5 text-slate-950 shadow-none sm:p-5">
+            <div className="mb-4 text-center">
+              <h1 className="text-2xl font-black tracking-[-0.03em] text-slate-950">
                 {isRegister ? "Crea tu cuenta" : "Inicia sesión"}
               </h1>
             </div>
 
           <button
-            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[0.85rem] border border-violet-500 bg-white px-5 text-sm font-black text-slate-950 shadow-sm transition duration-200 hover:bg-violet-50 hover:text-violet-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-purple"
+            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[0.75rem] border border-violet-500 bg-white px-5 text-sm font-black text-slate-950 transition duration-200 hover:bg-violet-50 hover:text-violet-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-purple"
             onClick={handleGoogleAuth}
             type="button"
           >
@@ -420,7 +417,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
             <span className="h-px flex-1 bg-slate-200" />
           </div>
 
-          <form className="space-y-3.5" onSubmit={handleSubmit(onSubmit)}>
+          <form className="space-y-3" onSubmit={handleSubmit(onSubmit)}>
             {isRegister ? (
               <label className="grid gap-1.5 text-sm font-bold text-slate-950">
                 Nombre completo
@@ -432,7 +429,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
                   />
                   <input
                     autoComplete="name"
-                    className="min-h-11 w-full rounded-[0.8rem] border border-slate-950/10 bg-white pl-11 pr-4 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
+                    className="min-h-10 w-full rounded-[0.75rem] border border-slate-950/10 bg-white pl-11 pr-4 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
                     placeholder="Tu nombre completo"
                     {...register("fullName")}
                   />
@@ -455,7 +452,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
                 />
                 <input
                   autoComplete="email"
-                  className="min-h-11 w-full rounded-[0.8rem] border border-slate-950/10 bg-white pl-11 pr-4 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
+                  className="min-h-10 w-full rounded-[0.75rem] border border-slate-950/10 bg-white pl-11 pr-4 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
                   placeholder="tu@email.com"
                   type="email"
                   {...register("email")}
@@ -475,7 +472,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
                   size={18}
                 />
                 <input
-                  className="min-h-11 w-full rounded-[0.8rem] border border-slate-950/10 bg-white pl-11 pr-12 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
+                  className="min-h-10 w-full rounded-[0.75rem] border border-slate-950/10 bg-white pl-11 pr-12 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
                   placeholder={isRegister ? "Mínimo 10 caracteres" : "Tu contraseña"}
                   type={showPassword ? "text" : "password"}
                   {...passwordRegistration}
@@ -546,7 +543,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
                       size={18}
                     />
                     <input
-                      className="min-h-11 w-full rounded-[0.8rem] border border-slate-950/10 bg-white pl-11 pr-4 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
+                      className="min-h-10 w-full rounded-[0.75rem] border border-slate-950/10 bg-white pl-11 pr-4 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
                       placeholder="Repite tu contraseña"
                       type="password"
                       {...register("confirmPassword")}
@@ -624,7 +621,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
             ) : null}
 
             <Button
-              className="min-h-12 w-full rounded-[0.85rem] text-base font-black shadow-[0_14px_34px_rgba(124,58,237,0.2)]"
+              className="min-h-11 w-full rounded-[0.75rem] text-base font-black shadow-none"
               disabled={isSubmitting}
               type="submit"
             >
