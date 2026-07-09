@@ -38,12 +38,12 @@ export function HeaderNav() {
           : "border-slate-950/[0.06] bg-white",
       )}
     >
-      <div className="mx-auto grid min-h-[92px] w-full max-w-[1500px] grid-cols-[220px_minmax(0,1fr)_260px] items-center px-6 sm:px-8 xl:px-10 max-lg:grid-cols-[1fr_auto]">
+      <div className="mx-auto grid min-h-[74px] w-full max-w-[1500px] grid-cols-[220px_minmax(0,1fr)_245px] items-center px-5 sm:px-7 xl:px-9 max-lg:grid-cols-[1fr_auto]">
         <Logo className="text-slate-950" useBrandAsset />
 
         <nav
           aria-label="Navegación principal"
-          className="hidden items-center justify-center gap-9 lg:flex"
+          className="hidden items-center justify-center gap-8 lg:flex"
         >
           {navigationItems.map((item) => (
             <Link
@@ -56,7 +56,7 @@ export function HeaderNav() {
           ))}
         </nav>
 
-        <div className="hidden items-center justify-end gap-8 lg:flex">
+        <div className="hidden items-center justify-end gap-7 lg:flex">
           <Link
             className="whitespace-nowrap text-sm font-bold text-slate-700 transition-colors hover:text-violet-700"
             href="/login"
@@ -64,7 +64,7 @@ export function HeaderNav() {
             Iniciar sesión
           </Link>
           <Link
-            className="inline-flex min-h-14 min-w-[174px] items-center justify-center whitespace-nowrap rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-500 px-7 text-sm font-black text-white shadow-[0_22px_55px_rgba(124,58,237,0.24)] transition duration-150 hover:brightness-105"
+            className="inline-flex min-h-12 min-w-[160px] items-center justify-center whitespace-nowrap rounded-[1.1rem] bg-gradient-to-r from-violet-600 to-fuchsia-500 px-6 text-sm font-black text-white shadow-[0_18px_42px_rgba(124,58,237,0.2)] transition duration-150 hover:brightness-105"
             href="/registro"
           >
             Empieza gratis
