@@ -32,7 +32,6 @@ import {
 
 import { DashboardSidebar } from "@/components/app/DashboardSidebar";
 import { NotificationBell } from "@/components/app/NotificationBell";
-import { FloatingSiteChat } from "@/components/chat/FloatingSiteChat";
 import { Footer } from "@/components/marketing/Footer";
 import { PublicHeader } from "@/components/marketing/PublicHeader";
 import { ButtonLink } from "@/components/ui/Button";
@@ -1021,33 +1020,7 @@ function PrivateLibrary({ books }: { books: Book[] }) {
           )}
         </section>
 
-        <section className="mt-5 rounded-[18px] border border-violet-100 bg-white px-5 py-4">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-center gap-4">
-              <span className="grid h-12 w-12 place-items-center rounded-[14px] bg-violet-50 text-violet-700">
-                <Sparkles aria-hidden="true" size={22} />
-              </span>
-              <div>
-                <p className="font-black text-slate-950">
-                  ¿No encuentras un análisis?
-                </p>
-                <p className="mt-1 text-sm text-slate-600">
-                  Explora el catálogo completo y descubre tu próximo libro.
-                </p>
-              </div>
-            </div>
-            <ButtonLink
-              className="min-h-11 rounded-[12px] border-violet-300 bg-white text-violet-700 shadow-none hover:bg-violet-50"
-              href="/biblioteca"
-              variant="secondary"
-            >
-              Explorar catálogo
-              <ArrowDown aria-hidden="true" className="-rotate-90" size={16} />
-            </ButtonLink>
-          </div>
-        </section>
       </section>
-      <FloatingSiteChat plan={plan} />
     </main>
   );
 }
