@@ -1,13 +1,28 @@
 "use client";
 
-import { Check, Chrome, Eye, EyeOff, Loader2, Sparkles } from "lucide-react";
+import {
+  BookOpen,
+  Check,
+  Chrome,
+  Eye,
+  EyeOff,
+  Loader2,
+  LockKeyhole,
+  Mail,
+  MessageSquareText,
+  ShieldCheck,
+  Star,
+  TrendingUp,
+  User,
+  XCircle,
+  Zap,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { ZodError } from "zod";
 
-import { SectionHeading } from "@/components/marketing/SectionHeading";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Logo } from "@/components/ui/Logo";
@@ -98,6 +113,47 @@ function getPasswordLabel(score: number) {
 
   return "Fuerte";
 }
+
+const authBenefits = [
+  {
+    title: "Aprende más en menos tiempo",
+    description: "Análisis claros y accionables para complementar tus lecturas.",
+    icon: BookOpen,
+  },
+  {
+    title: "Aplica lo que aprendes",
+    description: "Ejercicios prácticos y estrategias concretas para avanzar.",
+    icon: Zap,
+  },
+  {
+    title: "Pregúntale a CEO",
+    description: "Recibe guía contextual según cada análisis disponible.",
+    icon: MessageSquareText,
+  },
+  {
+    title: "Crece cada día",
+    description: "Guarda progreso y convierte ideas en resultados visibles.",
+    icon: TrendingUp,
+  },
+];
+
+const authTrustItems = [
+  {
+    title: "Seguro y privado",
+    description: "Tus datos están protegidos",
+    icon: ShieldCheck,
+  },
+  {
+    title: "Acceso inmediato",
+    description: "Empieza a aprender hoy",
+    icon: Zap,
+  },
+  {
+    title: "Sin riesgos",
+    description: "Cancela cuando quieras",
+    icon: XCircle,
+  },
+];
 
 export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
   const router = useRouter();
@@ -376,55 +432,97 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
       >
         <div className="absolute left-0 top-20 -z-10 h-80 w-80 rounded-full bg-violet-100/80 blur-3xl" />
         <div className="absolute bottom-0 right-0 -z-10 h-96 w-96 rounded-full bg-fuchsia-100/80 blur-3xl" />
-        <div className="mx-auto w-full max-w-xl">
-          <div className="mb-8 flex items-center justify-between gap-4">
+        <div className="absolute right-0 top-6 hidden items-center gap-2 text-sm text-slate-500 lg:flex">
+          <span>{isRegister ? "¿Ya tienes cuenta?" : "¿No tienes cuenta?"}</span>
+          <Link
+            className="font-black text-violet-700 transition hover:text-fuchsia-600"
+            href={isRegister ? "/login" : "/registro"}
+          >
+            {isRegister ? "Inicia sesión" : "Regístrate"}
+          </Link>
+        </div>
+        <div className="mx-auto w-full max-w-[560px]">
+          <div className="mb-14 flex items-center justify-between gap-4">
             <Logo
-              className="text-slate-950 [&>span]:text-slate-950"
-              useBrandAsset
+              className="text-slate-950 [&>span]:text-xl [&>span]:font-black [&>span]:text-slate-950"
+              useBrandAsset={false}
             />
             <Link
-              className="rounded-full border border-slate-950/[0.08] bg-white px-4 py-2 text-sm font-bold text-slate-600 shadow-sm transition hover:border-violet-200 hover:text-violet-700"
+              className="rounded-full border border-slate-950/[0.08] bg-white px-4 py-2 text-sm font-bold text-slate-600 shadow-sm transition hover:border-violet-200 hover:text-violet-700 lg:hidden"
               href="/"
             >
               Inicio
             </Link>
           </div>
-          <SectionHeading
-            eyebrow={isRegister ? "Registro" : "Inicio de sesión"}
-            title={
-              isRegister
-                ? "Crea tu cuenta para empezar a aprender."
-                : "Vuelve a tu biblioteca de aprendizaje."
-            }
-            description={
-              isRegister
-                ? "Crea tu cuenta y luego elige tu plan para activar el acceso."
-                : "Ingresa con email y contraseña para continuar tu progreso."
-            }
-          />
-          <div className="mt-6 hidden overflow-hidden rounded-[1.5rem] border border-slate-950/[0.08] bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)] lg:block">
-            <p className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-[0.22em] text-violet-600">
-              <Sparkles aria-hidden="true" size={16} />
-              Ceoteca
-            </p>
-            <h2 className="mt-3 text-[clamp(1.7rem,2.3vw,2.4rem)] font-black leading-tight">
-              Aprende ideas clave y conviértelas en acción.
-            </h2>
-            <p className="mt-3 text-sm leading-7 text-slate-600">
-              Análisis editoriales, ejercicios prácticos y recomendaciones para
-              complementar tus lecturas sin reemplazar la obra original.
-            </p>
+          <p className="text-sm font-black uppercase tracking-[0.2em] text-violet-600">
+            {isRegister ? "Únete a Ceoteca" : "Accede a Ceoteca"}
+          </p>
+          <h1 className="mt-5 text-balance text-[clamp(2.65rem,5vw,4.35rem)] font-black leading-[0.98] tracking-[-0.055em] text-slate-950">
+            {isRegister
+              ? "Crea tu cuenta y empieza a aprender sin límites."
+              : "Vuelve a tus ideas, notas y progreso."}
+          </h1>
+          <p className="mt-6 max-w-lg text-lg leading-8 text-slate-600">
+            {isRegister
+              ? "Accede a análisis de libros de negocios, desarrollo personal e inversión, con el apoyo de CEO."
+              : "Continúa aprendiendo con análisis editoriales, ejercicios prácticos y recomendaciones personalizadas."}
+          </p>
+          <div className="mt-10 rounded-[1.5rem] border border-violet-100 bg-gradient-to-br from-violet-50 via-white to-fuchsia-50 p-6 shadow-[0_24px_70px_rgba(124,58,237,0.08)]">
+            <div className="grid gap-6">
+              {authBenefits.map((item) => {
+                const Icon = item.icon;
+
+                return (
+                  <div className="flex items-start gap-4" key={item.title}>
+                    <span className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-violet-100 text-violet-700">
+                      <Icon aria-hidden="true" size={24} />
+                    </span>
+                    <span>
+                      <span className="block text-base font-black text-slate-950">
+                        {item.title}
+                      </span>
+                      <span className="mt-1 block text-sm leading-6 text-slate-600">
+                        {item.description}
+                      </span>
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="mt-8 hidden items-center gap-4 lg:flex">
+            <div className="flex -space-x-2">
+              {["A", "M", "S", "G"].map((initial) => (
+                <span
+                  className="grid h-9 w-9 place-items-center rounded-full border-2 border-white bg-gradient-to-br from-violet-600 to-fuchsia-500 text-xs font-black text-white"
+                  key={initial}
+                >
+                  {initial}
+                </span>
+              ))}
+            </div>
+            <div>
+              <div className="flex gap-1 text-amber-400">
+                {Array.from({ length: 5 }, (_, index) => (
+                  <Star aria-hidden="true" fill="currentColor" key={index} size={16} />
+                ))}
+              </div>
+              <p className="mt-2 max-w-sm text-sm leading-6 text-slate-600">
+                &ldquo;Ceoteca me ayuda a convertir ideas de libros en acciones concretas.&rdquo;
+              </p>
+            </div>
           </div>
         </div>
 
         <Card
           className={cn(
-            "mx-auto w-full max-w-xl border-slate-950/[0.08] bg-white text-slate-950 shadow-[0_24px_80px_rgba(15,23,42,0.08)]",
-            isRegister ? "p-4 sm:p-5" : "p-5 sm:p-6 md:p-7",
+            "mx-auto w-full max-w-[620px] rounded-[1.6rem] border-slate-950/[0.08] bg-white text-slate-950 shadow-[0_28px_90px_rgba(15,23,42,0.10)]",
+            isRegister ? "p-5 sm:p-7 lg:p-8" : "p-5 sm:p-7 lg:p-8",
           )}
         >
           <button
-            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-button border border-slate-950/10 bg-white px-5 text-sm font-bold text-slate-900 shadow-sm transition duration-200 hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-purple"
+            className="inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-[0.9rem] border border-violet-500 bg-white px-5 text-sm font-black text-slate-950 shadow-sm transition duration-200 hover:bg-violet-50 hover:text-violet-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-purple"
             onClick={handleGoogleAuth}
             type="button"
           >
@@ -452,18 +550,25 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
           </div>
 
           <form
-            className={cn(isRegister ? "space-y-3" : "space-y-3.5")}
+            className={cn(isRegister ? "space-y-4" : "space-y-4")}
             onSubmit={handleSubmit(onSubmit)}
           >
             {isRegister ? (
-              <label className="grid gap-2 text-sm">
-                Nombre
-                <input
-                  autoComplete="name"
-                  className="min-h-11 rounded-button border border-slate-950/10 bg-white px-4 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
-                  placeholder="Tu nombre"
-                  {...register("fullName")}
-                />
+              <label className="grid gap-2 text-sm font-bold text-slate-950">
+                Nombre completo
+                <span className="relative">
+                  <User
+                    aria-hidden="true"
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                    size={18}
+                  />
+                  <input
+                    autoComplete="name"
+                    className="min-h-12 w-full rounded-[0.8rem] border border-slate-950/10 bg-white pl-12 pr-4 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
+                    placeholder="Tu nombre completo"
+                    {...register("fullName")}
+                  />
+                </span>
                 {errors.fullName ? (
                   <span className="text-xs text-danger">
                     {errors.fullName.message}
@@ -472,25 +577,37 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
               </label>
             ) : null}
 
-            <label className="grid gap-2 text-sm">
-              Email
-              <input
-                autoComplete="email"
-                className="min-h-11 rounded-button border border-slate-950/10 bg-white px-4 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
-                placeholder="tu@email.com"
-                type="email"
-                {...register("email")}
-              />
+            <label className="grid gap-2 text-sm font-bold text-slate-950">
+              Correo electrónico
+              <span className="relative">
+                <Mail
+                  aria-hidden="true"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                  size={18}
+                />
+                <input
+                  autoComplete="email"
+                  className="min-h-12 w-full rounded-[0.8rem] border border-slate-950/10 bg-white pl-12 pr-4 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
+                  placeholder="tu@email.com"
+                  type="email"
+                  {...register("email")}
+                />
+              </span>
               {errors.email ? (
                 <span className="text-xs text-danger">{errors.email.message}</span>
               ) : null}
             </label>
 
-            <label className="grid gap-2 text-sm">
+            <label className="grid gap-2 text-sm font-bold text-slate-950">
               Contraseña
               <span className="relative">
+                <LockKeyhole
+                  aria-hidden="true"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                  size={18}
+                />
                 <input
-                  className="min-h-11 w-full rounded-button border border-slate-950/10 bg-white px-4 pr-12 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
+                  className="min-h-12 w-full rounded-[0.8rem] border border-slate-950/10 bg-white pl-12 pr-12 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
                   placeholder={isRegister ? "Mínimo 10 caracteres" : "Tu contraseña"}
                   type={showPassword ? "text" : "password"}
                   {...passwordRegistration}
@@ -552,14 +669,21 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
                     {...register("website")}
                   />
                 </label>
-                <label className="grid gap-2 text-sm">
+                <label className="grid gap-2 text-sm font-bold text-slate-950">
                   Confirmar contraseña
-                  <input
-                    className="min-h-11 rounded-button border border-slate-950/10 bg-white px-4 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
-                    placeholder="Repite tu contraseña"
-                    type="password"
-                    {...register("confirmPassword")}
-                  />
+                  <span className="relative">
+                    <LockKeyhole
+                      aria-hidden="true"
+                      className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                      size={18}
+                    />
+                    <input
+                      className="min-h-12 w-full rounded-[0.8rem] border border-slate-950/10 bg-white pl-12 pr-4 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
+                      placeholder="Repite tu contraseña"
+                      type="password"
+                      {...register("confirmPassword")}
+                    />
+                  </span>
                   {errors.confirmPassword ? (
                     <span className="text-xs text-danger">
                       {errors.confirmPassword.message}
@@ -632,7 +756,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
             ) : null}
 
             <Button
-              className="min-h-11 w-full shadow-[0_18px_42px_rgba(124,58,237,0.22)]"
+              className="min-h-14 w-full rounded-[0.9rem] text-base font-black shadow-[0_18px_42px_rgba(124,58,237,0.22)]"
               disabled={isSubmitting}
               type="submit"
             >
@@ -648,6 +772,28 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
                   : "Iniciar sesión"}
             </Button>
           </form>
+
+          <div className="mt-8 grid gap-4 sm:grid-cols-3">
+            {authTrustItems.map((item) => {
+              const Icon = item.icon;
+
+              return (
+                <div className="flex items-start gap-3" key={item.title}>
+                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-500">
+                    <Icon aria-hidden="true" size={20} />
+                  </span>
+                  <span>
+                    <span className="block text-sm font-black text-slate-950">
+                      {item.title}
+                    </span>
+                    <span className="mt-1 block text-xs leading-5 text-slate-500">
+                      {item.description}
+                    </span>
+                  </span>
+                </div>
+              );
+            })}
+          </div>
 
           <p className="mt-6 text-center text-sm text-slate-600">
             {isRegister ? "¿Ya tienes cuenta?" : "¿No tienes cuenta?"}{" "}
