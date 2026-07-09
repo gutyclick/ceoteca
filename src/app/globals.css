@@ -95,6 +95,21 @@ a {
   color: transparent;
 }
 
+.auth-input {
+  color-scheme: light;
+}
+
+.auth-input:-webkit-autofill,
+.auth-input:-webkit-autofill:hover,
+.auth-input:-webkit-autofill:focus,
+.auth-input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+  -webkit-text-fill-color: #0f172a !important;
+  caret-color: #0f172a;
+  border-color: rgba(15, 23, 42, 0.1);
+  transition: background-color 9999s ease-in-out 0s;
+}
+
 .ambient-drift {
   animation: ambient-drift 12s ease-in-out infinite alternate;
 }

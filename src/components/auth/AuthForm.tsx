@@ -429,7 +429,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
                   />
                   <input
                     autoComplete="name"
-                    className="min-h-10 w-full rounded-[0.75rem] border border-slate-950/10 bg-white pl-11 pr-4 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
+                    className="auth-input min-h-10 w-full rounded-[0.75rem] border border-slate-950/10 bg-white pl-11 pr-4 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
                     placeholder="Tu nombre completo"
                     {...register("fullName")}
                   />
@@ -452,7 +452,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
                 />
                 <input
                   autoComplete="email"
-                  className="min-h-10 w-full rounded-[0.75rem] border border-slate-950/10 bg-white pl-11 pr-4 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
+                  className="auth-input min-h-10 w-full rounded-[0.75rem] border border-slate-950/10 bg-white pl-11 pr-4 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
                   placeholder="tu@email.com"
                   type="email"
                   {...register("email")}
@@ -472,7 +472,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
                   size={18}
                 />
                 <input
-                  className="min-h-10 w-full rounded-[0.75rem] border border-slate-950/10 bg-white pl-11 pr-12 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
+                  className="auth-input min-h-10 w-full rounded-[0.75rem] border border-slate-950/10 bg-white pl-11 pr-12 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
                   placeholder={isRegister ? "Mínimo 10 caracteres" : "Tu contraseña"}
                   type={showPassword ? "text" : "password"}
                   {...passwordRegistration}
@@ -543,7 +543,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
                       size={18}
                     />
                     <input
-                      className="min-h-10 w-full rounded-[0.75rem] border border-slate-950/10 bg-white pl-11 pr-4 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
+                      className="auth-input min-h-10 w-full rounded-[0.75rem] border border-slate-950/10 bg-white pl-11 pr-4 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
                       placeholder="Repite tu contraseña"
                       type="password"
                       {...register("confirmPassword")}
