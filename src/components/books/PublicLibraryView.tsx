@@ -7,6 +7,7 @@ import {
   ArrowDown,
   BarChart3,
   Bolt,
+  Bookmark,
   BookOpen,
   Brain,
   CheckCircle2,
@@ -17,7 +18,8 @@ import {
   Filter,
   Grid3X3,
   LibraryBig,
-  Lock,
+  List,
+  MoreHorizontal,
   PlayCircle,
   RotateCcw,
   Search,
@@ -34,7 +36,6 @@ import { FloatingSiteChat } from "@/components/chat/FloatingSiteChat";
 import { Footer } from "@/components/marketing/Footer";
 import { PublicHeader } from "@/components/marketing/PublicHeader";
 import { ButtonLink } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
 import { plans, type PlanKey } from "@/config/plans";
 import { bookCategories, filterBooks } from "@/data/books";
 import { clientEnv } from "@/lib/env";
@@ -63,10 +64,6 @@ const coverIcons = {
   people: Users,
   grid: Grid3X3,
 } as const;
-
-function pluralizeBooks(count: number) {
-  return `${count} ${count === 1 ? "libro" : "libros"}`;
-}
 
 function getBookCategories() {
   return bookCategories.filter(
@@ -122,17 +119,93 @@ function getPopularityScore(book: Book) {
   );
 }
 
-function ShelfCover({ book }: { book: Book }) {
+function PrivateBookCard({
+  book,
+  href,
+  planLocked = false,
+  progress = 0,
+}: {
+  book: Book;
+  href: string;
+  planLocked?: boolean;
+  progress?: number;
+}) {
+  const hasProgress = progress > 0;
+
+  return (
+    <Link
+      className="group relative flex min-h-[310px] flex-col rounded-[18px] border border-slate-950/[0.08] bg-white p-5 transition hover:border-violet-200"
+      href={href}
+    >
+      <button
+        aria-label={`Opciones de ${book.title}`}
+        className="absolute right-4 top-4 z-10 grid h-8 w-8 place-items-center rounded-full text-slate-500 transition hover:bg-slate-50 hover:text-violet-700"
+        onClick={(event) => event.preventDefault()}
+        type="button"
+      >
+        <MoreHorizontal aria-hidden="true" size={18} />
+      </button>
+
+      <div className="mx-auto w-[112px]">
+        <PrivateBookCover book={book} />
+      </div>
+
+      <div className="mt-5 min-w-0">
+        <h3 className="line-clamp-2 min-h-[2.5rem] text-base font-black leading-tight text-slate-950">
+          {book.title}
+        </h3>
+        <p className="mt-1 line-clamp-1 text-sm text-slate-500">
+          {book.author}
+        </p>
+      </div>
+
+      <div className="mt-auto pt-4">
+        {hasProgress ? (
+          <div className="mb-4 grid grid-cols-[1fr_auto] items-center gap-3">
+            <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-500"
+                style={{ width: `${Math.min(progress, 100)}%` }}
+              />
+            </div>
+            <span className="text-xs font-bold text-slate-500">{progress}%</span>
+          </div>
+        ) : (
+          <span className="mb-4 inline-flex rounded-full bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700">
+            No iniciado
+          </span>
+        )}
+
+        <div className="flex items-center justify-between gap-3 text-xs text-slate-500">
+          <span className="inline-flex items-center gap-1.5">
+            <Clock3 aria-hidden="true" size={14} />
+            {book.readingTime} min de lectura
+          </span>
+          {planLocked ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2 py-1 font-bold text-violet-700">
+              <Crown aria-hidden="true" size={12} />
+              Pro
+            </span>
+          ) : (
+            <Bookmark aria-hidden="true" size={17} />
+          )}
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function PrivateBookCover({ book }: { book: Book }) {
   const Icon = coverIcons[book.cover.variant] ?? Brain;
 
   if (book.cover.imagePath) {
     return (
-      <div className="relative aspect-[2/3] w-full overflow-hidden rounded-[12px] border border-white/10 bg-[#11111e] shadow-[0_18px_42px_rgba(0,0,0,0.34)] transition duration-300 group-hover:-translate-y-1 group-hover:border-brand-purple/45">
+      <div className="relative aspect-[2/3] w-full overflow-hidden rounded-[10px] border border-slate-950/[0.08] bg-slate-50">
         <Image
           alt={`Portada editorial de ${book.title}`}
           className="object-cover"
           fill
-          sizes="(min-width: 1280px) 180px, (min-width: 768px) 18vw, 42vw"
+          sizes="112px"
           src={book.cover.imagePath}
         />
       </div>
@@ -142,149 +215,28 @@ function ShelfCover({ book }: { book: Book }) {
   return (
     <div
       className={cn(
-        "relative aspect-[2/3] w-full overflow-hidden rounded-[12px] border border-white/10 bg-gradient-to-br p-3 shadow-[0_18px_42px_rgba(0,0,0,0.34)] transition duration-300 group-hover:-translate-y-1 group-hover:border-brand-purple/45",
+        "relative aspect-[2/3] w-full overflow-hidden rounded-[10px] border border-slate-950/[0.08] bg-gradient-to-br p-3",
         book.cover.gradient,
       )}
     >
-      <div className="absolute inset-0 bg-black/32" />
-      <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full border border-white/20" />
-      <div className="absolute bottom-4 left-4 h-20 w-20 rounded-full bg-white/18 blur-2xl" />
-      <div className="relative z-10 flex h-full flex-col justify-between">
-        <p className="line-clamp-1 text-[9px] font-semibold uppercase tracking-[0.18em] text-white/72 sm:text-[10px]">
+      <div className="absolute inset-0 bg-black/24" />
+      <div className="relative z-10 flex h-full flex-col justify-between text-white">
+        <p className="line-clamp-1 text-[8px] font-black uppercase tracking-[0.18em] text-white/75">
           {book.category}
         </p>
-        <div className="grid flex-1 place-items-center py-3">
-          <span className="grid h-12 w-12 place-items-center rounded-[16px] bg-white/15 text-white backdrop-blur-md sm:h-14 sm:w-14">
-            <Icon aria-hidden="true" size={28} />
-          </span>
-        </div>
-        <div className="min-w-0">
-          <h3 className="line-clamp-4 break-words text-[clamp(1rem,4.8vw,1.28rem)] font-black leading-[0.94] text-white sm:text-[1.22rem]">
+        <span className="mx-auto grid h-12 w-12 place-items-center rounded-[14px] bg-white/16">
+          <Icon aria-hidden="true" size={25} />
+        </span>
+        <div>
+          <h3 className="line-clamp-4 text-[1rem] font-black leading-[0.95]">
             {book.title}
           </h3>
-          <p className="mt-2 line-clamp-1 text-[11px] text-white/74">
+          <p className="mt-1 line-clamp-1 text-[10px] text-white/75">
             {book.author}
           </p>
         </div>
       </div>
     </div>
-  );
-}
-
-function LibraryBookTile({
-  book,
-  href,
-  locked = false,
-  planLocked = false,
-  progress = 0,
-}: {
-  book: Book;
-  href: string;
-  locked?: boolean;
-  planLocked?: boolean;
-  progress?: number;
-}) {
-  return (
-    <Link className="group block min-w-0" href={href}>
-      <div className="relative">
-        <ShelfCover book={book} />
-        {planLocked ? (
-          <span className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full border border-white/10 bg-black/55 text-brand-purple backdrop-blur-md">
-            <Lock aria-hidden="true" size={15} />
-          </span>
-        ) : null}
-      </div>
-      <div className="mt-3 min-w-0">
-        <h3 className="line-clamp-2 min-h-[2.45rem] text-sm font-semibold leading-tight text-white sm:text-[15px]">
-          {book.title}
-        </h3>
-        <p className="mt-1 line-clamp-1 text-xs text-text-muted">
-          {book.author}
-        </p>
-        <div className="mt-1 flex items-center gap-1.5 text-xs text-text-secondary">
-          <Clock3 aria-hidden="true" size={13} />
-          <span>{book.readingTime} min</span>
-          {locked ? (
-            <span className="ml-auto rounded-full bg-brand-purple/15 px-2 py-0.5 text-[10px] text-brand-purple">
-              Vista previa
-            </span>
-          ) : planLocked ? (
-            <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-brand-purple/15 px-2 py-0.5 text-[10px] text-brand-purple">
-              <Crown aria-hidden="true" size={11} />
-              Pro
-            </span>
-          ) : null}
-        </div>
-        {!locked && progress > 0 ? (
-          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-brand-purple to-brand-blue"
-              style={{ width: `${Math.min(progress, 100)}%` }}
-            />
-          </div>
-        ) : null}
-      </div>
-    </Link>
-  );
-}
-
-function CategoryShelf({
-  books,
-  category,
-  onFilter,
-  getBookIndex,
-  plan = "pro",
-  progressRows = [],
-}: {
-  books: Book[];
-  category: BookCategory;
-  onFilter?: (category: BookCategory) => void;
-  getBookIndex?: (book: Book) => number;
-  plan?: PlanKey;
-  progressRows?: ProgressRow[];
-}) {
-  const categoryBooks = books.filter((book) => book.category === category);
-
-  if (categoryBooks.length === 0) {
-    return null;
-  }
-
-  return (
-    <section>
-      <div className="flex items-end justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-semibold sm:text-2xl">{category}</h2>
-          <p className="mt-1 text-sm text-text-secondary">
-            {pluralizeBooks(categoryBooks.length)}
-          </p>
-        </div>
-        {onFilter ? (
-          <button
-            className="shrink-0 text-sm text-brand-purple transition hover:text-white"
-            onClick={() => onFilter(category)}
-            type="button"
-          >
-            Ver solo esta categoría
-          </button>
-        ) : null}
-      </div>
-      <div className="mt-4 grid grid-cols-[repeat(auto-fill,minmax(132px,1fr))] gap-x-4 gap-y-8 sm:grid-cols-[repeat(auto-fill,minmax(150px,1fr))] lg:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] xl:grid-cols-[repeat(auto-fill,minmax(170px,1fr))]">
-        {categoryBooks.map((book) => {
-          const bookIndex = getBookIndex?.(book) ?? 0;
-          const isPlanLocked = !isBookIncludedInPlan(bookIndex, plan);
-
-          return (
-            <LibraryBookTile
-              book={book}
-              href={isPlanLocked ? "/planes" : `/libro/${book.slug}`}
-              key={book.id}
-              planLocked={isPlanLocked}
-              progress={getBookProgress(progressRows, book)}
-            />
-          );
-        })}
-      </div>
-    </section>
   );
 }
 
@@ -704,6 +656,8 @@ function PrivateLibrary({ books }: { books: Book[] }) {
   const [planAccess, setPlanAccess] = useState<PlanAccessFilter>("Todos");
   const [progressFilter, setProgressFilter] = useState<ProgressFilter>("Todos");
   const [sortBy, setSortBy] = useState<SortOption>("featured");
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [plan, setPlan] = useState<PlanKey>("free");
   const [progressRows, setProgressRows] = useState<ProgressRow[]>([]);
   const bookIndexById = useMemo(
@@ -782,16 +736,6 @@ function PrivateLibrary({ books }: { books: Book[] }) {
     sortBy,
     timeFilter,
   ]);
-  const visibleCategories = useMemo(
-    () =>
-      getBookCategories()
-        .map((item) => ({
-          category: item,
-          books: filteredBooks.filter((book) => book.category === item),
-        }))
-        .filter((item) => item.books.length > 0),
-    [filteredBooks],
-  );
   const activeFilterCount = [
     category !== "Todos",
     difficulty !== "Todas",
@@ -858,229 +802,208 @@ function PrivateLibrary({ books }: { books: Book[] }) {
   }, []);
 
   return (
-    <main className="min-h-screen overflow-x-clip bg-[#03040b] pb-16 pl-0 text-text-primary transition-[padding] duration-300 ease-out sm:pl-[var(--dashboard-sidebar-offset,84px)]">
-      <DashboardSidebar active="library" />
-      <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_22%_10%,rgba(124,58,237,0.16),transparent_30%),linear-gradient(180deg,#02030a_0%,#050611_45%,#03040b_100%)]" />
+    <main className="min-h-screen overflow-x-clip bg-[#fbfaf8] pb-12 pl-0 text-slate-950 transition-[padding] duration-300 ease-out sm:pl-[var(--dashboard-sidebar-offset,240px)]">
+      <DashboardSidebar active="library" tone="light" />
 
-      <section className="mx-auto w-full max-w-[1540px] px-4 pt-4 sm:px-5 md:px-8 xl:px-10">
-        <header className="flex items-center justify-end">
-          <NotificationBell />
-        </header>
-
-        <section className="mt-8 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+      <section className="mx-auto w-full max-w-[1380px] px-5 pt-8 sm:px-7 lg:px-10">
+        <header className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(420px,auto)] lg:items-start">
           <div>
-            <p className="text-lg font-medium text-brand-purple">
-              Biblioteca completa
-            </p>
-            <h1 className="mt-4 max-w-3xl text-balance text-[clamp(2.25rem,5.4vw,4.5rem)] font-black leading-[0.98] tracking-normal">
-              Encuentra tu próxima lectura aplicada.
+            <h1 className="text-4xl font-black tracking-[-0.04em] text-slate-950">
+              Biblioteca
             </h1>
-          </div>
-          <Card className="w-full rounded-[18px] bg-white/[0.035] p-5 lg:max-w-xs">
-            <p className="text-sm text-text-secondary">Disponibles</p>
-            <p className="mt-2 text-4xl font-bold">{books.length}</p>
-            <p className="mt-1 text-sm text-text-secondary">
-              análisis publicados
+            <p className="mt-2 text-base text-slate-600">
+              Todos tus análisis organizados para que sigas aprendiendo.
             </p>
-          </Card>
-        </section>
+          </div>
 
-        <Card className="sticky top-3 z-20 mt-7 rounded-[20px] bg-[#101119]/92 p-3 backdrop-blur-xl">
-          <div className="grid gap-3 xl:grid-cols-[minmax(260px,1fr)_auto] xl:items-start">
-            <label className="relative block">
+          <div className="flex flex-col gap-3 sm:flex-row lg:justify-end">
+            <label className="relative w-full sm:w-[340px]">
               <span className="sr-only">Buscar en biblioteca</span>
               <Search
                 aria-hidden="true"
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted"
-                size={18}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                size={19}
               />
               <input
-                className="min-h-12 w-full rounded-[14px] border border-white/10 bg-white/[0.045] pl-11 pr-4 text-sm outline-none transition placeholder:text-text-muted focus:border-brand-purple"
+                className="min-h-12 w-full rounded-[14px] border border-slate-950/[0.10] bg-white pl-12 pr-4 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-violet-300 focus:ring-4 focus:ring-violet-100"
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Buscar por título, autor, categoría o etiqueta"
+                placeholder="Buscar libros, autores o temas..."
                 value={query}
               />
             </label>
+            <button
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[14px] border border-slate-950/[0.10] bg-white px-5 text-sm font-bold text-slate-700 transition hover:border-violet-200 hover:text-violet-700"
+              type="button"
+            >
+              <Filter aria-hidden="true" size={18} />
+              Filtros
+            </button>
+            <NotificationBell />
+          </div>
+        </header>
 
-            <div className="grid gap-3">
-              <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6">
-                <label className="grid gap-1 text-xs text-text-muted">
-                  Ordenar
-                  <select
-                    className="min-h-10 rounded-[12px] border border-white/10 bg-[#151722] px-3 text-sm text-text-primary outline-none"
-                    onChange={(event) => setSortBy(event.target.value as SortOption)}
-                    value={sortBy}
-                  >
-                    <option value="featured">Destacado</option>
-                    <option value="recent">Reciente</option>
-                    <option value="popular">Popular</option>
-                    <option value="continue">Continuar</option>
-                  </select>
-                </label>
-                <label className="grid gap-1 text-xs text-text-muted">
-                  Dificultad
-                  <select
-                    className="min-h-10 rounded-[12px] border border-white/10 bg-[#151722] px-3 text-sm text-text-primary outline-none"
-                    onChange={(event) =>
-                      setDifficulty(event.target.value as "Todas" | BookDifficulty)
-                    }
-                    value={difficulty}
-                  >
-                    <option value="Todas">Todas</option>
-                    <option value="Inicial">Inicial</option>
-                    <option value="Intermedio">Intermedio</option>
-                    <option value="Avanzado">Avanzado</option>
-                  </select>
-                </label>
-                <label className="grid gap-1 text-xs text-text-muted">
-                  Tiempo
-                  <select
-                    className="min-h-10 rounded-[12px] border border-white/10 bg-[#151722] px-3 text-sm text-text-primary outline-none"
-                    onChange={(event) => setTimeFilter(event.target.value as TimeFilter)}
-                    value={timeFilter}
-                  >
-                    <option value="Todos">Todos</option>
-                    <option value="short">Hasta 10 min</option>
-                    <option value="medium">11 a 15 min</option>
-                    <option value="long">Más de 15 min</option>
-                  </select>
-                </label>
-                <label className="grid gap-1 text-xs text-text-muted">
-                  Plan
-                  <select
-                    className="min-h-10 rounded-[12px] border border-white/10 bg-[#151722] px-3 text-sm text-text-primary outline-none"
-                    onChange={(event) =>
-                      setPlanAccess(event.target.value as PlanAccessFilter)
-                    }
-                    value={planAccess}
-                  >
-                    <option value="Todos">Todos</option>
-                    <option value="included">Incluidos</option>
-                    <option value="upgrade">Requieren plan</option>
-                  </select>
-                </label>
-                <label className="grid gap-1 text-xs text-text-muted">
-                  Progreso
-                  <select
-                    className="min-h-10 rounded-[12px] border border-white/10 bg-[#151722] px-3 text-sm text-text-primary outline-none"
-                    onChange={(event) =>
-                      setProgressFilter(event.target.value as ProgressFilter)
-                    }
-                    value={progressFilter}
-                  >
-                    <option value="Todos">Todos</option>
-                    <option value="not-started">Sin iniciar</option>
-                    <option value="in-progress">En progreso</option>
-                    <option value="completed">Completados</option>
-                  </select>
-                </label>
-                <button
-                  className="mt-auto inline-flex min-h-10 items-center justify-center gap-2 rounded-[12px] border border-white/10 px-3 text-sm text-text-secondary transition hover:bg-white/[0.06] hover:text-white"
-                  onClick={() => {
-                    setQuery("");
-                    setCategory("Todos");
-                    setDifficulty("Todas");
-                    setTimeFilter("Todos");
-                    setPlanAccess("Todos");
-                    setProgressFilter("Todos");
-                    setSortBy("featured");
-                  }}
-                  type="button"
-                >
-                  <RotateCcw aria-hidden="true" size={15} />
-                  Limpiar
-                </button>
-              </div>
-
-              <div
-                aria-label="Filtrar por categoría"
-                className="flex max-w-full gap-2 overflow-x-auto pb-1"
-                role="list"
+        <section className="mt-10">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative">
+              <button
+                aria-expanded={isCategoryOpen}
+                className="inline-flex min-h-12 min-w-[220px] items-center justify-between gap-3 rounded-[14px] border border-violet-200 bg-white px-5 text-sm font-bold text-slate-800 transition hover:border-violet-300"
+                onClick={() => setIsCategoryOpen((current) => !current)}
+                type="button"
               >
-                {bookCategories.map((item) => (
-                  <button
-                    className={cn(
-                      "inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full border border-white/10 px-4 text-sm text-text-secondary transition hover:bg-white/[0.06] hover:text-white",
-                      category === item &&
-                        "border-brand-purple bg-brand-purple/15 text-white",
-                    )}
-                    key={item}
-                    onClick={() => setCategory(item)}
-                    type="button"
-                  >
-                    {item === "Todos" ? <Filter aria-hidden="true" size={15} /> : null}
-                    {item}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-text-muted">
-            <span>{filteredBooks.length} resultados</span>
-            {activeFilterCount > 0 ? (
-              <span className="rounded-full bg-brand-purple/15 px-2 py-1 text-brand-purple">
-                {activeFilterCount} filtros activos
-              </span>
-            ) : null}
-          </div>
-        </Card>
+                <span className="inline-flex items-center gap-3">
+                  <Grid3X3 aria-hidden="true" className="text-violet-600" size={18} />
+                  {category === "Todos" ? "Todas las categorías" : category}
+                </span>
+                <ChevronDown aria-hidden="true" size={16} />
+              </button>
 
-        <section className="mt-10 space-y-12">
-          {visibleCategories.length > 0 ? (
-            <>
-              {visibleCategories.map(({ category: currentCategory }) => (
-                <CategoryShelf
-                  books={filteredBooks}
-                  category={currentCategory}
-                  getBookIndex={(book) => bookIndexById.get(book.id) ?? 0}
-                  key={currentCategory}
-                  onFilter={setCategory}
-                  plan={plan}
-                  progressRows={progressRows}
-                />
-              ))}
-              {visibleCategories.length <= 2 && activeFilterCount === 0 ? (
-                <Card className="rounded-[20px] border-dashed border-white/15 bg-white/[0.025] p-6">
-                  <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
-                    <div>
-                      <p className="text-lg font-semibold">
-                        Más categorías están en camino
-                      </p>
-                      <p className="mt-2 max-w-2xl text-sm leading-6 text-text-secondary">
-                        Estamos ampliando la biblioteca con análisis de ventas,
-                        marketing, negociación, innovación y casos de éxito.
-                      </p>
-                    </div>
-                    <ButtonLink href="/home" variant="secondary">
-                      Volver al inicio
-                    </ButtonLink>
-                  </div>
-                </Card>
-              ) : null}
-            </>
-          ) : (
-            <Card className="rounded-[20px] border-dashed border-white/15 bg-white/[0.025] p-8 text-center">
-              <p className="text-xl font-semibold">No encontramos resultados</p>
-              <p className="mt-2 text-sm text-text-secondary">
-                Ajusta los filtros o prueba con otra búsqueda. También puedes
-                explorar categorías cercanas para descubrir nuevos análisis.
-              </p>
-              <div className="mt-5 flex flex-wrap justify-center gap-2">
-                {getBookCategories()
-                  .slice(0, 5)
-                  .map((item) => (
+              {isCategoryOpen ? (
+                <div className="absolute left-0 top-[calc(100%+8px)] z-30 w-[280px] overflow-hidden rounded-[16px] border border-slate-950/[0.08] bg-white">
+                  {bookCategories.map((item) => (
                     <button
-                      className="rounded-full border border-white/10 px-3 py-1.5 text-xs text-text-secondary transition hover:bg-white/[0.06] hover:text-white"
+                      className={cn(
+                        "flex w-full items-center justify-between gap-3 px-5 py-3 text-left text-sm font-bold text-slate-700 transition hover:bg-violet-50 hover:text-violet-700",
+                        category === item && "bg-violet-50 text-violet-700",
+                      )}
                       key={item}
-                      onClick={() => setCategory(item)}
+                      onClick={() => {
+                        setCategory(item);
+                        setIsCategoryOpen(false);
+                      }}
                       type="button"
                     >
-                      {item}
+                      <span>{item === "Todos" ? "Todas las categorías" : item}</span>
+                      {category === item ? (
+                        <CheckCircle2 aria-hidden="true" size={17} />
+                      ) : null}
                     </button>
                   ))}
-              </div>
+                </div>
+              ) : null}
+            </div>
+
+            <select
+              aria-label="Estado de lectura"
+              className="min-h-12 rounded-[14px] border border-slate-950/[0.10] bg-white px-4 text-sm font-bold text-slate-700 outline-none focus:border-violet-300"
+              onChange={(event) =>
+                setProgressFilter(event.target.value as ProgressFilter)
+              }
+              value={progressFilter}
+            >
+              <option value="Todos">Estado: Todos</option>
+              <option value="not-started">Estado: Sin iniciar</option>
+              <option value="in-progress">Estado: En progreso</option>
+              <option value="completed">Estado: Completados</option>
+            </select>
+
+            <select
+              aria-label="Ordenar biblioteca"
+              className="min-h-12 rounded-[14px] border border-slate-950/[0.10] bg-white px-4 text-sm font-bold text-slate-700 outline-none focus:border-violet-300"
+              onChange={(event) => setSortBy(event.target.value as SortOption)}
+              value={sortBy}
+            >
+              <option value="featured">Ordenar: Destacados</option>
+              <option value="recent">Ordenar: Recientes</option>
+              <option value="popular">Ordenar: Populares</option>
+              <option value="continue">Ordenar: Continuar</option>
+            </select>
+
+            <select
+              aria-label="Dificultad"
+              className="min-h-12 rounded-[14px] border border-slate-950/[0.10] bg-white px-4 text-sm font-bold text-slate-700 outline-none focus:border-violet-300"
+              onChange={(event) =>
+                setDifficulty(event.target.value as "Todas" | BookDifficulty)
+              }
+              value={difficulty}
+            >
+              <option value="Todas">Dificultad: Todas</option>
+              <option value="Inicial">Dificultad: Inicial</option>
+              <option value="Intermedio">Dificultad: Intermedio</option>
+              <option value="Avanzado">Dificultad: Avanzado</option>
+            </select>
+
+            <div className="inline-flex min-h-12 overflow-hidden rounded-[14px] border border-slate-950/[0.10] bg-white">
               <button
-                className="mt-5 inline-flex min-h-11 items-center justify-center rounded-button border border-white/10 px-4 text-sm text-text-secondary transition hover:bg-white/[0.06] hover:text-white"
+                aria-label="Vista en cuadrícula"
+                className={cn(
+                  "grid w-12 place-items-center text-slate-500 transition hover:text-violet-700",
+                  viewMode === "grid" && "bg-violet-50 text-violet-700",
+                )}
+                onClick={() => setViewMode("grid")}
+                type="button"
+              >
+                <Grid3X3 aria-hidden="true" size={18} />
+              </button>
+              <button
+                aria-label="Vista en lista"
+                className={cn(
+                  "grid w-12 place-items-center border-l border-slate-950/[0.08] text-slate-500 transition hover:text-violet-700",
+                  viewMode === "list" && "bg-violet-50 text-violet-700",
+                )}
+                onClick={() => setViewMode("list")}
+                type="button"
+              >
+                <List aria-hidden="true" size={18} />
+              </button>
+            </div>
+
+            {activeFilterCount > 0 || query ? (
+              <button
+                className="inline-flex min-h-12 items-center gap-2 rounded-[14px] border border-slate-950/[0.10] bg-white px-4 text-sm font-bold text-slate-600 transition hover:text-violet-700"
+                onClick={() => {
+                  setQuery("");
+                  setCategory("Todos");
+                  setDifficulty("Todas");
+                  setTimeFilter("Todos");
+                  setPlanAccess("Todos");
+                  setProgressFilter("Todos");
+                  setSortBy("featured");
+                }}
+                type="button"
+              >
+                <RotateCcw aria-hidden="true" size={16} />
+                Limpiar
+              </button>
+            ) : null}
+          </div>
+        </section>
+
+        <section className="mt-5 rounded-[18px] border border-slate-950/[0.08] bg-white p-4">
+          {filteredBooks.length > 0 ? (
+            <div
+              className={cn(
+                "grid gap-4",
+                viewMode === "grid"
+                  ? "grid-cols-[repeat(auto-fill,minmax(210px,1fr))]"
+                  : "grid-cols-1 md:grid-cols-2",
+              )}
+            >
+              {filteredBooks.map((book) => {
+                const bookIndex = bookIndexById.get(book.id) ?? 0;
+                const isPlanLocked = !isBookIncludedInPlan(bookIndex, plan);
+
+                return (
+                  <PrivateBookCard
+                    book={book}
+                    href={isPlanLocked ? "/planes" : `/libro/${book.slug}`}
+                    key={book.id}
+                    planLocked={isPlanLocked}
+                    progress={getBookProgress(progressRows, book)}
+                  />
+                );
+              })}
+            </div>
+          ) : (
+            <div className="rounded-[16px] border border-dashed border-slate-950/[0.12] bg-slate-50 p-8 text-center">
+              <p className="text-xl font-black text-slate-950">
+                No encontramos resultados
+              </p>
+              <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600">
+                Ajusta los filtros o busca por otro título, autor o tema.
+              </p>
+              <button
+                className="mt-5 inline-flex min-h-11 items-center justify-center rounded-[12px] border border-slate-950/[0.10] bg-white px-4 text-sm font-bold text-slate-700 transition hover:text-violet-700"
                 onClick={() => {
                   setQuery("");
                   setCategory("Todos");
@@ -1094,32 +1017,35 @@ function PrivateLibrary({ books }: { books: Book[] }) {
               >
                 Limpiar filtros
               </button>
-            </Card>
+            </div>
           )}
         </section>
 
-        <footer className="mt-12 border-t border-white/10 py-8 text-sm text-text-muted">
+        <section className="mt-5 rounded-[18px] border border-violet-100 bg-white px-5 py-4">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <p>&copy; 2026 Ceoteca. Todos los derechos reservados.</p>
-            <nav
-              aria-label="Legal de biblioteca"
-              className="flex flex-wrap gap-x-5 gap-y-2"
+            <div className="flex items-center gap-4">
+              <span className="grid h-12 w-12 place-items-center rounded-[14px] bg-violet-50 text-violet-700">
+                <Sparkles aria-hidden="true" size={22} />
+              </span>
+              <div>
+                <p className="font-black text-slate-950">
+                  ¿No encuentras un análisis?
+                </p>
+                <p className="mt-1 text-sm text-slate-600">
+                  Explora el catálogo completo y descubre tu próximo libro.
+                </p>
+              </div>
+            </div>
+            <ButtonLink
+              className="min-h-11 rounded-[12px] border-violet-300 bg-white text-violet-700 shadow-none hover:bg-violet-50"
+              href="/biblioteca"
+              variant="secondary"
             >
-              <Link className="transition hover:text-text-primary" href="/terminos">
-                Términos
-              </Link>
-              <Link className="transition hover:text-text-primary" href="/privacidad">
-                Privacidad
-              </Link>
-              <Link
-                className="transition hover:text-text-primary"
-                href="mailto:hola@ceoteca.com"
-              >
-                Soporte
-              </Link>
-            </nav>
+              Explorar catálogo
+              <ArrowDown aria-hidden="true" className="-rotate-90" size={16} />
+            </ButtonLink>
           </div>
-        </footer>
+        </section>
       </section>
       <FloatingSiteChat plan={plan} />
     </main>
