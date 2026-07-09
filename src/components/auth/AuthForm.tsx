@@ -424,15 +424,13 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
     <main className="min-h-screen overflow-x-hidden bg-[#fbfaf8] text-slate-950">
       <section
         className={cn(
-          "ceoteca-container relative grid min-h-screen gap-8 py-6 sm:py-8 lg:grid-cols-[0.9fr_1fr] lg:items-center",
-          isRegister
-            ? "lg:gap-10"
-            : "lg:gap-14",
+          "ceoteca-container relative grid min-h-screen gap-6 py-5 sm:py-6 lg:grid-cols-[0.9fr_1fr] lg:items-center",
+          isRegister ? "lg:gap-8 xl:gap-10" : "lg:gap-12",
         )}
       >
-        <div className="absolute left-0 top-20 -z-10 h-80 w-80 rounded-full bg-violet-100/80 blur-3xl" />
-        <div className="absolute bottom-0 right-0 -z-10 h-96 w-96 rounded-full bg-fuchsia-100/80 blur-3xl" />
-        <div className="absolute right-0 top-6 hidden items-center gap-2 text-sm text-slate-500 lg:flex">
+        <div className="absolute left-0 top-16 -z-10 h-64 w-64 rounded-full bg-violet-100/80 blur-3xl" />
+        <div className="absolute bottom-0 right-0 -z-10 h-72 w-72 rounded-full bg-fuchsia-100/75 blur-3xl" />
+        <div className="absolute right-0 top-5 hidden items-center gap-2 text-sm text-slate-500 lg:flex">
           <span>{isRegister ? "¿Ya tienes cuenta?" : "¿No tienes cuenta?"}</span>
           <Link
             className="font-black text-violet-700 transition hover:text-fuchsia-600"
@@ -441,10 +439,10 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
             {isRegister ? "Inicia sesión" : "Regístrate"}
           </Link>
         </div>
-        <div className="mx-auto w-full max-w-[560px]">
-          <div className="mb-14 flex items-center justify-between gap-4">
+        <div className="mx-auto w-full max-w-[520px]">
+          <div className="mb-8 flex items-center justify-between gap-4 xl:mb-10">
             <Logo
-              className="text-slate-950 [&>span]:text-xl [&>span]:font-black [&>span]:text-slate-950"
+              className="text-slate-950 [&>span]:text-lg [&>span]:font-black [&>span]:text-slate-950"
               useBrandAsset={false}
             />
             <Link
@@ -454,34 +452,34 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
               Inicio
             </Link>
           </div>
-          <p className="text-sm font-black uppercase tracking-[0.2em] text-violet-600">
+          <p className="text-xs font-black uppercase tracking-[0.22em] text-violet-600">
             {isRegister ? "Únete a Ceoteca" : "Accede a Ceoteca"}
           </p>
-          <h1 className="mt-5 text-balance text-[clamp(2.65rem,5vw,4.35rem)] font-black leading-[0.98] tracking-[-0.055em] text-slate-950">
+          <h1 className="mt-4 text-balance text-[clamp(2.2rem,4.2vw,3.55rem)] font-black leading-[1.02] tracking-[-0.045em] text-slate-950">
             {isRegister
               ? "Crea tu cuenta y empieza a aprender sin límites."
               : "Vuelve a tus ideas, notas y progreso."}
           </h1>
-          <p className="mt-6 max-w-lg text-lg leading-8 text-slate-600">
+          <p className="mt-5 max-w-lg text-base leading-7 text-slate-600">
             {isRegister
               ? "Accede a análisis de libros de negocios, desarrollo personal e inversión, con el apoyo de CEO."
               : "Continúa aprendiendo con análisis editoriales, ejercicios prácticos y recomendaciones personalizadas."}
           </p>
-          <div className="mt-10 rounded-[1.5rem] border border-violet-100 bg-gradient-to-br from-violet-50 via-white to-fuchsia-50 p-6 shadow-[0_24px_70px_rgba(124,58,237,0.08)]">
-            <div className="grid gap-6">
+          <div className="mt-7 rounded-[1.35rem] border border-violet-100 bg-gradient-to-br from-violet-50 via-white to-fuchsia-50 p-5 shadow-[0_18px_54px_rgba(124,58,237,0.07)]">
+            <div className="grid gap-4">
               {authBenefits.map((item) => {
                 const Icon = item.icon;
 
                 return (
-                  <div className="flex items-start gap-4" key={item.title}>
-                    <span className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-violet-100 text-violet-700">
-                      <Icon aria-hidden="true" size={24} />
+                  <div className="flex items-start gap-3" key={item.title}>
+                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-violet-100 text-violet-700">
+                      <Icon aria-hidden="true" size={20} />
                     </span>
                     <span>
-                      <span className="block text-base font-black text-slate-950">
+                      <span className="block text-sm font-black text-slate-950">
                         {item.title}
                       </span>
-                      <span className="mt-1 block text-sm leading-6 text-slate-600">
+                      <span className="mt-0.5 block text-sm leading-5 text-slate-600">
                         {item.description}
                       </span>
                     </span>
@@ -491,7 +489,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
             </div>
           </div>
 
-          <div className="mt-8 hidden items-center gap-4 lg:flex">
+          <div className="mt-6 hidden items-center gap-4 lg:flex">
             <div className="flex -space-x-2">
               {["A", "M", "S", "G"].map((initial) => (
                 <span
@@ -508,7 +506,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
                   <Star aria-hidden="true" fill="currentColor" key={index} size={16} />
                 ))}
               </div>
-              <p className="mt-2 max-w-sm text-sm leading-6 text-slate-600">
+              <p className="mt-1.5 max-w-sm text-xs leading-5 text-slate-600">
                 &ldquo;Ceoteca me ayuda a convertir ideas de libros en acciones concretas.&rdquo;
               </p>
             </div>
@@ -517,12 +515,12 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
 
         <Card
           className={cn(
-            "mx-auto w-full max-w-[620px] rounded-[1.6rem] border-slate-950/[0.08] bg-white text-slate-950 shadow-[0_28px_90px_rgba(15,23,42,0.10)]",
-            isRegister ? "p-5 sm:p-7 lg:p-8" : "p-5 sm:p-7 lg:p-8",
+            "mx-auto w-full max-w-[590px] rounded-[1.45rem] border-slate-950/[0.08] bg-white text-slate-950 shadow-[0_22px_72px_rgba(15,23,42,0.10)]",
+            isRegister ? "p-5 sm:p-6 lg:p-7" : "p-5 sm:p-6 lg:p-7",
           )}
         >
           <button
-            className="inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-[0.9rem] border border-violet-500 bg-white px-5 text-sm font-black text-slate-950 shadow-sm transition duration-200 hover:bg-violet-50 hover:text-violet-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-purple"
+            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[0.85rem] border border-violet-500 bg-white px-5 text-sm font-black text-slate-950 shadow-sm transition duration-200 hover:bg-violet-50 hover:text-violet-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-purple"
             onClick={handleGoogleAuth}
             type="button"
           >
@@ -549,12 +547,9 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
             <span className="h-px flex-1 bg-slate-200" />
           </div>
 
-          <form
-            className={cn(isRegister ? "space-y-4" : "space-y-4")}
-            onSubmit={handleSubmit(onSubmit)}
-          >
+          <form className="space-y-3.5" onSubmit={handleSubmit(onSubmit)}>
             {isRegister ? (
-              <label className="grid gap-2 text-sm font-bold text-slate-950">
+              <label className="grid gap-1.5 text-sm font-bold text-slate-950">
                 Nombre completo
                 <span className="relative">
                   <User
@@ -564,7 +559,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
                   />
                   <input
                     autoComplete="name"
-                    className="min-h-12 w-full rounded-[0.8rem] border border-slate-950/10 bg-white pl-12 pr-4 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
+                    className="min-h-11 w-full rounded-[0.8rem] border border-slate-950/10 bg-white pl-11 pr-4 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
                     placeholder="Tu nombre completo"
                     {...register("fullName")}
                   />
@@ -577,7 +572,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
               </label>
             ) : null}
 
-            <label className="grid gap-2 text-sm font-bold text-slate-950">
+            <label className="grid gap-1.5 text-sm font-bold text-slate-950">
               Correo electrónico
               <span className="relative">
                 <Mail
@@ -587,7 +582,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
                 />
                 <input
                   autoComplete="email"
-                  className="min-h-12 w-full rounded-[0.8rem] border border-slate-950/10 bg-white pl-12 pr-4 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
+                  className="min-h-11 w-full rounded-[0.8rem] border border-slate-950/10 bg-white pl-11 pr-4 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
                   placeholder="tu@email.com"
                   type="email"
                   {...register("email")}
@@ -598,7 +593,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
               ) : null}
             </label>
 
-            <label className="grid gap-2 text-sm font-bold text-slate-950">
+            <label className="grid gap-1.5 text-sm font-bold text-slate-950">
               Contraseña
               <span className="relative">
                 <LockKeyhole
@@ -607,7 +602,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
                   size={18}
                 />
                 <input
-                  className="min-h-12 w-full rounded-[0.8rem] border border-slate-950/10 bg-white pl-12 pr-12 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
+                  className="min-h-11 w-full rounded-[0.8rem] border border-slate-950/10 bg-white pl-11 pr-12 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
                   placeholder={isRegister ? "Mínimo 10 caracteres" : "Tu contraseña"}
                   type={showPassword ? "text" : "password"}
                   {...passwordRegistration}
@@ -669,7 +664,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
                     {...register("website")}
                   />
                 </label>
-                <label className="grid gap-2 text-sm font-bold text-slate-950">
+                <label className="grid gap-1.5 text-sm font-bold text-slate-950">
                   Confirmar contraseña
                   <span className="relative">
                     <LockKeyhole
@@ -678,7 +673,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
                       size={18}
                     />
                     <input
-                      className="min-h-12 w-full rounded-[0.8rem] border border-slate-950/10 bg-white pl-12 pr-4 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
+                      className="min-h-11 w-full rounded-[0.8rem] border border-slate-950/10 bg-white pl-11 pr-4 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
                       placeholder="Repite tu contraseña"
                       type="password"
                       {...register("confirmPassword")}
@@ -756,7 +751,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
             ) : null}
 
             <Button
-              className="min-h-14 w-full rounded-[0.9rem] text-base font-black shadow-[0_18px_42px_rgba(124,58,237,0.22)]"
+              className="min-h-12 w-full rounded-[0.85rem] text-base font-black shadow-[0_14px_34px_rgba(124,58,237,0.2)]"
               disabled={isSubmitting}
               type="submit"
             >
@@ -773,20 +768,20 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
             </Button>
           </form>
 
-          <div className="mt-8 grid gap-4 sm:grid-cols-3">
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
             {authTrustItems.map((item) => {
               const Icon = item.icon;
 
               return (
                 <div className="flex items-start gap-3" key={item.title}>
-                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-500">
-                    <Icon aria-hidden="true" size={20} />
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-500">
+                    <Icon aria-hidden="true" size={17} />
                   </span>
                   <span>
-                    <span className="block text-sm font-black text-slate-950">
+                    <span className="block text-xs font-black text-slate-950">
                       {item.title}
                     </span>
-                    <span className="mt-1 block text-xs leading-5 text-slate-500">
+                    <span className="mt-0.5 block text-[11px] leading-4 text-slate-500">
                       {item.description}
                     </span>
                   </span>
@@ -795,7 +790,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
             })}
           </div>
 
-          <p className="mt-6 text-center text-sm text-slate-600">
+          <p className="mt-4 text-center text-sm text-slate-600 lg:hidden">
             {isRegister ? "¿Ya tienes cuenta?" : "¿No tienes cuenta?"}{" "}
             <Link
               className="font-medium text-brand-purple"
