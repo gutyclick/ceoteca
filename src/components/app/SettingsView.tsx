@@ -11,9 +11,7 @@ import {
   CreditCard,
   Download,
   Flame,
-  Globe,
   KeyRound,
-  Languages,
   Loader2,
   Mail,
   Phone,
@@ -755,24 +753,6 @@ export function SettingsView() {
                 <h2 className="text-xl font-black text-slate-950">
                   Preferencias
                 </h2>
-                <div className="mt-6 grid gap-4 md:grid-cols-2">
-                  <Field label="Zona horaria">
-                    <InputShell icon={Globe}>
-                      <select className="min-h-11 w-full rounded-[12px] border border-slate-950/[0.10] bg-white pl-12 pr-4 text-slate-800 outline-none focus:border-violet-300">
-                        <option>(GMT-05:00) Bogotá, Lima, Quito</option>
-                        <option>(GMT-04:00) Caracas, La Paz</option>
-                        <option>(GMT-06:00) Ciudad de México</option>
-                      </select>
-                    </InputShell>
-                  </Field>
-                  <Field label="Idioma">
-                    <InputShell icon={Languages}>
-                      <select className="min-h-11 w-full rounded-[12px] border border-slate-950/[0.10] bg-white pl-12 pr-4 text-slate-800 outline-none focus:border-violet-300">
-                        <option>Español</option>
-                      </select>
-                    </InputShell>
-                  </Field>
-                </div>
                 <div className="mt-6 grid gap-3">
                   <Toggle
                     description="Recibe avisos útiles para retomar análisis pendientes."
@@ -996,28 +976,6 @@ export function SettingsView() {
                 <MetricRow icon={Flame} title="Días de racha" value="5 días" />
                 <MetricRow icon={Trophy} title="Logros obtenidos" value="3 logros" />
               </div>
-            </section>
-
-            <section className="rounded-[18px] border border-red-100 bg-white p-6">
-              <h2 className="font-black text-slate-950">Zona de peligro</h2>
-              <p className="mt-2 text-sm text-slate-600">
-                Acciones permanentes que no se pueden deshacer.
-              </p>
-              <button
-                className="mt-5 flex w-full items-center justify-between rounded-[14px] border border-red-200 bg-red-50 px-4 py-4 text-left text-sm text-red-700"
-                type="button"
-              >
-                <span className="flex items-center gap-3">
-                  <Trash2 aria-hidden="true" size={19} />
-                  <span>
-                    <span className="block font-black">Eliminar cuenta</span>
-                    <span className="mt-1 block text-xs text-red-700/75">
-                      Se eliminarán tus datos y actividad.
-                    </span>
-                  </span>
-                </span>
-                <ChevronRight aria-hidden="true" size={18} />
-              </button>
             </section>
           </aside>
         </section>
