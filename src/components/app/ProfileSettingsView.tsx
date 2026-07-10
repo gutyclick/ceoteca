@@ -8,24 +8,25 @@ import {
   CalendarDays,
   CheckCircle2,
   ChevronRight,
+  Clock3,
   Crown,
   Flame,
-  Headphones,
-  HelpCircle,
   LibraryBig,
+  Loader2,
   Lock,
   Pencil,
+  Search,
   Sparkles,
+  Star,
+  Target,
   TrendingUp,
+  Trophy,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { DashboardSidebar } from "@/components/app/DashboardSidebar";
 import { NotificationBell } from "@/components/app/NotificationBell";
-import { Card } from "@/components/ui/Card";
-import { Logo } from "@/components/ui/Logo";
 import { plans } from "@/config/plans";
-import { siteConfig } from "@/config/site";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/database.types";
 import { resolvePlanFromSubscriptions } from "@/lib/subscriptions/resolve";
@@ -44,6 +45,15 @@ type ProgressItem = ProgressRow & {
   bookSlug: string;
 };
 
+type ActivityItem = {
+  id: string;
+  href: string;
+  title: string;
+  detail: string;
+  createdAt: string;
+  icon: LucideIcon;
+};
+
 type ProfileData = {
   userId: string;
   email: string;
@@ -54,15 +64,6 @@ type ProfileData = {
   chatQuestionsThisMonth: number;
   activity: ActivityItem[];
   isDemo: boolean;
-};
-
-type ActivityItem = {
-  id: string;
-  href: string;
-  title: string;
-  detail: string;
-  createdAt: string;
-  icon: LucideIcon;
 };
 
 type ViewState =
@@ -185,10 +186,10 @@ function buildActivityItems({
     return {
       id: `favorite-${item.id}`,
       href: book ? `/libro/${book.slug}` : "/biblioteca",
-      title: book ? `Guardaste ${book.title}` : "Guardaste un libro",
+      title: book ? `Guardaste ${book.title}` : "Guardaste un análisis",
       detail: book?.category ?? "Favorito de tu biblioteca",
       createdAt: item.created_at,
-      icon: Sparkles,
+      icon: Star,
     };
   });
 
@@ -206,10 +207,10 @@ function createDemoProfileData(): ProfileData {
     isDemo: true,
     profile: {
       id: "demo-user",
-      full_name: "Andres Ramirez",
+      full_name: "Andrés Gómez",
       avatar_url: avatarOptions[0],
       birth_date: null,
-      plan: "free",
+      plan: "pro",
       founder: false,
       onboarding_completed: true,
       plan_selected_at: now,
@@ -223,8 +224,8 @@ function createDemoProfileData(): ProfileData {
       updated_at: now,
     },
     subscription: null,
-    effectivePlan: "free",
-    chatQuestionsThisMonth: 0,
+    effectivePlan: "pro",
+    chatQuestionsThisMonth: 4,
     progress: [
       {
         id: "progress-1",
@@ -264,52 +265,30 @@ function createDemoProfileData(): ProfileData {
         started_at: now,
         completed_at: null,
         updated_at: now,
-        bookTitle: "Padre Rico Padre Pobre",
+        bookTitle: "Padre Rico, Padre Pobre",
         bookCategory: "Finanzas personales",
         bookSlug: "padre-rico-padre-pobre",
       },
     ],
-    activity: [],
+    activity: [
+      {
+        id: "demo-activity-1",
+        href: "/libro/habitos-atomicos",
+        title: "Continuaste Hábitos Atómicos",
+        detail: "73% leído · Productividad",
+        createdAt: now,
+        icon: BookOpen,
+      },
+      {
+        id: "demo-activity-2",
+        href: "/libro/deep-work",
+        title: "Completaste Trabajo profundo",
+        detail: "100% leído · Productividad",
+        createdAt: now,
+        icon: CheckCircle2,
+      },
+    ],
   };
-}
-
-function ProfileStatCard({
-  icon: Icon,
-  value,
-  label,
-  detail,
-  tone,
-}: {
-  icon: LucideIcon;
-  value: string;
-  label: string;
-  detail: string;
-  tone: string;
-}) {
-  return (
-    <Card className="group min-h-[210px] rounded-[16px] bg-white/[0.035] p-6">
-      <div className="flex h-full flex-col justify-between">
-        <div className="flex items-start gap-5">
-          <span
-            className={cn(
-              "grid h-14 w-14 shrink-0 place-items-center rounded-full border bg-white/[0.055]",
-              tone,
-            )}
-          >
-            <Icon aria-hidden="true" size={28} />
-          </span>
-          <div>
-            <p className="text-3xl font-semibold">{value}</p>
-            <p className="mt-4 text-base leading-6">{label}</p>
-            <p className="mt-3 text-sm leading-6 text-text-secondary">{detail}</p>
-          </div>
-        </div>
-        <span className="ml-auto grid h-10 w-10 place-items-center rounded-full bg-white/[0.06] text-text-secondary transition group-hover:bg-brand-purple/30 group-hover:text-white">
-          <ChevronRight aria-hidden="true" size={18} />
-        </span>
-      </div>
-    </Card>
-  );
 }
 
 function AvatarImage({
@@ -345,17 +324,19 @@ function AvatarPicker({
   onSelect: (avatarUrl: string) => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-5 backdrop-blur-sm">
-      <Card className="w-full max-w-2xl rounded-[20px] bg-[#080915] p-6">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/35 p-5 backdrop-blur-sm">
+      <section className="w-full max-w-xl rounded-[24px] border border-slate-950/[0.08] bg-white p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-semibold">Elige tu imagen</h2>
-            <p className="mt-2 text-sm leading-6 text-text-secondary">
-              Usa una imagen prealojada. Se guardara en tu perfil de Supabase.
+            <h2 className="text-2xl font-black tracking-[-0.03em] text-slate-950">
+              Elige tu imagen
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Selecciona una imagen prealojada para tu perfil.
             </p>
           </div>
           <button
-            className="grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.04] text-text-secondary transition hover:text-white"
+            className="grid h-10 w-10 place-items-center rounded-full border border-slate-950/[0.10] bg-white text-slate-500 transition hover:text-violet-700"
             onClick={onClose}
             type="button"
           >
@@ -366,10 +347,10 @@ function AvatarPicker({
           {avatarOptions.map((avatarUrl) => (
             <button
               className={cn(
-                "relative aspect-square overflow-hidden rounded-[24px] border bg-white/[0.04] transition hover:-translate-y-1 hover:border-brand-purple/70",
+                "relative aspect-square overflow-hidden rounded-[22px] border bg-slate-50 transition hover:border-violet-500",
                 currentAvatar === avatarUrl
-                  ? "border-brand-purple shadow-[0_0_35px_rgba(124,58,237,0.35)]"
-                  : "border-white/10",
+                  ? "border-violet-600 ring-4 ring-violet-100"
+                  : "border-slate-200",
               )}
               disabled={isSaving}
               key={avatarUrl}
@@ -381,305 +362,186 @@ function AvatarPicker({
           ))}
         </div>
         {error ? (
-          <div className="mt-5 rounded-card border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
+          <div className="mt-5 rounded-[14px] border border-red-200 bg-red-50 p-3 text-sm text-red-700">
             {error}
           </div>
         ) : null}
-        <p className="mt-5 text-xs leading-5 text-text-muted">
+        <p className="mt-5 text-xs leading-5 text-slate-500">
           {isSaving ? "Guardando imagen..." : "Puedes cambiarla cuando quieras."}
         </p>
-      </Card>
+      </section>
     </div>
   );
 }
 
-function StreakCard({ activeDays }: { activeDays: number }) {
-  const days = ["L", "M", "M", "J", "V", "S", "D"];
-
+function StatCard({
+  icon: Icon,
+  value,
+  label,
+  detail,
+  tone,
+}: {
+  icon: LucideIcon;
+  value: string;
+  label: string;
+  detail: string;
+  tone: string;
+}) {
   return (
-    <Card className="rounded-[16px] bg-white/[0.035] p-6">
-      <div className="flex items-center gap-5">
-        <span className="grid h-16 w-16 place-items-center rounded-full bg-orange-400/15 text-orange-300">
-          <Flame aria-hidden="true" size={34} />
+    <section className="rounded-[18px] border border-slate-950/[0.08] bg-white p-5">
+      <div className="flex items-start gap-4">
+        <span
+          className={cn(
+            "grid h-14 w-14 shrink-0 place-items-center rounded-[16px]",
+            tone,
+          )}
+        >
+          <Icon aria-hidden="true" size={27} />
         </span>
-        <div>
-          <p className="text-5xl font-semibold">{activeDays}</p>
-          <p className="mt-1 text-lg">días con actividad</p>
+        <div className="min-w-0">
+          <p className="text-3xl font-black tracking-[-0.04em] text-slate-950">
+            {value}
+          </p>
+          <p className="mt-1 text-sm font-black text-slate-950">{label}</p>
+          <p className="mt-2 text-xs font-bold text-violet-700">{detail}</p>
         </div>
       </div>
+    </section>
+  );
+}
+
+function StreakPanel({ activeDays }: { activeDays: number }) {
+  const days = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+
+  return (
+    <section className="rounded-[18px] border border-slate-950/[0.08] bg-white p-6">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Flame aria-hidden="true" className="text-slate-600" size={21} />
+          <h2 className="text-lg font-black text-slate-950">Racha de lectura</h2>
+        </div>
+        <span className="rounded-full bg-violet-50 px-4 py-2 text-sm font-bold text-violet-700">
+          {activeDays} días
+        </span>
+      </div>
+      <p className="mt-3 text-sm text-slate-600">
+        Estás en racha. Mantén un ritmo que puedas sostener.
+      </p>
       <div className="mt-6 grid grid-cols-7 gap-3">
         {days.map((day, index) => {
           const isActive = index < Math.min(activeDays, 7);
 
           return (
-            <span
-              className={cn(
-                "grid h-10 w-10 place-items-center rounded-full text-sm font-medium",
-                isActive
-                  ? "bg-brand-purple text-white"
-                  : "bg-white/[0.06] text-text-muted",
-              )}
-              key={`${day}-${index}`}
-            >
-              {day}
-            </span>
-          );
-        })}
-      </div>
-      <p className="mt-6 text-base text-text-secondary">
-        Excelente. Manten tu ritmo de aprendizaje.
-      </p>
-    </Card>
-  );
-}
-
-function MonthlyProgressCard({
-  progress,
-  relativeLevel,
-}: {
-  progress: ProgressItem[];
-  relativeLevel: number;
-}) {
-  const ordered = [...progress]
-    .sort(
-      (a, b) =>
-        new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime(),
-    )
-    .slice(-6);
-  const values =
-    ordered.length > 0 ? ordered.map((item) => item.progress) : [0, 0, 0, 0, 0, 0];
-  const points = values.map((value, index) => {
-    const x = values.length === 1 ? 50 : (index / (values.length - 1)) * 100;
-    const y = 100 - value;
-
-    return { x, y };
-  });
-  const path = points
-    .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`)
-    .join(" ");
-
-  return (
-    <Card className="rounded-[16px] bg-white/[0.035] p-6">
-      <div className="flex items-center justify-between gap-4">
-        <h2 className="text-2xl font-semibold">Tu progreso</h2>
-        <span className="inline-flex min-h-11 items-center rounded-button border border-white/10 bg-white/[0.035] px-4 text-sm text-text-secondary">
-          Este mes
-        </span>
-      </div>
-      <div className="mt-6 grid h-64 grid-cols-[44px_1fr] gap-3">
-        <div className="grid text-xs text-text-secondary">
-          {["100%", "75%", "50%", "25%", "0%"].map((label) => (
-            <span key={label}>{label}</span>
-          ))}
-        </div>
-        <div className="relative overflow-hidden rounded-card border border-white/5 bg-[#050713]/70">
-          <svg
-            aria-label="Grafico mensual de progreso"
-            className="h-full w-full overflow-visible"
-            preserveAspectRatio="none"
-            viewBox="0 0 100 100"
-          >
-            <defs>
-              <linearGradient id="profile-month-line" x1="0" x2="1" y1="0" y2="0">
-                <stop stopColor="#a855f7" />
-                <stop offset="1" stopColor="#7c3aed" />
-              </linearGradient>
-            </defs>
-            {[0, 25, 50, 75, 100].map((line) => (
-              <line
-                key={line}
-                stroke="rgba(255,255,255,0.08)"
-                strokeDasharray="2 3"
-                strokeWidth="0.5"
-                x1="0"
-                x2="100"
-                y1={line}
-                y2={line}
-              />
-            ))}
-            <path
-              d={`${path} L 100 100 L 0 100 Z`}
-              fill="rgba(124,58,237,0.18)"
-              vectorEffect="non-scaling-stroke"
-            />
-            <path
-              d={path}
-              fill="none"
-              stroke="url(#profile-month-line)"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2.6"
-              vectorEffect="non-scaling-stroke"
-            />
-            <circle
-              cx={points.at(-1)?.x ?? 0}
-              cy={points.at(-1)?.y ?? 100}
-              fill="#f7f7fa"
-              r="2.6"
-              stroke="#a855f7"
-              strokeWidth="1.5"
-              vectorEffect="non-scaling-stroke"
-            />
-          </svg>
-        </div>
-      </div>
-      <div className="mt-7 flex gap-4 rounded-card border border-white/10 bg-white/[0.035] p-4">
-        <span className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-brand-purple/20 text-brand-purple">
-          <TrendingUp aria-hidden="true" size={28} />
-        </span>
-        <div>
-          <p className="font-semibold">Vas por buen camino</p>
-          <p className="mt-2 text-sm leading-6 text-text-secondary">
-            Has avanzado más que el {relativeLevel}% estimado de usuarios este mes.
-          </p>
-        </div>
-      </div>
-    </Card>
-  );
-}
-
-function RecentActivityPanel({ activity }: { activity: ActivityItem[] }) {
-  return (
-    <Card className="rounded-[16px] bg-white/[0.035] p-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold">Actividad reciente</h2>
-        <Link className="text-sm text-brand-purple" href="/biblioteca">
-          Ver todo
-        </Link>
-      </div>
-      <div className="mt-6 grid gap-1">
-        {activity.length > 0 ? (
-          activity.slice(0, 5).map((item) => {
-            const Icon = item.icon;
-
-            return (
-              <Link
-                className="grid grid-cols-[48px_1fr_auto_20px] items-center gap-4 border-b border-white/10 py-4 last:border-b-0"
-                href={item.href}
-                key={item.id}
-              >
-                <span className="grid h-12 w-12 place-items-center rounded-button bg-brand-purple/20 text-brand-purple">
-                  <Icon aria-hidden="true" size={23} />
-                </span>
-                <span className="min-w-0">
-                  <span className="block font-medium">{item.title}</span>
-                  <span className="mt-1 line-clamp-1 block text-sm text-text-secondary">
-                    {item.detail}
-                  </span>
-                </span>
-                <span className="whitespace-nowrap text-sm text-text-secondary">
-                  {formatRelativeDate(item.createdAt)}
-                </span>
-                <ChevronRight aria-hidden="true" className="text-text-secondary" size={17} />
-              </Link>
-            );
-          })
-        ) : (
-          <div className="rounded-card border border-dashed border-white/15 bg-white/[0.025] p-5 text-sm leading-6 text-text-secondary">
-            Aún no hay actividad. Empieza un libro desde la biblioteca.
-          </div>
-        )}
-      </div>
-    </Card>
-  );
-}
-function UpgradeBanner() {
-  return (
-    <Card className="rounded-[16px] border-brand-purple/30 bg-gradient-to-r from-brand-purple/25 via-brand-purple/12 to-brand-blue/10 p-6">
-      <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-        <div className="flex items-center gap-5">
-          <span className="grid h-16 w-16 place-items-center rounded-full bg-brand-purple/25 text-brand-purple">
-            <Sparkles aria-hidden="true" size={32} />
-          </span>
-          <div>
-            <h2 className="text-2xl font-semibold">Mejora tu experiencia</h2>
-            <p className="mt-2 text-sm leading-6 text-text-secondary">
-              Desbloquea resumenes ilimitados, audio, ejercicios y chat con IA.
-            </p>
-          </div>
-        </div>
-        <Link
-          className="inline-flex min-h-14 min-w-40 items-center justify-center rounded-button bg-brand-gradient px-6 text-sm font-medium text-white transition hover:brightness-110"
-          href="/planes"
-        >
-          Ver planes
-        </Link>
-      </div>
-    </Card>
-  );
-}
-
-function AchievementSummary({
-  badges,
-}: {
-  badges: Array<{
-    title: string;
-    description: string;
-    icon: LucideIcon;
-    unlocked: boolean;
-  }>;
-}) {
-  return (
-    <Card className="rounded-[16px] bg-white/[0.035] p-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold">Logros</h2>
-        <button className="text-sm text-brand-purple" type="button">
-          Ver todos
-        </button>
-      </div>
-      <div className="mt-6 grid gap-4">
-        {badges.slice(0, 4).map((badge) => {
-          const Icon = badge.icon;
-
-          return (
-            <div className="flex items-center gap-4" key={badge.title}>
+            <div className="grid gap-2 text-center" key={`${day}-${index}`}>
+              <span className="text-xs font-bold text-slate-500">{day}</span>
               <span
                 className={cn(
-                  "grid h-12 w-12 place-items-center rounded-full",
-                  badge.unlocked
-                    ? "bg-brand-purple/20 text-brand-purple"
-                    : "bg-white/[0.05] text-text-muted",
+                  "grid aspect-square place-items-center rounded-full border text-sm font-black",
+                  isActive
+                    ? "border-violet-100 bg-violet-100 text-violet-700"
+                    : "border-slate-200 bg-white text-slate-300",
                 )}
               >
-                <Icon aria-hidden="true" size={23} />
+                {isActive ? "✓" : ""}
               </span>
-              <div>
-                <p className="font-semibold">{badge.title}</p>
-                <p className="mt-1 text-sm text-text-secondary">
-                  {badge.description}
-                </p>
-              </div>
             </div>
           );
         })}
       </div>
-    </Card>
+      <div className="mt-6 flex items-center justify-between border-t border-slate-950/[0.08] pt-5 text-sm">
+        <span className="flex items-center gap-2 font-bold text-slate-700">
+          <Trophy aria-hidden="true" size={18} />
+          Mejor racha: {Math.max(activeDays, 5)} días
+        </span>
+        <ChevronRight aria-hidden="true" className="text-slate-400" size={18} />
+      </div>
+    </section>
   );
 }
 
-function HelpPanel() {
+function ActivityPanel({ activity }: { activity: ActivityItem[] }) {
   return (
-    <Card className="relative overflow-hidden rounded-[16px] bg-white/[0.035] p-6">
-      <div className="absolute bottom-0 right-0 h-36 w-72 bg-brand-purple/20 blur-3xl" />
-      <div className="relative z-10">
-        <h2 className="text-2xl font-semibold">¿Necesitas ayuda?</h2>
-        <p className="mt-3 text-sm leading-6 text-text-secondary">
-          Visita nuestro centro de ayuda o contactanos.
-        </p>
-        <Link
-          className="mt-7 flex min-h-16 items-center justify-between rounded-card border border-white/10 bg-white/[0.045] px-4 transition hover:border-brand-purple/50"
-          href={`mailto:${siteConfig.supportEmail}`}
-        >
-          <span className="flex items-center gap-4">
-            <span className="grid h-11 w-11 place-items-center rounded-button bg-brand-purple/20 text-brand-purple">
-              <Headphones aria-hidden="true" size={22} />
-            </span>
-            Centro de ayuda
-          </span>
-          <HelpCircle aria-hidden="true" size={22} />
+    <section className="rounded-[18px] border border-slate-950/[0.08] bg-white p-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-black text-slate-950">Actividad reciente</h2>
+        <Link className="text-sm font-bold text-violet-700" href="/biblioteca">
+          Ver todo
         </Link>
       </div>
-    </Card>
+      <div className="mt-5 grid gap-1">
+        {activity.length > 0 ? (
+          activity.slice(0, 4).map((item) => {
+            const Icon = item.icon;
+
+            return (
+              <Link
+                className="grid grid-cols-[44px_1fr_auto_18px] items-center gap-3 border-b border-slate-950/[0.06] py-4 last:border-b-0"
+                href={item.href}
+                key={item.id}
+              >
+                <span className="grid h-11 w-11 place-items-center rounded-[13px] bg-violet-50 text-violet-700">
+                  <Icon aria-hidden="true" size={21} />
+                </span>
+                <span className="min-w-0">
+                  <span className="line-clamp-1 block text-sm font-black text-slate-950">
+                    {item.title}
+                  </span>
+                  <span className="mt-1 line-clamp-1 block text-xs text-slate-500">
+                    {item.detail}
+                  </span>
+                </span>
+                <span className="whitespace-nowrap text-xs text-slate-500">
+                  {formatRelativeDate(item.createdAt)}
+                </span>
+                <ChevronRight aria-hidden="true" className="text-slate-400" size={16} />
+              </Link>
+            );
+          })
+        ) : (
+          <div className="rounded-[16px] border border-dashed border-slate-200 bg-slate-50 p-5 text-sm leading-6 text-slate-600">
+            Aún no hay actividad. Empieza un análisis desde la biblioteca.
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function AchievementCard({
+  title,
+  description,
+  icon: Icon,
+  unlocked,
+  progress,
+}: {
+  title: string;
+  description: string;
+  icon: LucideIcon;
+  unlocked: boolean;
+  progress?: string;
+}) {
+  return (
+    <article className="rounded-[16px] border border-slate-950/[0.08] bg-white p-4">
+      <div className="flex items-start gap-4">
+        <span
+          className={cn(
+            "grid h-14 w-14 shrink-0 place-items-center rounded-[16px] border",
+            unlocked
+              ? "border-violet-200 bg-violet-100 text-violet-700"
+              : "border-slate-200 bg-slate-100 text-slate-400",
+          )}
+        >
+          <Icon aria-hidden="true" size={26} />
+        </span>
+        <div className="min-w-0">
+          <p className="text-sm font-black text-slate-950">{title}</p>
+          <p className="mt-1 text-xs leading-5 text-slate-600">{description}</p>
+          <p className="mt-3 text-xs font-black text-violet-700">
+            {unlocked ? "Completado" : progress ?? "En progreso"}
+          </p>
+        </div>
+      </div>
+    </article>
   );
 }
 
@@ -817,7 +679,7 @@ export function ProfileSettingsView() {
 
           return {
             ...item,
-            bookTitle: book?.title ?? "Libro de Ceoteca",
+            bookTitle: book?.title ?? "Análisis de Ceoteca",
             bookCategory: book?.category ?? "Biblioteca",
             bookSlug: book?.slug ?? "biblioteca",
           };
@@ -854,7 +716,7 @@ export function ProfileSettingsView() {
             status: "ready",
             data: createDemoProfileData(),
             notice:
-              "No pudimos cargar Supabase en esta vista. Mostramos datos demo para mantener el flujo navegable.",
+              "No pudimos cargar tus datos en este momento. Mostramos una vista temporal.",
           });
         }
       }
@@ -877,7 +739,7 @@ export function ProfileSettingsView() {
 
     try {
       if (!avatarOptions.includes(avatarUrl as (typeof avatarOptions)[number])) {
-        throw new Error("Selecciona una imagen valida.");
+        throw new Error("Selecciona una imagen válida.");
       }
 
       if (!state.data.isDemo) {
@@ -916,17 +778,18 @@ export function ProfileSettingsView() {
 
   if (state.status === "loading") {
     return (
-      <main className="min-h-screen bg-[#03040b] text-text-primary">
-        <section className="mx-auto w-full max-w-[1180px] px-5 py-8 md:px-8">
-          <Logo className="[&>span]:text-[15px] [&>span]:tracking-[0.34em]" />
-          <Card className="mt-10 min-h-[420px] animate-pulse rounded-[18px] bg-white/[0.035] p-8">
-            <div className="h-10 w-56 rounded-full bg-white/10" />
-            <div className="mt-8 grid gap-5 lg:grid-cols-4">
-              {Array.from({ length: 4 }).map((_, index) => (
-                <div className="h-32 rounded-[16px] bg-white/[0.06]" key={index} />
-              ))}
-            </div>
-          </Card>
+      <main className="min-h-screen bg-[#fbfaf8] text-slate-950">
+        <section className="mx-auto grid min-h-screen w-full max-w-xl place-items-center px-5">
+          <div className="rounded-[22px] border border-slate-950/[0.08] bg-white p-8 text-center">
+            <Loader2
+              aria-hidden="true"
+              className="mx-auto animate-spin text-violet-700"
+              size={32}
+            />
+            <p className="mt-4 text-sm font-bold text-slate-600">
+              Cargando tu perfil...
+            </p>
+          </div>
         </section>
       </main>
     );
@@ -934,24 +797,25 @@ export function ProfileSettingsView() {
 
   if (state.status === "unauthorized") {
     return (
-      <main className="min-h-screen bg-[#03040b] text-text-primary">
-        <section className="mx-auto w-full max-w-2xl px-5 py-8 md:px-8">
-          <Logo className="[&>span]:text-[15px] [&>span]:tracking-[0.34em]" />
-          <Card className="mt-12 rounded-[18px] bg-white/[0.035] p-8 text-center">
-            <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-brand-purple/20 text-brand-purple">
+      <main className="min-h-screen bg-[#fbfaf8] text-slate-950">
+        <section className="mx-auto grid min-h-screen w-full max-w-xl place-items-center px-5">
+          <div className="rounded-[22px] border border-slate-950/[0.08] bg-white p-8 text-center">
+            <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-violet-50 text-violet-700">
               <Lock aria-hidden="true" size={28} />
             </span>
-            <h1 className="mt-6 text-3xl font-semibold">Inicia sesión</h1>
-            <p className="mt-3 text-sm leading-7 text-text-secondary">
+            <h1 className="mt-6 text-3xl font-black tracking-[-0.03em]">
+              Inicia sesión
+            </h1>
+            <p className="mt-3 text-sm leading-7 text-slate-600">
               Tu perfil y progreso pertenecen a tu cuenta privada.
             </p>
             <Link
-              className="mt-7 inline-flex min-h-12 items-center justify-center rounded-button bg-brand-gradient px-5 text-sm font-medium text-white transition hover:brightness-110"
+              className="mt-7 inline-flex min-h-12 items-center justify-center rounded-[14px] bg-gradient-to-r from-violet-600 to-fuchsia-500 px-5 text-sm font-black text-white"
               href="/login"
             >
               Ir a login
             </Link>
-          </Card>
+          </div>
         </section>
       </main>
     );
@@ -959,8 +823,7 @@ export function ProfileSettingsView() {
 
   const { data, notice } = state;
   const displayName = data.profile.full_name ?? "Usuario Ceoteca";
-  const currentPlan = data.effectivePlan;
-  const plan = plans[currentPlan];
+  const plan = plans[data.effectivePlan];
   const completedBooks = data.progress.filter((item) => item.completed).length;
   const averageProgress = getAverageProgress(data.progress);
   const relativeLevel = getRelativeLevel(averageProgress, completedBooks);
@@ -971,182 +834,246 @@ export function ProfileSettingsView() {
     chatLimit === null ? null : Math.max(0, chatLimit - data.chatQuestionsThisMonth);
   const badges = [
     {
-      title: "Primer paso",
-      description: "Comenzaste tu viaje de aprendizaje.",
-      icon: Sparkles,
+      title: "Primer análisis",
+      description: "Completa tu primer análisis.",
+      icon: BookOpen,
       unlocked: data.progress.length > 0,
+      progress: "0/1",
+    },
+    {
+      title: "Racha de 3 días",
+      description: "Lee durante 3 días seguidos.",
+      icon: Flame,
+      unlocked: activeDays >= 3,
+      progress: `${Math.min(activeDays, 3)}/3`,
+    },
+    {
+      title: "10 horas de lectura",
+      description: "Acumula 10 horas de lectura.",
+      icon: Clock3,
+      unlocked: data.progress.length >= 10,
+      progress: `${Math.min(data.progress.length, 10)}/10`,
+    },
+    {
+      title: "Lector constante",
+      description: "Mantén una racha de 7 días.",
+      icon: Trophy,
+      unlocked: activeDays >= 7,
+      progress: `${Math.min(activeDays, 7)}/7`,
     },
     {
       title: "Explorador",
-      description: `Exploraste ${data.progress.length} libros.`,
-      icon: LibraryBig,
-      unlocked: data.progress.length >= 3,
+      description: "Inicia análisis en varias categorías.",
+      icon: Target,
+      unlocked: data.progress.length >= 5,
+      progress: `${Math.min(data.progress.length, 5)}/5`,
     },
     {
-      title: "Curioso",
-      description: "Hiciste tu primera pregunta a la IA.",
-      icon: Bot,
-      unlocked: data.chatQuestionsThisMonth > 0,
-    },
-    {
-      title: "Constante",
-      description: "Mantienes actividad de aprendizaje.",
-      icon: Flame,
-      unlocked: activeDays >= 3,
-    },
-    {
-      title: "Finalizador",
-      description: "Completaste tu primer análisis.",
-      icon: CheckCircle2,
-      unlocked: completedBooks > 0,
-    },
-    {
-      title: "Enfoque",
-      description: `Promedio de avance: ${averageProgress}%.`,
-      icon: TrendingUp,
-      unlocked: averageProgress >= 50,
+      title: "Maestro del conocimiento",
+      description: "Completa 50 análisis.",
+      icon: Crown,
+      unlocked: completedBooks >= 50,
+      progress: `${Math.min(completedBooks, 50)}/50`,
     },
   ];
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#03040b] pb-16 pl-0 text-text-primary transition-[padding] duration-300 ease-out sm:pl-[var(--dashboard-sidebar-offset,84px)]">
-      <DashboardSidebar active="profile" />
-      <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_18%_8%,rgba(124,58,237,0.18),transparent_28%),radial-gradient(circle_at_78%_12%,rgba(79,99,255,0.12),transparent_30%),linear-gradient(180deg,#02030a_0%,#050612_52%,#04040a_100%)]" />
+    <main className="min-h-screen overflow-x-hidden bg-[#fbfaf8] pb-12 pl-0 text-slate-950 transition-[padding] duration-300 ease-out sm:pl-[var(--dashboard-sidebar-offset,240px)]">
+      <DashboardSidebar active="profile" tone="light" />
 
-      <section className="w-full max-w-[1500px] px-5 pt-4 md:px-8 xl:px-10">
-        <header className="flex items-center justify-end">
-          <NotificationBell />
+      <section className="mx-auto w-full max-w-[1380px] px-5 pt-8 sm:px-7 lg:px-10">
+        <header className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(420px,auto)] lg:items-start">
+          <div>
+            <h1 className="text-4xl font-black tracking-[-0.04em] text-slate-950">
+              Mi perfil
+            </h1>
+            <p className="mt-2 text-base text-slate-600">
+              Tu progreso, estadísticas y logros en Ceoteca.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3 lg:justify-end">
+            <label className="relative hidden w-[340px] sm:block">
+              <span className="sr-only">Buscar en Ceoteca</span>
+              <Search
+                aria-hidden="true"
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                size={19}
+              />
+              <input
+                className="min-h-12 w-full rounded-[14px] border border-slate-950/[0.10] bg-white pl-12 pr-4 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-violet-300 focus:ring-4 focus:ring-violet-100"
+                placeholder="Buscar libros, autores o temas..."
+                type="search"
+              />
+            </label>
+            <NotificationBell />
+          </div>
         </header>
 
         {notice ? (
-          <Card className="mt-6 rounded-[14px] border-warning/30 bg-warning/10 p-4 text-sm leading-6 text-warning">
+          <div className="mt-6 rounded-[16px] border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-800">
             {notice}
-          </Card>
+          </div>
         ) : null}
 
-        <section className="mt-10 grid gap-8 lg:grid-cols-[1fr_450px] lg:items-center">
-          <div className="grid gap-8 md:grid-cols-[270px_1fr] md:items-center">
-            <div className="relative mx-auto h-64 w-64 md:mx-0">
-              <div className="absolute inset-0 rounded-full border-4 border-brand-purple shadow-[0_0_48px_rgba(124,58,237,0.55)]" />
-              <div className="absolute inset-3 grid place-items-center overflow-hidden rounded-full bg-gradient-to-br from-slate-700 via-slate-500 to-slate-900 text-6xl font-semibold">
-                <AvatarImage
-                  avatarUrl={data.profile.avatar_url}
-                  initials={initials}
-                />
+        <section className="mt-8 rounded-[20px] border border-slate-950/[0.08] bg-white p-6">
+          <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-center">
+            <div className="grid gap-6 md:grid-cols-[150px_1fr] md:items-center">
+              <div className="relative h-36 w-36">
+                <div className="grid h-full w-full place-items-center overflow-hidden rounded-full bg-violet-100 text-3xl font-black text-violet-700">
+                  <AvatarImage
+                    avatarUrl={data.profile.avatar_url}
+                    initials={initials}
+                  />
+                </div>
+                <button
+                  aria-label="Cambiar imagen de perfil"
+                  className="absolute bottom-0 right-1 grid h-10 w-10 place-items-center rounded-full bg-violet-600 text-white"
+                  onClick={() => setIsAvatarPickerOpen(true)}
+                  type="button"
+                >
+                  <Pencil aria-hidden="true" size={17} />
+                </button>
               </div>
-              <button
-                aria-label="Cambiar imagen de perfil"
-                className="absolute bottom-1 right-5 grid h-16 w-16 place-items-center rounded-full border border-white/10 bg-[#101321] text-white shadow-ambient transition hover:border-brand-purple/70"
-                onClick={() => setIsAvatarPickerOpen(true)}
-                type="button"
-              >
-                <Pencil aria-hidden="true" size={22} />
-              </button>
+
+              <div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <h2 className="text-2xl font-black tracking-[-0.03em] text-slate-950">
+                    {displayName}
+                  </h2>
+                  <span className="rounded-full bg-violet-50 px-3 py-1 text-xs font-black text-violet-700">
+                    Miembro {plan.name}
+                  </span>
+                </div>
+                <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600">
+                  Aprendiendo cada día para convertir ideas en acción.
+                </p>
+                <div className="mt-6 flex flex-wrap gap-6 text-sm text-slate-600">
+                  <span className="inline-flex items-center gap-2">
+                    <CalendarDays aria-hidden="true" size={18} />
+                    Miembro desde {formatDate(data.profile.created_at)}
+                  </span>
+                  <span className="inline-flex items-center gap-2">
+                    <Crown aria-hidden="true" size={18} />
+                    Plan {plan.name}
+                  </span>
+                </div>
+              </div>
             </div>
-            <div>
-              <p className="text-lg font-medium text-brand-purple">
-                Bienvenido de nuevo
+
+            <div className="rounded-[18px] bg-violet-50 p-6">
+              <Sparkles aria-hidden="true" className="text-violet-500" size={28} />
+              <p className="mt-4 text-lg leading-7 text-slate-800">
+                La lectura funciona mejor cuando termina en una decisión,
+                una conversación o una acción concreta.
               </p>
-              <h1 className="mt-4 text-balance text-5xl font-semibold md:text-6xl">
-                {displayName}
-              </h1>
-              <p className="mt-4 text-lg text-text-secondary">
-                Aprendiz desde {formatDate(data.profile.created_at)}
+              <p className="mt-4 text-sm font-black text-violet-700">
+                Ceoteca
               </p>
-              <p className="mt-3 text-lg text-text-secondary">{data.email}</p>
-              <div className="mt-6 flex flex-wrap gap-3">
-                <span className="inline-flex items-center gap-2 rounded-[14px] border border-brand-purple/35 bg-brand-purple/20 px-4 py-3 text-sm text-brand-purple">
-                  <Crown aria-hidden="true" size={16} />
-                  Plan {plan.name}
-                </span>
-                <span className="inline-flex items-center gap-2 rounded-[14px] border border-white/10 bg-white/[0.045] px-4 py-3 text-sm text-text-secondary">
-                  <CalendarDays aria-hidden="true" size={16} />
-                  Miembro desde {formatDate(data.profile.created_at)}
-                </span>
-              </div>
             </div>
           </div>
-
-          <StreakCard activeDays={activeDays} />
         </section>
 
-        <section className="mt-7 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          <ProfileStatCard
-            detail="Explorando nuevos conocimientos"
+        <section className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+          <StatCard
+            detail="+3 esta semana"
             icon={BookOpen}
-            label="Libros iniciados"
-            tone="border-brand-purple/25 text-brand-purple"
+            label="Análisis iniciados"
+            tone="bg-violet-50 text-violet-700"
             value={`${data.progress.length}`}
           />
-          <ProfileStatCard
-            detail="Sigue así, tú puedes"
+          <StatCard
+            detail="+64 esta semana"
             icon={LibraryBig}
-            label="Libros completados"
-            tone="border-emerald-300/20 text-emerald-300"
+            label="Completados"
+            tone="bg-emerald-50 text-emerald-700"
             value={`${completedBooks}`}
           />
-          <ProfileStatCard
-            detail={`Por encima del ${relativeLevel}% estimado de usuarios`}
+          <StatCard
+            detail="Sigue así"
+            icon={Flame}
+            label="Días de racha"
+            tone="bg-orange-50 text-orange-600"
+            value={`${activeDays}`}
+          />
+          <StatCard
+            detail="Ver todos"
+            icon={Trophy}
+            label="Logros obtenidos"
+            tone="bg-amber-50 text-amber-600"
+            value={`${badges.filter((badge) => badge.unlocked).length}`}
+          />
+          <StatCard
+            detail="Vas muy bien"
             icon={TrendingUp}
-            label="Progreso promedio"
-            tone="border-amber-300/20 text-amber-300"
+            label="Nivel de progreso"
+            tone="bg-sky-50 text-sky-700"
             value={`${averageProgress}%`}
           />
-          <ProfileStatCard
-            detail={
-              remainingChatQuestions === null
-                ? "Uso razonable incluido"
-                : `${remainingChatQuestions} preguntas disponibles según tu plan`
-            }
-            icon={Bot}
-            label="Preguntas a la IA este mes"
-            tone="border-sky-300/20 text-sky-300"
-            value={`${data.chatQuestionsThisMonth}`}
-          />
         </section>
 
-        <section className="mt-5 grid gap-5 lg:grid-cols-2">
-          <MonthlyProgressCard
-            progress={data.progress}
-            relativeLevel={relativeLevel}
-          />
-          <RecentActivityPanel activity={data.activity} />
+        <section className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_390px]">
+          <StreakPanel activeDays={activeDays} />
+          <ActivityPanel activity={data.activity} />
         </section>
 
-        <section className="mt-5">
-          <UpgradeBanner />
-        </section>
-
-        <section className="mt-5 grid gap-5 lg:grid-cols-2">
-          <AchievementSummary badges={badges} />
-          <HelpPanel />
-        </section>
-
-        <footer className="mt-10 border-t border-white/10 py-8 text-sm text-text-muted">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <p>© 2026 Ceoteca. Todos los derechos reservados.</p>
-            <nav
-              aria-label="Legal del perfil"
-              className="flex flex-wrap gap-x-5 gap-y-2"
-            >
-              <Link className="transition hover:text-text-primary" href="/terminos">
-                Términos
-              </Link>
-              <Link
-                className="transition hover:text-text-primary"
-                href="/privacidad"
-              >
-                Privacidad
-              </Link>
-              <Link
-                className="transition hover:text-text-primary"
-                href={`mailto:${siteConfig.supportEmail}`}
-              >
-                Soporte
-              </Link>
-            </nav>
+        <section className="mt-5 rounded-[20px] border border-slate-950/[0.08] bg-white p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <h2 className="text-lg font-black text-slate-950">Logros</h2>
+              <span className="text-sm font-bold text-slate-500">
+                {badges.filter((badge) => badge.unlocked).length} de {badges.length} desbloqueados
+              </span>
+            </div>
+            <button className="text-sm font-black text-violet-700" type="button">
+              Ver todos los logros
+            </button>
           </div>
-        </footer>
+          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {badges.map((badge) => (
+              <AchievementCard
+                description={badge.description}
+                icon={badge.icon}
+                key={badge.title}
+                progress={badge.progress}
+                title={badge.title}
+                unlocked={badge.unlocked}
+              />
+            ))}
+          </div>
+        </section>
+
+        <section className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_390px]">
+          <div className="rounded-[20px] border border-slate-950/[0.08] bg-white p-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-black text-slate-950">Resumen de CEO</h2>
+              <span className="rounded-full bg-violet-50 px-3 py-1 text-xs font-black text-violet-700">
+                IA
+              </span>
+            </div>
+            <p className="mt-4 text-sm leading-7 text-slate-600">
+              Tu avance muestra constancia. El siguiente paso recomendado es
+              terminar un análisis pendiente y convertir una idea en una acción
+              medible esta semana. Estás por encima del {relativeLevel}% estimado
+              de usuarios con actividad reciente.
+            </p>
+          </div>
+
+          <div className="rounded-[20px] border border-slate-950/[0.08] bg-white p-6">
+            <h2 className="text-lg font-black text-slate-950">Uso de CEO</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              {remainingChatQuestions === null
+                ? "Tu plan incluye consultas ampliadas con uso razonable."
+                : `Te quedan ${remainingChatQuestions} preguntas este mes.`}
+            </p>
+            <Link
+              className="mt-5 inline-flex min-h-11 items-center justify-center rounded-[13px] bg-gradient-to-r from-violet-600 to-fuchsia-500 px-5 text-sm font-black text-white"
+              href="/planes"
+            >
+              Mejorar plan
+            </Link>
+          </div>
+        </section>
       </section>
 
       {isAvatarPickerOpen ? (
