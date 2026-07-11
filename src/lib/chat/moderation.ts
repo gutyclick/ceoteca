@@ -19,6 +19,7 @@ const allowedSitePatterns = [
   /\b(libro|lectura|leer|an[aá]lisis|cat[aá]logo|recomienda|recomendaci[oó]n)\b/i,
   /\b(productividad|h[aá]bito|mentalidad|liderazgo|finanzas|negocio|emprend)\b/i,
   /\b(desarrollo personal|comunicaci[oó]n|negociaci[oó]n|marketing|ventas)\b/i,
+  /\b(estrategia|empresa|innovaci[oó]n|tecnolog[ií]a|psicolog[ií]a|comportamiento)\b/i,
   /\b(aplicar|plan|rutina|enfoque|aprendizaje|comprar)\b/i,
 ];
 
@@ -55,7 +56,7 @@ export function moderateChatMessage(
       allowed: false,
       code: "out_of_scope",
       reason:
-        "CEO está enfocado en Ceoteca, lectura, productividad, hábitos, mentalidad, desarrollo personal, liderazgo, finanzas y recomendaciones del catálogo.",
+        "CEO está enfocado en Ceoteca, lectura, negocios, marketing, ventas, productividad, desarrollo personal, liderazgo, finanzas y recomendaciones del catálogo.",
     };
   }
 

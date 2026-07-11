@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const protectedRoutes = ["/home", "/libro", "/perfil", "/planes"];
+const protectedRoutes = ["/home", "/libro", "/perfil", "/chat", "/planes"];
 
 export function middleware(request: NextRequest) {
   const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
@@ -21,6 +21,7 @@ export const config = {
     "/home/:path*",
     "/libro/:path*",
     "/perfil/:path*",
+    "/chat/:path*",
     "/planes/:path*",
     "/configuracion/:path*",
   ],

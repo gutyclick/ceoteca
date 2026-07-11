@@ -13,6 +13,7 @@ export const privateRoutes = [
   "/home",
   "/libro",
   "/perfil",
+  "/chat",
   "/planes",
   "/configuracion",
 ] as const;

@@ -15,6 +15,7 @@ export function AppChrome({ children }: AppChromeProps) {
   const usesDashboardChrome =
     pathname === "/home" ||
     pathname === "/perfil" ||
+    pathname === "/chat" ||
     pathname === "/configuracion" ||
     pathname === "/planes" ||
     pathname.startsWith("/libro/");
