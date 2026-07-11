@@ -36,7 +36,7 @@ export const plans: Record<PlanKey, PlanConfig> = {
       "3 análisis para comenzar",
       "Biblioteca con vista previa",
       "Sin audio",
-      "Sin chat con IA",
+      "Sin Chat con CEO",
     ],
     ctaLabel: "Empezar gratis",
   },
@@ -131,7 +131,7 @@ export const pricingFeatureRows = [
     },
   },
   {
-    label: "Chat con IA",
+    label: "Chat con CEO",
     values: {
       free: "No incluido",
       pro: "50 preguntas/mes",
@@ -191,6 +191,6 @@ export const pricingFaqs = [
   {
     question: "¿El audio está incluido en todos los planes?",
     answer:
-      "El audio está incluido desde Pro. En el plan Gratis puedes explorar la biblioteca y leer análisis seleccionados sin audio ni chat con IA.",
+      "El audio está incluido desde Pro. En el plan Gratis puedes explorar la biblioteca y leer análisis seleccionados sin Chat con CEO.",
   },
 ] as const;

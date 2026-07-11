@@ -8,6 +8,7 @@ export type PersistChatInput = {
   userId: string;
   bookId: string;
   context: ChatContext;
+  conversationId?: string | null;
   userMessage: string;
   assistantMessage: string;
 };
@@ -38,6 +39,7 @@ export interface ChatRepository {
     userId: string,
     bookId: string,
     context: ChatContext,
+    conversationId?: string | null,
   ): Promise<ChatConversationMessage[]>;
 }
 
@@ -67,7 +69,7 @@ export class MockChatRepository implements ChatRepository {
   }
 
   async persistMessages(input: PersistChatInput): Promise<void> {
-    const key = `${input.userId}:${input.context}:${input.bookId}`;
+    const key = `${input.userId}:${input.context}:${input.conversationId ?? input.bookId}`;
     const current = mockMessages.get(key) ?? [];
     mockMessages.set(key, [
       ...current,
@@ -84,8 +86,9 @@ export class MockChatRepository implements ChatRepository {
     userId: string,
     bookId: string,
     context: ChatContext,
+    conversationId?: string | null,
   ): Promise<ChatConversationMessage[]> {
-    return mockMessages.get(`${userId}:${context}:${bookId}`) ?? [];
+    return mockMessages.get(`${userId}:${context}:${conversationId ?? bookId}`) ?? [];
   }
 }
 
@@ -168,6 +171,7 @@ export class SupabaseChatRepository implements ChatRepository {
         user_id: input.userId,
         book_id: input.bookId,
         context: input.context,
+        conversation_id: input.conversationId ?? null,
         role: "user",
         content: input.userMessage,
       },
@@ -175,6 +179,7 @@ export class SupabaseChatRepository implements ChatRepository {
         user_id: input.userId,
         book_id: input.bookId,
         context: input.context,
+        conversation_id: input.conversationId ?? null,
         role: "assistant",
         content: input.assistantMessage,
       },
@@ -206,15 +211,21 @@ export class SupabaseChatRepository implements ChatRepository {
     userId: string,
     bookId: string,
     context: ChatContext,
+    conversationId?: string | null,
   ): Promise<ChatConversationMessage[]> {
     const supabase = this.getClient();
-    const { data, error } = await supabase
+    let query = supabase
       .from("chat_messages")
       .select("role, content")
       .eq("user_id", userId)
       .eq("context", context)
-      .eq("book_id", bookId)
-      .order("created_at", { ascending: true });
+      .eq("book_id", bookId);
+
+    query = conversationId
+      ? query.eq("conversation_id", conversationId)
+      : query.is("conversation_id", null);
+
+    const { data, error } = await query.order("created_at", { ascending: true });
 
     if (error) {
       throw new Error(error.message);

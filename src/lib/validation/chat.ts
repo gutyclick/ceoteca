@@ -9,6 +9,7 @@ export const chatRequestSchema = z
   .object({
     context: z.enum(["book", "site"]).default("book"),
     bookId: z.string().min(1, "El libro es requerido.").optional(),
+    conversationId: z.string().uuid("La conversación no es válida.").optional(),
     message: z
       .string()
       .min(1, "Escribe una pregunta.")

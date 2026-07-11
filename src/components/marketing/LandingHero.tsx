@@ -28,7 +28,7 @@ const valueItems = [
     icon: Zap,
   },
   {
-    title: "Chat con IA",
+    title: "Chat con CEO",
     description: "Resuelve dudas y profundiza en cada idea.",
     icon: MessageCircle,
   },

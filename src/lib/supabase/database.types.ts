@@ -178,6 +178,7 @@ export type Database = {
           user_id: string;
           book_id: string;
           context: "book" | "site";
+          conversation_id: string | null;
           role: "user" | "assistant";
           content: string;
           created_at: string;
@@ -186,10 +187,39 @@ export type Database = {
           user_id: string;
           book_id: string;
           context?: "book" | "site";
+          conversation_id?: string | null;
           role: "user" | "assistant";
           content: string;
         };
         Update: Record<string, never>;
+        Relationships: [];
+      };
+      chat_conversations: {
+        Row: {
+          id: string;
+          user_id: string;
+          context: "book" | "site";
+          book_id: string | null;
+          title: string;
+          last_message_at: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          context?: "book" | "site";
+          book_id?: string | null;
+          title?: string;
+          last_message_at?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          title?: string;
+          last_message_at?: string;
+          updated_at?: string;
+        };
         Relationships: [];
       };
       chat_events: {

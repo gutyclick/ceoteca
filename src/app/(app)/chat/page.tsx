@@ -4,7 +4,7 @@ import { ChatWorkspace } from "@/components/chat/ChatWorkspace";
 import { createBookRepository } from "@/lib/books/repository";
 
 export const metadata: Metadata = {
-  title: "Chat IA",
+  title: "Chat con CEO",
   description: "Conversa con CEO sobre tu biblioteca y los análisis de Ceoteca.",
 };
 

@@ -11,6 +11,7 @@ import {
   Loader2,
   Menu,
   MessageSquare,
+  Plus,
   Search,
   Send,
   Sparkles,
@@ -33,8 +34,8 @@ type ChatMessage = {
 };
 
 type Conversation =
-  | { key: "site"; context: "site"; title: "Conversación general"; book: null }
-  | { key: string; context: "book"; title: string; book: Book };
+  | { key: string; context: "site"; title: string; book: null; conversationId: string | null; lastMessageAt: string | null }
+  | { key: string; context: "book"; title: string; book: Book; conversationId: null; lastMessageAt: string | null };
 
 type FilterKey = "all" | "book" | "site";
 
@@ -52,8 +53,33 @@ type ChatResponse = {
     message: string;
     remainingQuestions: number | null;
     usage: { questionCount: number; limit: number | null };
+    conversationTitle?: string | null;
   };
   error?: { message: string };
+};
+
+type ConversationsResponse = {
+  data?: {
+    conversations: Array<{ id: string; title: string; last_message_at: string }>;
+    startedBooks: Array<{ bookId: string; lastMessageAt: string }>;
+  };
+  error?: { message: string };
+};
+
+type CreateConversationResponse = {
+  data?: {
+    conversation: { id: string; title: string; last_message_at: string };
+  };
+  error?: { message: string };
+};
+
+const draftConversation: Conversation = {
+  key: "site:draft",
+  context: "site",
+  title: "Nueva conversación",
+  book: null,
+  conversationId: null,
+  lastMessageAt: null,
 };
 
 const generalSuggestions = [
@@ -121,14 +147,9 @@ function BookAvatar({ book }: { book: Book }) {
 }
 
 export function ChatWorkspace({ books }: { books: Book[] }) {
-  const conversations = useMemo<Conversation[]>(
-    () => [
-      { key: "site", context: "site", title: "Conversación general", book: null },
-      ...books.map((book) => ({ key: `book:${book.id}`, context: "book" as const, title: book.title, book })),
-    ],
-    [books],
-  );
-  const [selectedKey, setSelectedKey] = useState("site");
+  const bookById = useMemo(() => new Map(books.map((book) => [book.id, book])), [books]);
+  const [conversations, setConversations] = useState<Conversation[]>([draftConversation]);
+  const [selectedKey, setSelectedKey] = useState(draftConversation.key);
   const [filter, setFilter] = useState<FilterKey>("all");
   const [query, setQuery] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -139,10 +160,11 @@ export function ChatWorkspace({ books }: { books: Book[] }) {
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [isConversationPanelOpen, setIsConversationPanelOpen] = useState(false);
+  const [isLoadingConversations, setIsLoadingConversations] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const selected = conversations.find((item) => item.key === selectedKey) ?? conversations[0];
+  const selected = conversations.find((item) => item.key === selectedKey) ?? draftConversation;
   const canUseChat = plans[plan].features.includes("chat");
   const suggestions = selected.context === "site" ? generalSuggestions : bookSuggestions;
 
@@ -157,8 +179,12 @@ export function ChatWorkspace({ books }: { books: Book[] }) {
 
     async function loadAccount() {
       const supabase = createBrowserSupabaseClient();
-      const { data: userData } = await supabase.auth.getUser();
+      const [{ data: userData }, { data: sessionData }] = await Promise.all([
+        supabase.auth.getUser(),
+        supabase.auth.getSession(),
+      ]);
       if (!userData.user || !isMounted) return;
+      const token = sessionData.session?.access_token;
       const [profileResponse, subscriptionsResponse] = await Promise.all([
         supabase.from("profiles").select("full_name,plan").eq("id", userData.user.id).maybeSingle(),
         supabase.from("subscriptions").select("plan,status,updated_at").eq("user_id", userData.user.id).order("updated_at", { ascending: false }),
@@ -166,11 +192,41 @@ export function ChatWorkspace({ books }: { books: Book[] }) {
       if (!isMounted) return;
       setFullName(profileResponse.data?.full_name ?? "Lector");
       setPlan(resolvePlanFromSubscriptions({ profilePlan: profileResponse.data?.plan ?? "free", subscriptions: subscriptionsResponse.data ?? [] }).plan);
+
+      if (token) {
+        const response = await fetch("/api/chat/conversations", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const payload = (await response.json()) as ConversationsResponse;
+        if (isMounted && response.ok && payload.data) {
+          const generalConversations: Conversation[] = payload.data.conversations.map((conversation) => ({
+            key: `site:${conversation.id}`,
+            context: "site",
+            title: conversation.title,
+            book: null,
+            conversationId: conversation.id,
+            lastMessageAt: conversation.last_message_at,
+          }));
+          const bookConversations: Conversation[] = payload.data.startedBooks.flatMap((item) => {
+            const book = bookById.get(item.bookId);
+            return book
+              ? [{ key: `book:${book.id}`, context: "book" as const, title: book.title, book, conversationId: null, lastMessageAt: item.lastMessageAt }]
+              : [];
+          });
+          const loaded = [...generalConversations, ...bookConversations].sort(
+            (a, b) => new Date(b.lastMessageAt ?? 0).getTime() - new Date(a.lastMessageAt ?? 0).getTime(),
+          );
+          const nextConversations = loaded.length > 0 ? loaded : [draftConversation];
+          setConversations(nextConversations);
+          setSelectedKey(nextConversations[0].key);
+        }
+      }
+      if (isMounted) setIsLoadingConversations(false);
     }
 
     void loadAccount();
     return () => { isMounted = false; };
-  }, []);
+  }, [bookById]);
 
   useEffect(() => {
     let isMounted = true;
@@ -178,12 +234,17 @@ export function ChatWorkspace({ books }: { books: Book[] }) {
     async function loadHistory() {
       setIsLoadingHistory(true);
       setError(null);
+      if (selected.context === "site" && !selected.conversationId) {
+        setMessages([]);
+        setIsLoadingHistory(false);
+        return;
+      }
       const supabase = createBrowserSupabaseClient();
       const { data } = await supabase.auth.getSession();
       const token = data.session?.access_token;
       if (!token || !selected) return;
       const search = selected.context === "site"
-        ? "context=site"
+        ? `context=site&conversationId=${encodeURIComponent(selected.conversationId ?? "")}`
         : `context=book&bookId=${encodeURIComponent(selected.book.slug)}`;
       const response = await fetch(`/api/chat/history?${search}`, { headers: { Authorization: `Bearer ${token}` } });
       const payload = (await response.json()) as HistoryResponse;
@@ -212,6 +273,16 @@ export function ChatWorkspace({ books }: { books: Book[] }) {
     window.setTimeout(() => inputRef.current?.focus(), 100);
   }
 
+  function startNewConversation() {
+    setConversations((current) => [draftConversation, ...current.filter((item) => item.key !== draftConversation.key)]);
+    setSelectedKey(draftConversation.key);
+    setMessages([]);
+    setInput("");
+    setError(null);
+    setIsConversationPanelOpen(false);
+    window.setTimeout(() => inputRef.current?.focus(), 100);
+  }
+
   async function sendMessage() {
     const message = input.trim();
     if (!message || isSending || !selected || !canUseChat) return;
@@ -225,12 +296,35 @@ export function ChatWorkspace({ books }: { books: Book[] }) {
       const { data } = await supabase.auth.getSession();
       const token = data.session?.access_token;
       if (!token) throw new Error("Tu sesión expiró. Inicia sesión nuevamente.");
+      let requestConversation = selected;
+      if (selected.context === "site" && !selected.conversationId) {
+        const createResponse = await fetch("/api/chat/conversations", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ title: "Nueva conversación" }),
+        });
+        const createPayload = (await createResponse.json()) as CreateConversationResponse;
+        if (!createResponse.ok || !createPayload.data) {
+          throw new Error(createPayload.error?.message ?? "No pudimos crear la conversación.");
+        }
+        requestConversation = {
+          key: `site:${createPayload.data.conversation.id}`,
+          context: "site",
+          title: createPayload.data.conversation.title,
+          book: null,
+          conversationId: createPayload.data.conversation.id,
+          lastMessageAt: createPayload.data.conversation.last_message_at,
+        };
+        setConversations((current) => [requestConversation, ...current.filter((item) => item.key !== draftConversation.key)]);
+      }
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          context: selected.context,
-          bookId: selected.book?.slug,
+          context: requestConversation.context,
+          bookId: requestConversation.book?.slug,
+          conversationId: requestConversation.conversationId ?? undefined,
           message,
           conversation: messages.slice(-12),
         }),
@@ -239,6 +333,16 @@ export function ChatWorkspace({ books }: { books: Book[] }) {
       if (!response.ok || !payload.data) throw new Error(payload.error?.message ?? "No pudimos generar una respuesta.");
       setMessages((current) => [...current, { role: "assistant", content: payload.data!.message }]);
       setRemainingQuestions(payload.data.remainingQuestions);
+      if (selected.key === draftConversation.key) {
+        setSelectedKey(requestConversation.key);
+      }
+      if (payload.data.conversationTitle && requestConversation.context === "site") {
+        setConversations((current) => current.map((item) =>
+          item.key === requestConversation.key
+            ? { ...item, title: payload.data!.conversationTitle!, lastMessageAt: new Date().toISOString() }
+            : item,
+        ));
+      }
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "No pudimos generar una respuesta.");
     } finally {
@@ -251,7 +355,10 @@ export function ChatWorkspace({ books }: { books: Book[] }) {
       <div className="border-b border-slate-950/[0.08] p-4">
         <div className="flex items-center justify-between gap-3">
           <h2 className="font-black">Conversaciones</h2>
-          <button aria-label="Cerrar conversaciones" className="grid h-9 w-9 place-items-center rounded-full text-slate-500 lg:hidden" onClick={() => setIsConversationPanelOpen(false)} type="button"><X size={18} /></button>
+          <div className="flex items-center gap-1">
+            <button aria-label="Nueva conversación general" className="grid h-9 w-9 place-items-center rounded-full text-violet-700 transition hover:bg-violet-50" onClick={startNewConversation} title="Nueva conversación" type="button"><Plus size={19} /></button>
+            <button aria-label="Cerrar conversaciones" className="grid h-9 w-9 place-items-center rounded-full text-slate-500 lg:hidden" onClick={() => setIsConversationPanelOpen(false)} type="button"><X size={18} /></button>
+          </div>
         </div>
         <label className="relative mt-4 block">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
@@ -264,13 +371,15 @@ export function ChatWorkspace({ books }: { books: Book[] }) {
         </div>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto p-2">
-        {filteredConversations.map((conversation) => (
+        {isLoadingConversations ? <div className="grid h-24 place-items-center text-slate-400"><Loader2 className="animate-spin" size={20} /></div> : null}
+        {!isLoadingConversations && filteredConversations.length === 0 ? <div className="p-5 text-center text-sm leading-6 text-slate-500">No hay conversaciones en esta vista.</div> : null}
+        {!isLoadingConversations ? filteredConversations.map((conversation) => (
           <button className={cn("flex w-full items-center gap-3 rounded-[14px] p-3 text-left transition hover:bg-slate-50", selected.key === conversation.key && "bg-violet-50")} key={conversation.key} onClick={() => selectConversation(conversation.key)} type="button">
             {conversation.book ? <BookAvatar book={conversation.book} /> : <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[13px] bg-violet-100 text-violet-700"><MessageSquare size={20} /></span>}
             <span className="min-w-0 flex-1"><span className="line-clamp-2 block text-sm font-black leading-5">{conversation.title}</span><span className="mt-1 block truncate text-xs text-slate-500">{conversation.book?.author ?? "Preguntas generales"}</span></span>
             <ChevronRight className="shrink-0 text-slate-300" size={16} />
           </button>
-        ))}
+        )) : null}
       </div>
     </aside>
   );
@@ -278,10 +387,10 @@ export function ChatWorkspace({ books }: { books: Book[] }) {
   return (
     <main className="min-h-screen bg-[#fbfaf8] pl-0 text-slate-950 sm:pl-[var(--dashboard-sidebar-offset,84px)]">
       <DashboardSidebar active="chat" tone="light" showProfile />
-      <section className="mx-auto flex min-h-screen w-full max-w-[1500px] flex-col px-4 pb-4 pt-6 sm:px-6 lg:px-8">
+      <section className="flex min-h-screen w-full flex-col px-4 pb-4 pt-6 sm:px-6 lg:px-7">
         <header className="flex items-center justify-between gap-4 pb-5">
           <div>
-            <h1 className="text-3xl font-black tracking-[-0.04em]">Chat IA</h1>
+            <h1 className="text-3xl font-black tracking-[-0.04em]">Chat con CEO</h1>
             <p className="mt-1 hidden text-sm text-slate-500 sm:block">Conversa con CEO dentro del contexto de Ceoteca.</p>
           </div>
           <div className="flex items-center gap-3"><NotificationBell tone="light" /><DashboardAccountMenu /></div>

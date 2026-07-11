@@ -11,7 +11,7 @@ import { clientEnv } from "@/lib/env";
 import { createAIProvider } from "@/lib/openai/provider";
 import { canAccessFeature } from "@/lib/permissions";
 import { checkRateLimit } from "@/lib/rate-limit/memory";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createServerSupabaseClient, createServiceSupabaseClient } from "@/lib/supabase/server";
 import { getEffectiveSubscriptionForUser } from "@/lib/subscriptions/service";
 import { chatRequestSchema } from "@/lib/validation/chat";
 import type { AppUser } from "@/types";
@@ -156,11 +156,31 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  let conversationTitle: string | null = null;
+  if (parsed.data.context === "site" && parsed.data.conversationId) {
+    const serviceClient = createServiceSupabaseClient();
+    const { data: conversation } = await serviceClient
+      .from("chat_conversations")
+      .select("title")
+      .eq("id", parsed.data.conversationId)
+      .eq("user_id", session.user.id)
+      .eq("context", "site")
+      .maybeSingle();
+
+    if (!conversation) {
+      return jsonError(
+        { code: "CONVERSATION_NOT_FOUND", message: "No encontramos esta conversación." },
+        404,
+      );
+    }
+    conversationTitle = conversation.title;
+  }
+
   if (!canAccessFeature(session.user.plan, "chat")) {
     return jsonError(
       {
         code: "CHAT_NOT_INCLUDED",
-        message: "Tu plan actual no incluye chat con IA.",
+        message: "Tu plan actual no incluye Chat con CEO.",
       },
       403,
     );
@@ -231,6 +251,7 @@ export async function POST(request: NextRequest) {
       session.user.id,
       book.id,
       parsed.data.context,
+      parsed.data.conversationId,
     );
     const trustedConversation =
       storedConversation.length > 0
@@ -259,9 +280,23 @@ export async function POST(request: NextRequest) {
       userId: session.user.id,
       bookId: book.id,
       context: parsed.data.context,
+      conversationId: parsed.data.conversationId,
       userMessage: parsed.data.message,
       assistantMessage: result.message,
     });
+
+    if (parsed.data.conversationId) {
+      const serviceClient = createServiceSupabaseClient();
+      const title = parsed.data.message.trim().replace(/\s+/g, " ").slice(0, 72);
+      await serviceClient
+        .from("chat_conversations")
+        .update({
+          ...(conversationTitle === "Nueva conversación" ? { title } : {}),
+          last_message_at: new Date().toISOString(),
+        })
+        .eq("id", parsed.data.conversationId)
+        .eq("user_id", session.user.id);
+    }
 
     return jsonData({
       message: result.message,
@@ -273,6 +308,10 @@ export async function POST(request: NextRequest) {
         questionCount: nextMonthlyCount,
         limit: plan.chatMonthlyLimit,
       },
+      conversationTitle:
+        conversationTitle === "Nueva conversación"
+          ? parsed.data.message.trim().replace(/\s+/g, " ").slice(0, 72)
+          : conversationTitle,
     });
   } catch (caughtError) {
     console.error("Chat request failed", caughtError);

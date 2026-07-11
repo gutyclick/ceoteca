@@ -66,7 +66,7 @@ const pricingPlans: PricingPlan[] = [
       { label: "3 análisis para comenzar" },
       { label: "Biblioteca con vista previa" },
       { label: "Sin audio", included: false },
-      { label: "Sin chat con IA", included: false },
+      { label: "Sin Chat con CEO", included: false },
     ],
   },
   {

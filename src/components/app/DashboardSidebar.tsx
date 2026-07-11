@@ -32,7 +32,7 @@ type DashboardSidebarProps = {
 const menuItems = [
   { key: "home", label: "Inicio", href: "/home", icon: Home },
   { key: "library", label: "Biblioteca", href: "/biblioteca", icon: BookOpen },
-  { key: "chat", label: "Chat IA", href: "/chat", icon: MessageSquare },
+  { key: "chat", label: "Chat con CEO", href: "/chat", icon: MessageSquare },
   { key: "profile", label: "Perfil", href: "/perfil", icon: User },
   { key: "settings", label: "Ajustes", href: "/configuracion", icon: Settings },
 ] as const;

@@ -81,6 +81,7 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const context = searchParams.get("context") === "site" ? "site" : "book";
   const bookSlug = searchParams.get("bookId");
+  const conversationId = searchParams.get("conversationId");
   const bookRepository = createBookRepository();
   const books =
     context === "site"
@@ -106,10 +107,28 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  if (context === "site" && conversationId) {
+    const supabase = createServerSupabaseClient(session.accessToken);
+    const { data: conversation } = await supabase
+      .from("chat_conversations")
+      .select("id")
+      .eq("id", conversationId)
+      .eq("user_id", session.user.id)
+      .eq("context", "site")
+      .maybeSingle();
+
+    if (!conversation) {
+      return jsonError(
+        { code: "CONVERSATION_NOT_FOUND", message: "No encontramos esta conversación." },
+        404,
+      );
+    }
+  }
+
   const plan = plans[session.user.plan];
   const chatRepository = createChatRepository(session.accessToken);
   const [messages, questionCount] = await Promise.all([
-    chatRepository.listMessages(session.user.id, book.id, context),
+    chatRepository.listMessages(session.user.id, book.id, context, conversationId),
     chatRepository.getMonthlyUsage(session.user.id),
   ]);
 
