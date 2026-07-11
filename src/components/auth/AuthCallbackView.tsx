@@ -40,6 +40,8 @@ export function AuthCallbackView() {
         const supabase = createBrowserSupabaseClient();
         const oauthError = searchParams.get("error_description") ?? searchParams.get("error");
         const code = searchParams.get("code");
+        const tokenHash = searchParams.get("token_hash");
+        const verificationType = searchParams.get("type");
 
         if (oauthError) {
           throw new Error(
@@ -55,6 +57,13 @@ export function AuthCallbackView() {
           if (error) {
             throw error;
           }
+        } else if (tokenHash && verificationType === "signup") {
+          const { error } = await supabase.auth.verifyOtp({
+            token_hash: tokenHash,
+            type: "signup",
+          });
+
+          if (error) throw error;
         }
 
         const { data, error } = await supabase.auth.getSession();
@@ -69,7 +78,9 @@ export function AuthCallbackView() {
           throw new Error("No pudimos validar tu usuario de Google.");
         }
 
-        if (nextPath === "/planes") {
+        const isGoogleUser = userData.user.app_metadata.provider === "google";
+
+        if (nextPath === "/planes" && isGoogleUser) {
           await fetch("/api/auth/oauth/complete", {
             method: "POST",
             headers: {
@@ -116,10 +127,10 @@ export function AuthCallbackView() {
   const isError = state.type === "error";
 
   return (
-    <main className="min-h-screen bg-background px-5 py-8 text-text-primary">
+    <main className="min-h-screen bg-[#fbfaf8] px-5 py-8 text-slate-950">
       <section className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-xl flex-col justify-center">
-        <Logo className="[&>span]:text-[15px] [&>span]:tracking-[0.34em]" />
-        <Card className="mt-10 rounded-[20px] bg-white/[0.035] p-8 text-center">
+        <Logo className="mx-auto text-slate-950 [&>span]:text-[15px] [&>span]:tracking-[0.34em]" useBrandAsset />
+        <Card className="mt-8 rounded-[20px] border-slate-950/[0.08] bg-white p-8 text-center text-slate-950 shadow-none">
           <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-brand-purple/20 text-brand-purple">
             {isError ? (
               <TriangleAlert aria-hidden="true" size={30} />
@@ -130,7 +141,7 @@ export function AuthCallbackView() {
           <h1 className="mt-6 text-3xl font-semibold">
             {isError ? "No pudimos iniciar sesión" : "Conectando tu cuenta"}
           </h1>
-          <p className="mt-3 text-sm leading-7 text-text-secondary">
+          <p className="mt-3 text-sm leading-7 text-slate-600">
             {state.message}
           </p>
           {!isError ? (

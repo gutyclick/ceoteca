@@ -224,7 +224,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
       });
 
       if (result.redirectTo) {
-        router.push(isRegister ? result.redirectTo : nextPath);
+        router.replace(result.redirectTo);
         router.refresh();
       }
     } catch (error) {
@@ -267,8 +267,24 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
 
     await storeSession(payload.data.session);
 
+    let redirectTo = nextPath;
+    try {
+      const supabase = createBrowserSupabaseClient();
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData.user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("onboarding_completed")
+          .eq("id", userData.user.id)
+          .maybeSingle();
+        if (!profile?.onboarding_completed) redirectTo = "/planes";
+      }
+    } catch {
+      redirectTo = payload.data.redirectTo ?? "/home";
+    }
+
     return {
-      redirectTo: payload.data.redirectTo ?? "/home",
+      redirectTo,
       message: payload.data.message,
     };
   }

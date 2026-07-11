@@ -9,14 +9,16 @@ const onboardingSchema = z
   .object({
     birthDate: z.string().date().nullable(),
     occupation: z.string().trim().min(2).max(80),
-    discoverySource: z.enum([
+    discoverySources: z.array(z.enum([
       "google",
-      "social_media",
+      "instagram",
+      "tiktok",
+      "youtube",
       "recommendation",
-      "content_creator",
+      "podcast_newsletter",
       "community",
       "other",
-    ]),
+    ])).min(1).max(8),
     plan: z.enum(["free", "pro", "unlimited", "founder"]),
     starterBookId: z.string().uuid().nullable(),
   })
@@ -93,7 +95,7 @@ export async function POST(request: NextRequest) {
     .update({
       birth_date: input.birthDate,
       occupation: input.occupation,
-      discovery_source: input.discoverySource,
+      discovery_source: input.discoverySources,
       starter_book_id: input.plan === "free" ? input.starterBookId : null,
     })
     .eq("id", userData.user.id);

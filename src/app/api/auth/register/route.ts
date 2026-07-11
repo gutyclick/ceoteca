@@ -266,6 +266,10 @@ export async function POST(request: NextRequest) {
       email: parsed.data.email,
       password: parsed.data.password,
       options: {
+        emailRedirectTo: new URL(
+          "/auth/callback?next=/planes",
+          clientEnv.NEXT_PUBLIC_SITE_URL,
+        ).toString(),
         data: {
           full_name: parsed.data.fullName,
           requested_plan: parsed.data.plan,

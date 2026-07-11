@@ -2,8 +2,9 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarDays, Check, Loader2, MessageCircle, Mic2, MoreHorizontal } from "lucide-react";
 import { useState } from "react";
+import { FaGoogle, FaInstagram, FaTiktok, FaYoutube } from "react-icons/fa6";
 
 import { Logo } from "@/components/ui/Logo";
 import { plans, type PlanKey } from "@/config/plans";
@@ -23,12 +24,14 @@ const occupations = [
 ] as const;
 
 const discoverySources = [
-  { value: "google", label: "Buscando en Google" },
-  { value: "social_media", label: "Redes sociales" },
-  { value: "recommendation", label: "Recomendación de alguien" },
-  { value: "content_creator", label: "Creador, podcast o newsletter" },
-  { value: "community", label: "Comunidad, curso o evento" },
-  { value: "other", label: "Otro medio" },
+  { value: "google", label: "Google", icon: FaGoogle, iconClassName: "text-[#4285F4]" },
+  { value: "instagram", label: "Instagram", icon: FaInstagram, iconClassName: "text-[#E4405F]" },
+  { value: "tiktok", label: "TikTok", icon: FaTiktok, iconClassName: "text-slate-950" },
+  { value: "youtube", label: "YouTube", icon: FaYoutube, iconClassName: "text-[#FF0000]" },
+  { value: "recommendation", label: "Recomendación", icon: MessageCircle, iconClassName: "text-emerald-600" },
+  { value: "podcast_newsletter", label: "Podcast o newsletter", icon: Mic2, iconClassName: "text-violet-600" },
+  { value: "community", label: "Comunidad o evento", icon: CalendarDays, iconClassName: "text-amber-600" },
+  { value: "other", label: "Otro medio", icon: MoreHorizontal, iconClassName: "text-slate-500" },
 ] as const;
 
 type DiscoverySource = (typeof discoverySources)[number]["value"];
@@ -38,7 +41,7 @@ export function OnboardingWizard({ books }: { books: Book[] }) {
   const [step, setStep] = useState(1);
   const [birthDate, setBirthDate] = useState("");
   const [occupation, setOccupation] = useState("");
-  const [discoverySource, setDiscoverySource] = useState<DiscoverySource | "">("");
+  const [discoverySourcesSelected, setDiscoverySourcesSelected] = useState<DiscoverySource[]>([]);
   const [selectedPlan, setSelectedPlan] = useState<PlanKey | null>(null);
   const [starterBookId, setStarterBookId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -69,7 +72,7 @@ export function OnboardingWizard({ books }: { books: Book[] }) {
         body: JSON.stringify({
           birthDate: birthDate || null,
           occupation,
-          discoverySource,
+          discoverySources: discoverySourcesSelected,
           plan,
           starterBookId: bookId,
         }),
@@ -102,6 +105,14 @@ export function OnboardingWizard({ books }: { books: Book[] }) {
     void finishOnboarding(plan, null);
   }
 
+  function toggleDiscoverySource(source: DiscoverySource) {
+    setDiscoverySourcesSelected((current) =>
+      current.includes(source)
+        ? current.filter((item) => item !== source)
+        : [...current, source],
+    );
+  }
+
   return (
     <main className="min-h-screen bg-[#fbfaf8] text-slate-950">
       <header className="mx-auto flex min-h-20 w-full max-w-[1180px] items-center justify-between px-5 sm:px-8">
@@ -124,6 +135,16 @@ export function OnboardingWizard({ books }: { books: Book[] }) {
             <StepHeading title="Cuéntanos un poco sobre ti" description="Usaremos esta información para personalizar tu experiencia." />
             <div className="mt-8 grid gap-5">
               <label className="grid gap-2 text-sm font-black">
+                Fecha de nacimiento <span className="font-medium text-slate-400">Opcional</span>
+                <input
+                  className="min-h-14 rounded-[14px] border border-slate-950/[0.10] bg-white px-4 text-slate-800 outline-none focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
+                  max={new Date().toISOString().slice(0, 10)}
+                  onChange={(event) => setBirthDate(event.target.value)}
+                  type="date"
+                  value={birthDate}
+                />
+              </label>
+              <label className="grid gap-2 text-sm font-black">
                 ¿A qué te dedicas?
                 <select
                   className="min-h-14 rounded-[14px] border border-slate-950/[0.10] bg-white px-4 text-slate-800 outline-none focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
@@ -134,16 +155,6 @@ export function OnboardingWizard({ books }: { books: Book[] }) {
                   {occupations.map((item) => <option key={item}>{item}</option>)}
                 </select>
               </label>
-              <label className="grid gap-2 text-sm font-black">
-                Fecha de nacimiento <span className="font-medium text-slate-400">Opcional</span>
-                <input
-                  className="min-h-14 rounded-[14px] border border-slate-950/[0.10] bg-white px-4 text-slate-800 outline-none focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
-                  max={new Date().toISOString().slice(0, 10)}
-                  onChange={(event) => setBirthDate(event.target.value)}
-                  type="date"
-                  value={birthDate}
-                />
-              </label>
             </div>
             <WizardActions disabled={!occupation} onNext={() => setStep(2)} />
           </div>
@@ -151,26 +162,33 @@ export function OnboardingWizard({ books }: { books: Book[] }) {
 
         {step === 2 ? (
           <div className="mx-auto w-full max-w-2xl">
-            <StepHeading title="¿Cómo conociste Ceoteca?" description="Tu respuesta nos ayuda a entender qué canales son más útiles." />
+            <StepHeading title="¿Cómo conociste Ceoteca?" description="Puedes elegir más de una opción." />
             <div className="mt-8 grid gap-3 sm:grid-cols-2">
-              {discoverySources.map((source) => (
-                <button
-                  className={cn(
-                    "flex min-h-16 items-center justify-between rounded-[14px] border bg-white px-5 text-left text-sm font-black transition",
-                    discoverySource === source.value
+              {discoverySources.map((source) => {
+                const Icon = source.icon;
+                const isSelected = discoverySourcesSelected.includes(source.value);
+
+                return (
+                  <button
+                    aria-pressed={isSelected}
+                    className={cn(
+                    "flex min-h-16 items-center gap-4 rounded-[14px] border bg-white px-5 text-left text-sm font-black transition",
+                    isSelected
                       ? "border-violet-500 bg-violet-50 text-violet-800 ring-4 ring-violet-100"
                       : "border-slate-950/[0.10] text-slate-700 hover:border-violet-200",
                   )}
                   key={source.value}
-                  onClick={() => setDiscoverySource(source.value)}
+                  onClick={() => toggleDiscoverySource(source.value)}
                   type="button"
                 >
-                  {source.label}
-                  {discoverySource === source.value ? <Check aria-hidden="true" size={18} /> : null}
-                </button>
-              ))}
+                    <Icon aria-hidden="true" className={source.iconClassName} size={21} />
+                    <span className="flex-1">{source.label}</span>
+                    {isSelected ? <Check aria-hidden="true" size={18} /> : null}
+                  </button>
+                );
+              })}
             </div>
-            <WizardActions disabled={!discoverySource} onBack={() => setStep(1)} onNext={() => setStep(3)} />
+            <WizardActions disabled={discoverySourcesSelected.length === 0} onBack={() => setStep(1)} onNext={() => setStep(3)} />
           </div>
         ) : null}
 
