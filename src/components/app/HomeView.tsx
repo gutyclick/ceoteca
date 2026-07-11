@@ -7,20 +7,11 @@ import {
   ArrowRight,
   BookMarked,
   BookOpen,
-  BriefcaseBusiness,
   CheckCircle2,
-  ChevronRight,
-  CircleDollarSign,
+  Clock3,
   Flame,
-  Lightbulb,
-  MoreVertical,
-  Send,
-  Sparkles,
   Target,
-  Trophy,
-  Zap,
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 
 import { DashboardSidebar } from "@/components/app/DashboardSidebar";
 import { DashboardAccountMenu } from "@/components/app/DashboardAccountMenu";
@@ -30,7 +21,7 @@ import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/database.types";
 import { resolvePlanFromSubscriptions } from "@/lib/subscriptions/resolve";
 import { cn } from "@/lib/utils/cn";
-import type { Book, BookCategory } from "@/types";
+import type { Book } from "@/types";
 
 type HomeViewProps = {
   books: Book[];
@@ -45,60 +36,6 @@ type HomeAccountData = {
   chatQuestionsThisMonth: number;
 };
 
-type CategoryShortcut = {
-  label: string;
-  category: BookCategory;
-  icon: LucideIcon;
-  iconClassName: string;
-};
-
-const categoryShortcuts: CategoryShortcut[] = [
-  {
-    label: "Liderazgo",
-    category: "Liderazgo",
-    icon: Trophy,
-    iconClassName: "text-amber-500",
-  },
-  {
-    label: "Productividad",
-    category: "Productividad",
-    icon: Zap,
-    iconClassName: "text-orange-500",
-  },
-  {
-    label: "Ventas",
-    category: "Ventas",
-    icon: Target,
-    iconClassName: "text-emerald-500",
-  },
-  {
-    label: "Dinero",
-    category: "Finanzas personales",
-    icon: CircleDollarSign,
-    iconClassName: "text-green-600",
-  },
-  {
-    label: "Negocios",
-    category: "Emprendimiento",
-    icon: BriefcaseBusiness,
-    iconClassName: "text-blue-600",
-  },
-];
-
-const actionChips = [
-  "Comparar libros",
-  "Crear plan",
-  "Explicar concepto",
-  "Aplicarlo a mi negocio",
-  "Resumir capítulo",
-] as const;
-
-const faqs = [
-  "¿Cómo funcionan los análisis en Ceoteca?",
-  "¿Cómo se crean los análisis?",
-  "¿Puedo cancelar cuando quiera?",
-  "¿Qué pasa en el periodo de prueba?",
-] as const;
 
 function getFirstName(name: string) {
   return name.trim().split(" ").filter(Boolean)[0] ?? "Lector";
@@ -124,10 +61,6 @@ function getLearnedMinutes(progressRows: ProgressRow[], books: Book[]) {
 
     return total + Math.round(book.readingTime * (item.progress / 100));
   }, 0);
-}
-
-function getCategoryBooks(books: Book[], category: BookCategory) {
-  return books.filter((book) => book.category === category);
 }
 
 function BookThumb({
@@ -305,6 +238,12 @@ export function HomeView({ books }: HomeViewProps) {
   const activeDays = getActiveDays(accountData.progress);
   const completedBooks = accountData.progress.filter((item) => item.completed).length;
   const learnedMinutes = getLearnedMinutes(accountData.progress, books);
+  const nextBook =
+    learningBooks.find((book) => book.id !== continueHero.id) ??
+    learningBooks[0] ??
+    continueHero;
+  const rhythmGoal = 5;
+  const rhythmPercent = Math.min(100, Math.round((activeDays / rhythmGoal) * 100));
 
   if (!firstBook) {
     return (
@@ -340,33 +279,9 @@ export function HomeView({ books }: HomeViewProps) {
           <h1 className="text-balance text-[clamp(2rem,4vw,3rem)] font-black tracking-[-0.04em]">
             Buenos días, {firstName} 👋
           </h1>
-          <p className="mt-2 text-lg font-medium text-slate-500">
-            ¿Qué quieres mejorar hoy?
+          <p className="mt-2 text-base font-medium text-slate-500">
+            Retoma tu lectura y mantén un ritmo que puedas sostener.
           </p>
-
-          <div className="mt-7 flex gap-4 overflow-x-auto pb-2 scrollbar-none">
-            {categoryShortcuts.map((item) => {
-              const Icon = item.icon;
-
-              return (
-                <Link
-                  className="inline-flex h-14 min-w-[150px] shrink-0 items-center justify-center gap-3 rounded-[16px] border border-slate-950/[0.08] bg-white px-5 text-sm font-black text-slate-800 shadow-[0_14px_36px_rgba(15,23,42,0.04)] transition hover:-translate-y-0.5 hover:border-violet-200"
-                  href={`/biblioteca?categoria=${encodeURIComponent(item.category)}`}
-                  key={item.label}
-                >
-                  <Icon aria-hidden="true" className={item.iconClassName} size={20} />
-                  {item.label}
-                </Link>
-              );
-            })}
-            <Link
-              aria-label="Ver más categorías"
-              className="grid h-14 w-14 shrink-0 place-items-center rounded-full border border-slate-950/[0.08] bg-white text-slate-700 shadow-[0_14px_36px_rgba(15,23,42,0.04)] transition hover:text-violet-700"
-              href="/biblioteca"
-            >
-              <ChevronRight aria-hidden="true" size={22} />
-            </Link>
-          </div>
         </section>
 
         <section className="mt-9">
@@ -401,23 +316,7 @@ export function HomeView({ books }: HomeViewProps) {
                 </span>
               </div>
             </div>
-            <div className="flex items-center justify-between gap-3 md:flex-col md:items-end">
-              <div className="flex gap-2 text-slate-500">
-                <button
-                  aria-label="Guardar en favoritos"
-                  className="grid h-10 w-10 place-items-center rounded-full hover:bg-slate-50"
-                  type="button"
-                >
-                  <BookMarked aria-hidden="true" size={18} />
-                </button>
-                <button
-                  aria-label="Más opciones"
-                  className="grid h-10 w-10 place-items-center rounded-full hover:bg-slate-50"
-                  type="button"
-                >
-                  <MoreVertical aria-hidden="true" size={18} />
-                </button>
-              </div>
+            <div className="flex items-center justify-end">
               <Link
                 className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[14px] bg-gradient-to-r from-violet-700 to-indigo-600 px-6 text-sm font-black text-white shadow-[0_18px_45px_rgba(124,58,237,0.20)] transition hover:brightness-105"
                 href={`/libro/${continueHero.slug}`}
@@ -427,53 +326,6 @@ export function HomeView({ books }: HomeViewProps) {
               </Link>
             </div>
           </article>
-        </section>
-
-        <section className="mt-9">
-          <div className="mb-4 flex items-center gap-3">
-            <h2 className="text-xl font-black tracking-[-0.02em]">
-              Pregunta a tu biblioteca
-            </h2>
-            <span className="rounded-full bg-violet-100 px-3 py-1 text-xs font-black text-violet-700">
-              Con IA
-            </span>
-          </div>
-          <div className="rounded-[22px] border border-slate-950/[0.08] bg-white p-5 shadow-[0_20px_70px_rgba(15,23,42,0.05)]">
-            <div className="grid gap-4 md:grid-cols-[1fr_54px] md:items-center">
-              <div>
-                <p className="text-sm font-medium text-slate-500">
-                  ¿Qué te gustaría saber o aplicar hoy?
-                </p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <button className="rounded-full bg-slate-50 px-4 py-2 text-sm font-medium text-slate-600" type="button">
-                    ¿Cómo aplico las ideas de Hábitos Atómicos para dejar la procrastinación?
-                  </button>
-                  <button className="rounded-full bg-slate-50 px-4 py-2 text-sm font-medium text-slate-600" type="button">
-                    Compara Padre Rico con El inversor inteligente
-                  </button>
-                </div>
-              </div>
-              <button
-                aria-label="Enviar pregunta"
-                className="grid h-12 w-12 place-items-center rounded-full bg-gradient-to-r from-violet-700 to-indigo-600 text-white shadow-[0_16px_35px_rgba(124,58,237,0.24)] md:justify-self-end"
-                type="button"
-              >
-                <Send aria-hidden="true" size={19} />
-              </button>
-            </div>
-          </div>
-          <div className="mt-3 flex gap-3 overflow-x-auto pb-1 scrollbar-none">
-            {actionChips.map((item) => (
-              <button
-                className="inline-flex h-11 shrink-0 items-center gap-2 rounded-[14px] border border-slate-950/[0.08] bg-white px-5 text-xs font-black text-slate-700 transition hover:border-violet-200 hover:text-violet-700"
-                key={item}
-                type="button"
-              >
-                <Sparkles aria-hidden="true" size={15} />
-                {item}
-              </button>
-            ))}
-          </div>
         </section>
 
         <section className="mt-9">
@@ -516,178 +368,85 @@ export function HomeView({ books }: HomeViewProps) {
         </section>
 
         <section className="mt-9">
-          <SectionHeader title="Colecciones recomendadas para ti" label="Ver todas" />
-          <div className="grid gap-4 lg:grid-cols-3">
+          <SectionHeader title="Tu progreso" href="/perfil" label="Ver perfil" />
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {[
               {
-                title: "Para emprendedores",
-                description: "Los mejores análisis para emprender con claridad.",
-                icon: "🚀",
-                category: "Emprendimiento" as BookCategory,
+                value: accountData.progress.length,
+                label: "Análisis iniciados",
+                Icon: BookOpen,
+                tone: "bg-violet-50 text-violet-700",
               },
               {
-                title: "Finanzas personales",
-                description: "Aprende a gestionar, invertir y multiplicar tu dinero.",
-                icon: "💰",
-                category: "Finanzas personales" as BookCategory,
+                value: completedBooks,
+                label: "Análisis completados",
+                Icon: CheckCircle2,
+                tone: "bg-emerald-50 text-emerald-600",
               },
               {
-                title: "Liderazgo",
-                description: "Desarrolla tu liderazgo e inspira equipos.",
-                icon: "📈",
-                category: "Liderazgo" as BookCategory,
+                value: learnedMinutes,
+                label: "Minutos aprendidos",
+                Icon: Clock3,
+                tone: "bg-sky-50 text-sky-600",
               },
-            ].map((collection) => {
-              const collectionBooks = getCategoryBooks(books, collection.category).slice(0, 4);
-
-              return (
-                <Link
-                  className="rounded-[18px] border border-slate-950/[0.08] bg-white p-5 shadow-[0_18px_50px_rgba(15,23,42,0.05)] transition hover:-translate-y-1 hover:border-violet-200"
-                  href={`/biblioteca?categoria=${encodeURIComponent(collection.category)}`}
-                  key={collection.title}
-                >
-                  <h3 className="text-lg font-black">
-                    <span className="mr-2">{collection.icon}</span>
-                    {collection.title}
-                  </h3>
-                  <p className="mt-2 min-h-10 text-sm leading-5 text-slate-500">
-                    {collection.description}
-                  </p>
-                  <div className="mt-4 flex items-end justify-between gap-3">
-                    <div className="flex -space-x-2">
-                      {collectionBooks.map((book) => (
-                        <BookThumb
-                          book={book}
-                          className="h-12 w-9 rounded-md ring-2 ring-white"
-                          key={book.id}
-                          sizes="36px"
-                        />
-                      ))}
-                    </div>
-                    <span className="rounded-[12px] border border-slate-950/[0.08] bg-slate-50 px-3 py-2 text-center text-xs font-bold text-slate-500">
-                      {getCategoryBooks(books, collection.category).length}
-                      <span className="block font-medium">análisis</span>
-                    </span>
-                  </div>
-                </Link>
-              );
-            })}
+              {
+                value: activeDays,
+                label: "Días con actividad",
+                Icon: Flame,
+                tone: "bg-orange-50 text-orange-600",
+              },
+            ].map(({ value, label, Icon, tone }) => (
+              <article
+                className="flex min-h-32 items-center gap-4 rounded-[18px] border border-slate-950/[0.08] bg-white p-5"
+                key={label}
+              >
+                <span className={cn("grid h-12 w-12 shrink-0 place-items-center rounded-[14px]", tone)}>
+                  <Icon aria-hidden="true" size={23} />
+                </span>
+                <div>
+                  <p className="text-3xl font-black tracking-[-0.03em]">{value}</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-500">{label}</p>
+                </div>
+              </article>
+            ))}
           </div>
         </section>
 
-        <section className="mt-9 grid gap-5 xl:grid-cols-[1fr_1fr]">
-          <div className="rounded-[20px] border border-slate-950/[0.08] bg-white shadow-[0_18px_55px_rgba(15,23,42,0.05)]">
-            <div className="flex items-center justify-between border-b border-slate-950/[0.06] p-5">
-              <h2 className="text-xl font-black">Tu progreso</h2>
-              <Link className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-violet-700" href="/perfil">
-                Ver estadísticas
-                <ArrowRight aria-hidden="true" size={15} />
-              </Link>
-            </div>
-            <div className="grid sm:grid-cols-2">
-              {[
-                [`${accountData.progress.length}`, "análisis leídos", BookOpen, "text-violet-700"],
-                [`${completedBooks}`, "ejercicios aplicados", CheckCircle2, "text-emerald-600"],
-                [`${learnedMinutes}`, "minutos aprendidos", Target, "text-blue-600"],
-                [`${activeDays}`, "días de racha", Flame, "text-orange-500"],
-              ].map(([value, label, Icon, color]) => (
-                <div className="flex gap-4 border-b border-slate-950/[0.06] p-5 even:sm:border-l" key={label as string}>
-                  <span className={cn("grid h-11 w-11 place-items-center rounded-[14px] bg-slate-50", color as string)}>
-                    <Icon aria-hidden="true" size={22} />
-                  </span>
-                  <div>
-                    <p className="text-3xl font-black">{value as string}</p>
-                    <p className="text-sm text-slate-500">{label as string}</p>
-                    <p className="mt-1 text-xs font-bold text-emerald-600">
-                      ↑ esta semana
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-[20px] border border-slate-950/[0.08] bg-white p-5 shadow-[0_18px_55px_rgba(15,23,42,0.05)]">
-            <h2 className="text-xl font-black">Insights de la IA</h2>
-            <p className="mt-1 text-sm text-slate-500">Basado en lo que has leído</p>
-            <div className="mt-6 grid gap-5 sm:grid-cols-[1fr_150px] sm:items-center">
-              <div>
-                <p className="font-black leading-6">
-                  Lees mucho sobre productividad. Prueba una ruta corta sobre ventas.
+        <section className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.7fr)]">
+          <article className="rounded-[18px] border border-slate-950/[0.08] bg-white p-5 md:p-6">
+            <div className="flex items-start gap-4">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] bg-violet-50 text-violet-700">
+                <Target aria-hidden="true" size={22} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-xl font-black">Tu ritmo de aprendizaje</h2>
+                <p className="mt-1 text-sm leading-6 text-slate-500">
+                  {activeDays > 0
+                    ? `Has registrado actividad en ${activeDays} ${activeDays === 1 ? "día" : "días"}.`
+                    : "Comienza hoy con una lectura breve y construye un ritmo constante."}
                 </p>
-                <p className="mt-4 text-sm text-slate-500">
-                  Te recomendamos explorar:
-                </p>
-                <div className="mt-3 grid divide-y divide-slate-100 text-sm font-medium text-slate-600">
-                  {["Psicología de Ventas", "Vendes o Vendes", "El pequeño libro rojo de las ventas"].map((item) => (
-                    <span className="py-2" key={item}>{item}</span>
-                  ))}
-                </div>
-              </div>
-              <div className="grid h-36 place-items-center rounded-[24px] bg-violet-50 text-violet-700">
-                <Lightbulb aria-hidden="true" size={64} />
               </div>
             </div>
-          </div>
-        </section>
-
-        <section className="mt-5 grid gap-5 xl:grid-cols-[1fr_1fr]">
-          <div className="rounded-[20px] border border-slate-950/[0.08] bg-white p-5 shadow-[0_18px_55px_rgba(15,23,42,0.05)]">
-            <h2 className="text-lg font-black">Idea para aplicar hoy</h2>
-            <blockquote className="mt-4 border-l-4 border-violet-600 pl-4 text-sm font-black leading-6">
-              La mayoría de personas crean hábitos demasiado grandes.
-            </blockquote>
-            <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-slate-500">
-                Hoy hazlo tan pequeño que no puedas fallar.
-              </p>
-              <button className="rounded-[12px] bg-violet-700 px-4 py-2 text-sm font-black text-white" type="button">
-                Marcar como hecho
-              </button>
+            <div className="mt-6 flex items-center justify-between gap-4 text-sm font-bold">
+              <span>Meta de 5 días activos</span>
+              <span className="text-violet-700">{Math.min(activeDays, rhythmGoal)}/{rhythmGoal}</span>
             </div>
-          </div>
-
-          <div className="rounded-[20px] border border-slate-950/[0.08] bg-white p-5 shadow-[0_18px_55px_rgba(15,23,42,0.05)]">
-            <h2 className="text-lg font-black">Preguntas frecuentes</h2>
-            <div className="mt-4 divide-y divide-slate-100">
-              {faqs.map((faq) => (
-                <button
-                  className="flex w-full items-center justify-between py-2.5 text-left text-sm font-medium text-slate-700"
-                  key={faq}
-                  type="button"
-                >
-                  {faq}
-                  <ChevronRight aria-hidden="true" size={16} />
-                </button>
-              ))}
+            <div className="mt-3">
+              <ProgressBar value={rhythmPercent} />
             </div>
-            <Link className="mt-2 inline-flex items-center gap-2 text-sm font-black text-violet-700" href="/biblioteca">
-              Ver todas las preguntas
-              <ArrowRight aria-hidden="true" size={15} />
-            </Link>
-          </div>
-        </section>
+          </article>
 
-        <section className="mt-8 rounded-[22px] bg-gradient-to-r from-violet-700 to-indigo-600 p-6 text-white shadow-[0_24px_70px_rgba(124,58,237,0.25)] md:grid md:grid-cols-[1fr_auto] md:items-center md:gap-8">
-          <div className="flex gap-4">
-            <span className="grid h-14 w-14 shrink-0 place-items-center rounded-[18px] bg-white/16">
-              <Sparkles aria-hidden="true" size={26} />
-            </span>
-            <div>
-              <h2 className="text-2xl font-black">
-                Convierte ideas en acción todos los días
-              </h2>
-              <p className="mt-2 text-sm leading-6 text-white/80">
-                Aprende, aplica y mejora con el poder de la IA y los mejores análisis.
-              </p>
-            </div>
-          </div>
           <Link
-            className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-[14px] bg-white px-6 text-sm font-black text-violet-700 md:mt-0"
-            href="/biblioteca"
+            className="group flex items-center gap-4 rounded-[18px] border border-slate-950/[0.08] bg-white p-5 transition hover:border-violet-200"
+            href={`/libro/${nextBook.slug}`}
           >
-            Explorar toda la biblioteca
-            <ArrowRight aria-hidden="true" size={16} />
+            <BookThumb book={nextBook} className="h-24 w-16 shrink-0 rounded-[10px]" sizes="64px" />
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-black uppercase tracking-[0.12em] text-violet-700">Siguiente lectura</p>
+              <h2 className="mt-2 line-clamp-2 text-lg font-black leading-tight">{nextBook.title}</h2>
+              <p className="mt-1 line-clamp-1 text-sm text-slate-500">{nextBook.author}</p>
+            </div>
+            <ArrowRight className="shrink-0 text-slate-400 transition group-hover:translate-x-1 group-hover:text-violet-700" aria-hidden="true" size={20} />
           </Link>
         </section>
 
