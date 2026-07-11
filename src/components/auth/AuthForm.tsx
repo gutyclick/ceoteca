@@ -8,6 +8,7 @@ import {
   Loader2,
   LockKeyhole,
   Mail,
+  MailCheck,
   User,
 } from "lucide-react";
 import Link from "next/link";
@@ -56,6 +57,7 @@ type AuthApiResponse = {
     session: SessionPayload | null;
     redirectTo: string | null;
     message: string;
+    requiresEmailConfirmation?: boolean;
   };
   error?: {
     code?: string;
@@ -119,6 +121,8 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
   const [passwordValue, setPasswordValue] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [pendingEmailForConfirmation, setPendingEmailForConfirmation] =
+    useState<string | null>(null);
+  const [registrationConfirmationEmail, setRegistrationConfirmationEmail] =
     useState<string | null>(null);
   const [isResendingConfirmation, setIsResendingConfirmation] = useState(false);
   const passwordScore = getPasswordScore(passwordValue);
@@ -223,6 +227,12 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
         message: result.message,
       });
 
+      if (isRegister && result.requiresEmailConfirmation) {
+        setPendingEmailForConfirmation(values.email);
+        setRegistrationConfirmationEmail(values.email);
+        return;
+      }
+
       if (result.redirectTo) {
         router.replace(result.redirectTo);
         router.refresh();
@@ -286,6 +296,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
     return {
       redirectTo,
       message: payload.data.message,
+      requiresEmailConfirmation: false,
     };
   }
 
@@ -316,6 +327,7 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
     return {
       redirectTo: payload.data.redirectTo ?? undefined,
       message: payload.data.message,
+      requiresEmailConfirmation: payload.data.requiresEmailConfirmation ?? false,
     };
   }
 
@@ -385,6 +397,68 @@ export function AuthForm({ mode, selectedPlan = "free" }: AuthFormProps) {
     } finally {
       setIsResendingConfirmation(false);
     }
+  }
+
+  if (isRegister && registrationConfirmationEmail) {
+    return (
+      <main className="min-h-screen bg-[#fbfaf8] px-5 py-8 text-slate-950">
+        <section className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-lg flex-col items-center justify-center text-center">
+          <Logo
+            className="text-slate-950 [&>span]:text-lg [&>span]:font-black [&>span]:text-slate-950"
+            useBrandAsset={false}
+          />
+          <div className="mt-8 w-full rounded-[20px] border border-slate-950/[0.08] bg-white px-6 py-9 sm:px-10 sm:py-11">
+            <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-violet-50 text-violet-700">
+              <MailCheck aria-hidden="true" size={30} />
+            </span>
+            <h1 className="mt-6 text-3xl font-black tracking-[-0.04em]">
+              Revisa tu correo
+            </h1>
+            <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-slate-600">
+              Enviamos un enlace de confirmación a
+              <strong className="mt-1 block break-all text-slate-950">
+                {registrationConfirmationEmail}
+              </strong>
+            </p>
+            <p className="mx-auto mt-5 max-w-sm text-sm leading-6 text-slate-500">
+              Abre el mensaje y confirma tu cuenta para continuar con la configuración de Ceoteca.
+            </p>
+
+            {status.type === "error" ? (
+              <p className="mt-5 rounded-[12px] border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700">
+                {status.message}
+              </p>
+            ) : null}
+            {status.type === "success" && status.message !== "Revisa tu correo para confirmar tu cuenta." ? (
+              <p className="mt-5 rounded-[12px] border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-700">
+                {status.message}
+              </p>
+            ) : null}
+
+            <button
+              className="mt-7 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[12px] border border-violet-200 bg-white px-5 text-sm font-black text-violet-700 transition hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={isResendingConfirmation}
+              onClick={() => void resendConfirmation()}
+              type="button"
+            >
+              {isResendingConfirmation ? (
+                <Loader2 aria-hidden="true" className="animate-spin" size={17} />
+              ) : null}
+              {isResendingConfirmation ? "Enviando..." : "Reenviar correo"}
+            </button>
+            <Link
+              className="mt-5 inline-block text-sm font-bold text-slate-500 transition hover:text-violet-700"
+              href="/login"
+            >
+              Volver a iniciar sesión
+            </Link>
+          </div>
+          <p className="mt-5 max-w-sm text-xs leading-5 text-slate-500">
+            Si no encuentras el mensaje, revisa las carpetas de spam o promociones.
+          </p>
+        </section>
+      </main>
+    );
   }
 
   return (
