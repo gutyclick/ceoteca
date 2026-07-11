@@ -162,7 +162,7 @@ export function ChatWorkspace({ books }: { books: Book[] }) {
   const [isConversationPanelOpen, setIsConversationPanelOpen] = useState(false);
   const [isLoadingConversations, setIsLoadingConversations] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const endRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const selected = conversations.find((item) => item.key === selectedKey) ?? draftConversation;
   const canUseChat = plans[plan].features.includes("chat");
@@ -264,7 +264,15 @@ export function ChatWorkspace({ books }: { books: Book[] }) {
   }, [selected]);
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    window.requestAnimationFrame(() => {
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: messages.length > 0 ? "smooth" : "auto",
+      });
+    });
   }, [messages, isSending]);
 
   function selectConversation(key: string) {
@@ -385,9 +393,9 @@ export function ChatWorkspace({ books }: { books: Book[] }) {
   );
 
   return (
-    <main className="min-h-screen bg-[#fbfaf8] pl-0 text-slate-950 sm:pl-[var(--dashboard-sidebar-offset,84px)]">
+    <main className="h-[100dvh] overflow-hidden bg-[#fbfaf8] pl-0 text-slate-950 sm:pl-[var(--dashboard-sidebar-offset,84px)]">
       <DashboardSidebar active="chat" tone="light" />
-      <section className="flex min-h-screen w-full flex-col px-4 pb-4 pt-6 sm:px-6 lg:px-7">
+      <section className="flex h-full min-h-0 w-full flex-col px-4 pb-4 pt-6 sm:px-6 lg:px-7">
         <header className="flex items-center justify-between gap-4 pb-5">
           <div>
             <h1 className="text-3xl font-black tracking-[-0.04em]">Chat con CEO</h1>
@@ -400,7 +408,7 @@ export function ChatWorkspace({ books }: { books: Book[] }) {
           <div className="hidden min-h-0 lg:block">{conversationPanel}</div>
           {isConversationPanelOpen ? <div className="fixed inset-0 z-[90] bg-slate-950/25 lg:hidden" onMouseDown={(event) => { if (event.currentTarget === event.target) setIsConversationPanelOpen(false); }}><div className="h-full w-[min(88vw,340px)]">{conversationPanel}</div></div> : null}
 
-          <section className="flex min-h-[calc(100dvh-116px)] min-w-0 flex-col lg:min-h-[720px]">
+          <section className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
             <header className="flex items-center gap-3 border-b border-slate-950/[0.08] px-4 py-3 sm:px-6">
               <button aria-label="Abrir conversaciones" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-slate-950/[0.08] lg:hidden" onClick={() => setIsConversationPanelOpen(true)} type="button"><Menu size={19} /></button>
               {selected.book ? <BookAvatar book={selected.book} /> : <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[13px] bg-violet-100 text-violet-700"><Bot size={21} /></span>}
@@ -408,13 +416,12 @@ export function ChatWorkspace({ books }: { books: Book[] }) {
               {remainingQuestions !== null && canUseChat ? <span className="hidden rounded-full bg-violet-50 px-3 py-2 text-xs font-bold text-violet-700 sm:block">{remainingQuestions} preguntas disponibles</span> : null}
             </header>
 
-            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-7">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-6 sm:px-7" ref={messagesContainerRef}>
               {isLoadingHistory ? <div className="grid h-full place-items-center text-slate-400"><Loader2 className="animate-spin" size={24} /></div> : null}
               {!isLoadingHistory && !canUseChat ? <div className="mx-auto grid h-full max-w-md content-center text-center"><span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-violet-50 text-violet-700"><Sparkles size={25} /></span><h2 className="mt-5 text-2xl font-black">CEO está disponible desde Pro</h2><p className="mt-3 text-sm leading-6 text-slate-500">Desbloquea conversaciones generales y una IA contextual para cada análisis.</p><Link className="mx-auto mt-6 inline-flex min-h-11 items-center rounded-[12px] bg-violet-700 px-5 text-sm font-black text-white" href="/planes">Ver planes</Link></div> : null}
               {!isLoadingHistory && canUseChat && messages.length === 0 ? <div className="mx-auto grid h-full max-w-3xl content-center py-8 text-center"><Sparkles className="mx-auto text-violet-700" size={34} /><h2 className="mt-4 text-2xl font-black sm:text-3xl">Hola, {getFirstName(fullName)}</h2><p className="mt-2 text-sm leading-6 text-slate-500">{selected.book ? `Pregunta sobre las ideas, ejercicios y aplicaciones de ${selected.book.title}.` : "Pregunta sobre negocios, marketing, productividad, desarrollo personal o tu biblioteca."}</p><div className="mt-7 grid gap-3 sm:grid-cols-3">{suggestions.map((suggestion, index) => { const Icon = index === 0 ? LibraryBig : index === 1 ? Sparkles : Target; return <button className="rounded-[16px] border border-slate-950/[0.08] p-4 text-left transition hover:border-violet-200 hover:bg-violet-50/50" key={suggestion} onClick={() => { setInput(suggestion); inputRef.current?.focus(); }} type="button"><Icon className="text-violet-700" size={20} /><span className="mt-3 block text-sm font-bold leading-5">{suggestion}</span></button>; })}</div></div> : null}
               {!isLoadingHistory && canUseChat && messages.length > 0 ? <div className="mx-auto grid max-w-3xl gap-5">{messages.map((message, index) => message.role === "user" ? <div className="ml-auto max-w-[86%] rounded-[18px] rounded-br-[6px] bg-violet-600 px-4 py-3 text-sm leading-6 text-white sm:max-w-[72%]" key={`${message.role}-${index}`}>{message.content}</div> : <div className="grid grid-cols-[36px_minmax(0,1fr)] gap-3" key={`${message.role}-${index}`}><span className="grid h-9 w-9 place-items-center rounded-[12px] bg-violet-50 text-violet-700"><Sparkles size={18} /></span><div className="rounded-[18px] rounded-tl-[6px] bg-slate-50 px-4 py-4 text-slate-700"><MessageContent content={message.content} /></div></div>)}</div> : null}
               {isSending ? <div className="mx-auto mt-5 flex max-w-3xl items-center gap-3 text-sm text-slate-500"><span className="grid h-9 w-9 place-items-center rounded-[12px] bg-violet-50 text-violet-700"><Loader2 className="animate-spin" size={18} /></span>CEO está preparando una respuesta...</div> : null}
-              <div ref={endRef} />
             </div>
 
             <footer className="border-t border-slate-950/[0.08] bg-white px-3 py-3 sm:px-6 sm:py-4">
