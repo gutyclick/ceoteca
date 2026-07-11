@@ -15,6 +15,9 @@ export type Database = {
           full_name: string | null;
           avatar_url: string | null;
           birth_date: string | null;
+          occupation: string | null;
+          discovery_source: string | null;
+          starter_book_id: string | null;
           plan: "free" | "pro" | "unlimited" | "founder";
           founder: boolean;
           onboarding_completed: boolean;
@@ -33,6 +36,9 @@ export type Database = {
           full_name?: string | null;
           avatar_url?: string | null;
           birth_date?: string | null;
+          occupation?: string | null;
+          discovery_source?: string | null;
+          starter_book_id?: string | null;
           plan?: "free" | "pro" | "unlimited" | "founder";
           founder?: boolean;
           onboarding_completed?: boolean;
@@ -48,6 +54,9 @@ export type Database = {
           full_name?: string | null;
           avatar_url?: string | null;
           birth_date?: string | null;
+          occupation?: string | null;
+          discovery_source?: string | null;
+          starter_book_id?: string | null;
           plan?: "free" | "pro" | "unlimited" | "founder";
           founder?: boolean;
           onboarding_completed?: boolean;

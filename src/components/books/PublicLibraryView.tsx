@@ -103,10 +103,15 @@ function getTimeBucket(readingTime: number): Exclude<TimeFilter, "Todos"> {
   return "long";
 }
 
-function isBookIncludedInPlan(bookIndex: number, plan: PlanKey) {
+function isBookIncludedInPlan(
+  bookIndex: number,
+  plan: PlanKey,
+  bookId?: string,
+  starterBookId?: string | null,
+) {
   const bookLimit = plans[plan].bookLimit;
 
-  return bookLimit === null || bookIndex < bookLimit;
+  return bookLimit === null || bookIndex < bookLimit || bookId === starterBookId;
 }
 
 function getPopularityScore(book: Book) {
@@ -659,6 +664,7 @@ function PrivateLibrary({ books }: { books: Book[] }) {
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [plan, setPlan] = useState<PlanKey>("free");
+  const [starterBookId, setStarterBookId] = useState<string | null>(null);
   const [progressRows, setProgressRows] = useState<ProgressRow[]>([]);
   const bookIndexById = useMemo(
     () => new Map(books.map((book, index) => [book.id, index])),
@@ -669,7 +675,7 @@ function PrivateLibrary({ books }: { books: Book[] }) {
     const baseBooks = filterBooks(books, query, category).filter((book) => {
       const bookIndex = bookIndexById.get(book.id) ?? 0;
       const progress = getBookProgress(progressRows, book);
-      const included = isBookIncludedInPlan(bookIndex, plan);
+      const included = isBookIncludedInPlan(bookIndex, plan, book.id, starterBookId);
       const matchesDifficulty =
         difficulty === "Todas" || book.difficulty === difficulty;
       const matchesTime =
@@ -735,6 +741,7 @@ function PrivateLibrary({ books }: { books: Book[] }) {
     query,
     sortBy,
     timeFilter,
+    starterBookId,
   ]);
   const activeFilterCount = [
     category !== "Todos",
@@ -764,7 +771,7 @@ function PrivateLibrary({ books }: { books: Book[] }) {
         const [profileResponse, subscriptionResponse, progressResponse] = await Promise.all([
           supabase
             .from("profiles")
-            .select("plan")
+              .select("plan,starter_book_id")
             .eq("id", userData.user.id)
             .maybeSingle(),
           supabase
@@ -785,6 +792,7 @@ function PrivateLibrary({ books }: { books: Book[] }) {
             subscriptions: subscriptionResponse.data ?? [],
           }).plan;
           setPlan(effectivePlan);
+          setStarterBookId(profileResponse.data?.starter_book_id ?? null);
           setProgressRows(progressResponse.data ?? []);
         }
       } catch {
@@ -982,7 +990,12 @@ function PrivateLibrary({ books }: { books: Book[] }) {
             >
               {filteredBooks.map((book) => {
                 const bookIndex = bookIndexById.get(book.id) ?? 0;
-                const isPlanLocked = !isBookIncludedInPlan(bookIndex, plan);
+                const isPlanLocked = !isBookIncludedInPlan(
+                  bookIndex,
+                  plan,
+                  book.id,
+                  starterBookId,
+                );
 
                 return (
                   <PrivateBookCard

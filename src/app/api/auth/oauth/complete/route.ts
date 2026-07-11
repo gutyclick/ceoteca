@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 
 import { jsonData, jsonError } from "@/lib/api/response";
+import { defaultAvatarUrl, isCeotecaAvatar } from "@/config/avatars";
 import { clientEnv } from "@/lib/env";
 import { createServerSupabaseClient, createServiceSupabaseClient } from "@/lib/supabase/server";
 
@@ -60,23 +61,18 @@ export async function POST(request: NextRequest) {
       : typeof metadata.name === "string"
         ? metadata.name
         : data.user.email ?? "Usuario";
-  const avatarUrl =
-    typeof metadata.avatar_url === "string"
-      ? metadata.avatar_url
-      : typeof metadata.picture === "string"
-        ? metadata.picture
-        : null;
-
   const { data: existingProfile } = await serviceClient
     .from("profiles")
-    .select("onboarding_completed,plan,terms_accepted_at")
+    .select("onboarding_completed,plan,terms_accepted_at,avatar_url")
     .eq("id", data.user.id)
     .maybeSingle();
 
   const profileResponse = await serviceClient.from("profiles").upsert({
     id: data.user.id,
     full_name: fullName,
-    avatar_url: avatarUrl,
+    avatar_url: isCeotecaAvatar(existingProfile?.avatar_url)
+      ? existingProfile?.avatar_url
+      : defaultAvatarUrl,
     plan: existingProfile?.plan ?? "free",
     onboarding_completed: existingProfile?.onboarding_completed ?? false,
     terms_accepted_at: existingProfile?.terms_accepted_at ?? acceptedAt,
