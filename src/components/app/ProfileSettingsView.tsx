@@ -8,17 +8,16 @@ import {
   CalendarDays,
   CheckCircle2,
   ChevronRight,
-  Clock3,
   Crown,
+  Compass,
   Flame,
   LibraryBig,
   Loader2,
   Lock,
   Pencil,
-  Search,
+  MessageCircle,
   Sparkles,
   Star,
-  Target,
   TrendingUp,
   Trophy,
 } from "lucide-react";
@@ -27,6 +26,7 @@ import type { LucideIcon } from "lucide-react";
 import { DashboardSidebar } from "@/components/app/DashboardSidebar";
 import { NotificationBell } from "@/components/app/NotificationBell";
 import { plans } from "@/config/plans";
+import { getDailyQuote } from "@/data/daily-quotes";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/database.types";
 import { resolvePlanFromSubscriptions } from "@/lib/subscriptions/resolve";
@@ -38,6 +38,10 @@ type SubscriptionRow = Database["public"]["Tables"]["subscriptions"]["Row"];
 type BookRow = Database["public"]["Tables"]["books"]["Row"];
 type ChatMessageRow = Database["public"]["Tables"]["chat_messages"]["Row"];
 type FavoriteRow = Database["public"]["Tables"]["user_book_favorites"]["Row"];
+type AchievementDefinitionRow = Database["public"]["Tables"]["achievement_definitions"]["Row"];
+type UserAchievementRow = Database["public"]["Tables"]["user_achievements"]["Row"];
+
+type AchievementItem = UserAchievementRow & { definition: AchievementDefinitionRow };
 
 type ProgressItem = ProgressRow & {
   bookTitle: string;
@@ -63,6 +67,8 @@ type ProfileData = {
   progress: ProgressItem[];
   chatQuestionsThisMonth: number;
   activity: ActivityItem[];
+  achievements: AchievementItem[];
+  activityDays: number;
   isDemo: boolean;
 };
 
@@ -134,15 +140,6 @@ function getAverageProgress(progress: ProgressItem[]) {
 
 function getRelativeLevel(averageProgress: number, completedBooks: number) {
   return Math.min(96, Math.max(18, completedBooks * 11 + averageProgress));
-}
-
-function getActiveDays(progress: ProgressItem[], activity: ActivityItem[] = []) {
-  return new Set(
-    [
-      ...progress.map((item) => item.updated_at),
-      ...activity.map((item) => item.createdAt),
-    ].map((value) => new Date(value).toISOString().slice(0, 10)),
-  ).size;
 }
 
 function buildActivityItems({
@@ -288,8 +285,20 @@ function createDemoProfileData(): ProfileData {
         icon: CheckCircle2,
       },
     ],
+    achievements: [],
+    activityDays: 4,
   };
 }
+
+const achievementIcons: Record<string, LucideIcon> = {
+  "book-open": BookOpen,
+  "check-circle": CheckCircle2,
+  "message-circle": MessageCircle,
+  flame: Flame,
+  compass: Compass,
+  trophy: Trophy,
+  crown: Crown,
+};
 
 function AvatarImage({
   avatarUrl,
@@ -574,6 +583,9 @@ export function ProfileSettingsView() {
           usageResponse,
           chatMessagesResponse,
           favoritesResponse,
+          achievementsResponse,
+          definitionsResponse,
+          activityDaysResponse,
         ] = await Promise.all([
           supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
           supabase
@@ -604,6 +616,18 @@ export function ProfileSettingsView() {
             .eq("user_id", userId)
             .order("created_at", { ascending: false })
             .limit(8),
+          supabase
+            .from("user_achievements")
+            .select("*")
+            .eq("user_id", userId),
+          supabase
+            .from("achievement_definitions")
+            .select("*")
+            .order("position", { ascending: true }),
+          supabase
+            .from("user_activity_days")
+            .select("activity_date")
+            .eq("user_id", userId),
         ]);
 
         if (profileResponse.error) {
@@ -628,6 +652,14 @@ export function ProfileSettingsView() {
 
         if (favoritesResponse.error) {
           throw favoritesResponse.error;
+        }
+
+        if (achievementsResponse.error || definitionsResponse.error) {
+          throw achievementsResponse.error ?? definitionsResponse.error;
+        }
+
+        if (activityDaysResponse.error) {
+          throw activityDaysResponse.error;
         }
 
         const profile = profileResponse.data;
@@ -690,6 +722,23 @@ export function ProfileSettingsView() {
           favorites: favoriteRows,
           bookMap,
         });
+        const achievementByCode = new Map(
+          (achievementsResponse.data ?? []).map((item) => [item.achievement_code, item]),
+        );
+        const achievements = (definitionsResponse.data ?? []).map((definition) => {
+          const userAchievement = achievementByCode.get(definition.code);
+
+          return {
+            id: userAchievement?.id ?? `locked-${definition.code}`,
+            user_id: userId,
+            achievement_code: definition.code,
+            progress: userAchievement?.progress ?? 0,
+            unlocked_at: userAchievement?.unlocked_at ?? null,
+            created_at: userAchievement?.created_at ?? definition.created_at,
+            updated_at: userAchievement?.updated_at ?? definition.created_at,
+            definition,
+          };
+        });
 
         if (isMounted) {
           setState({
@@ -702,6 +751,8 @@ export function ProfileSettingsView() {
               effectivePlan,
               progress,
               activity,
+              achievements,
+              activityDays: activityDaysResponse.data?.length ?? 0,
               chatQuestionsThisMonth: (usageResponse.data ?? []).reduce(
                 (total, row) => total + row.question_count,
                 0,
@@ -827,62 +878,26 @@ export function ProfileSettingsView() {
   const completedBooks = data.progress.filter((item) => item.completed).length;
   const averageProgress = getAverageProgress(data.progress);
   const relativeLevel = getRelativeLevel(averageProgress, completedBooks);
-  const activeDays = getActiveDays(data.progress, data.activity);
+  const activeDays = data.activityDays;
   const initials = getInitials(displayName, data.email);
   const chatLimit = plan.chatMonthlyLimit;
   const remainingChatQuestions =
     chatLimit === null ? null : Math.max(0, chatLimit - data.chatQuestionsThisMonth);
-  const badges = [
-    {
-      title: "Primer análisis",
-      description: "Completa tu primer análisis.",
-      icon: BookOpen,
-      unlocked: data.progress.length > 0,
-      progress: "0/1",
-    },
-    {
-      title: "Racha de 3 días",
-      description: "Lee durante 3 días seguidos.",
-      icon: Flame,
-      unlocked: activeDays >= 3,
-      progress: `${Math.min(activeDays, 3)}/3`,
-    },
-    {
-      title: "10 horas de lectura",
-      description: "Acumula 10 horas de lectura.",
-      icon: Clock3,
-      unlocked: data.progress.length >= 10,
-      progress: `${Math.min(data.progress.length, 10)}/10`,
-    },
-    {
-      title: "Lector constante",
-      description: "Mantén una racha de 7 días.",
-      icon: Trophy,
-      unlocked: activeDays >= 7,
-      progress: `${Math.min(activeDays, 7)}/7`,
-    },
-    {
-      title: "Explorador",
-      description: "Inicia análisis en varias categorías.",
-      icon: Target,
-      unlocked: data.progress.length >= 5,
-      progress: `${Math.min(data.progress.length, 5)}/5`,
-    },
-    {
-      title: "Maestro del conocimiento",
-      description: "Completa 50 análisis.",
-      icon: Crown,
-      unlocked: completedBooks >= 50,
-      progress: `${Math.min(completedBooks, 50)}/50`,
-    },
-  ];
+  const badges = data.achievements.map((achievement) => ({
+    title: achievement.definition.title,
+    description: achievement.definition.description,
+    icon: achievementIcons[achievement.definition.icon] ?? Trophy,
+    unlocked: Boolean(achievement.unlocked_at),
+    progress: `${Math.min(achievement.progress, achievement.definition.target)}/${achievement.definition.target}`,
+  }));
+  const dailyQuote = getDailyQuote();
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#fbfaf8] pb-12 pl-0 text-slate-950 transition-[padding] duration-300 ease-out sm:pl-[var(--dashboard-sidebar-offset,240px)]">
       <DashboardSidebar active="profile" tone="light" />
 
       <section className="mx-auto w-full max-w-[1380px] px-5 pt-8 sm:px-7 lg:px-10">
-        <header className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(420px,auto)] lg:items-start">
+        <header className="flex items-start justify-between gap-5 border-b border-slate-950/[0.08] pb-6">
           <div>
             <h1 className="text-4xl font-black tracking-[-0.04em] text-slate-950">
               Mi perfil
@@ -892,22 +907,7 @@ export function ProfileSettingsView() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3 lg:justify-end">
-            <label className="relative hidden w-[340px] sm:block">
-              <span className="sr-only">Buscar en Ceoteca</span>
-              <Search
-                aria-hidden="true"
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-                size={19}
-              />
-              <input
-                className="min-h-12 w-full rounded-[14px] border border-slate-950/[0.10] bg-white pl-12 pr-4 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-violet-300 focus:ring-4 focus:ring-violet-100"
-                placeholder="Buscar libros, autores o temas..."
-                type="search"
-              />
-            </label>
-            <NotificationBell />
-          </div>
+          <NotificationBell tone="light" />
         </header>
 
         {notice ? (
@@ -961,13 +961,12 @@ export function ProfileSettingsView() {
               </div>
             </div>
 
-            <div className="rounded-[18px] bg-violet-50 p-6">
-              <Sparkles aria-hidden="true" className="text-violet-500" size={28} />
-              <p className="mt-4 text-lg leading-7 text-slate-800">
-                La lectura funciona mejor cuando termina en una decisión,
-                una conversación o una acción concreta.
+            <div className="rounded-[16px] bg-violet-50 p-5">
+              <Sparkles aria-hidden="true" className="text-violet-500" size={22} />
+              <p className="mt-3 text-sm leading-6 text-slate-700">
+                {dailyQuote}
               </p>
-              <p className="mt-4 text-sm font-black text-violet-700">
+              <p className="mt-3 text-xs font-black text-violet-700">
                 Ceoteca
               </p>
             </div>

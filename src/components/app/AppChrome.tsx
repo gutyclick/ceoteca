@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 
+import { AchievementToastHost } from "@/components/app/AchievementToastHost";
 import { Footer } from "@/components/marketing/Footer";
 import { PublicHeader } from "@/components/marketing/PublicHeader";
 
@@ -18,7 +19,12 @@ export function AppChrome({ children }: AppChromeProps) {
     pathname.startsWith("/libro/");
 
   if (usesDashboardChrome) {
-    return children;
+    return (
+      <>
+        {children}
+        <AchievementToastHost />
+      </>
+    );
   }
 
   return (

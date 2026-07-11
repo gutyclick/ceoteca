@@ -805,7 +805,7 @@ function PrivateLibrary({ books }: { books: Book[] }) {
       <DashboardSidebar active="library" tone="light" />
 
       <section className="mx-auto w-full max-w-[1380px] px-5 pt-8 sm:px-7 lg:px-10">
-        <header className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(420px,auto)] lg:items-start">
+        <header className="grid gap-5 border-b border-slate-950/[0.08] pb-6 lg:grid-cols-[minmax(0,1fr)_minmax(420px,auto)] lg:items-start">
           <div>
             <h1 className="text-4xl font-black tracking-[-0.04em] text-slate-950">
               Biblioteca
@@ -837,7 +837,7 @@ function PrivateLibrary({ books }: { books: Book[] }) {
               <Filter aria-hidden="true" size={18} />
               Filtros
             </button>
-            <NotificationBell />
+            <NotificationBell tone="light" />
           </div>
         </header>
 

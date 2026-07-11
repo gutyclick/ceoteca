@@ -15,7 +15,6 @@ import {
   Loader2,
   Mail,
   Phone,
-  Search,
   ShieldCheck,
   SlidersHorizontal,
   Trash2,
@@ -545,7 +544,7 @@ export function SettingsView() {
       <DashboardSidebar active="settings" tone="light" />
 
       <section className="mx-auto w-full max-w-[1380px] px-5 pt-8 sm:px-7 lg:px-10">
-        <header className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(420px,auto)] lg:items-start">
+        <header className="flex items-start justify-between gap-5 border-b border-slate-950/[0.08] pb-6">
           <div>
             <h1 className="text-4xl font-black tracking-[-0.04em] text-slate-950">
               Ajustes
@@ -555,22 +554,7 @@ export function SettingsView() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3 lg:justify-end">
-            <label className="relative hidden w-[340px] sm:block">
-              <span className="sr-only">Buscar en Ceoteca</span>
-              <Search
-                aria-hidden="true"
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-                size={19}
-              />
-              <input
-                className="min-h-12 w-full rounded-[14px] border border-slate-950/[0.10] bg-white pl-12 pr-4 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-violet-300 focus:ring-4 focus:ring-violet-100"
-                placeholder="Buscar libros, autores o temas..."
-                type="search"
-              />
-            </label>
-            <NotificationBell />
-          </div>
+          <NotificationBell tone="light" />
         </header>
 
         <nav

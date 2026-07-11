@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   ArrowRight,
-  Bell,
   BookMarked,
   BookOpen,
   BriefcaseBusiness,
@@ -20,7 +19,6 @@ import {
   Lightbulb,
   LogOut,
   MoreVertical,
-  Search,
   Send,
   Sparkles,
   Target,
@@ -30,6 +28,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 
 import { DashboardSidebar } from "@/components/app/DashboardSidebar";
+import { NotificationBell } from "@/components/app/NotificationBell";
 import type { PlanKey } from "@/config/plans";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/database.types";
@@ -345,32 +344,15 @@ export function HomeView({ books }: HomeViewProps) {
     <main className="min-h-screen overflow-x-clip bg-[#fbfaf8] pb-8 pl-0 text-slate-950 transition-[padding] duration-300 ease-out sm:pl-[var(--dashboard-sidebar-offset,84px)]">
       <DashboardSidebar active="home" tone="light" />
 
-      <section className="mx-auto w-full max-w-[1180px] px-4 pt-5 sm:px-6 lg:px-8">
-        <header className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
-          <label className="relative block max-w-[600px]">
-            <span className="sr-only">Buscar en Ceoteca</span>
-            <Search
-              aria-hidden="true"
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-              size={20}
-            />
-            <input
-              className="h-12 w-full rounded-[16px] border border-slate-950/[0.10] bg-white pl-12 pr-16 text-sm text-slate-700 shadow-[0_14px_40px_rgba(15,23,42,0.04)] outline-none transition placeholder:text-slate-400 focus:border-violet-300 focus:ring-4 focus:ring-violet-100"
-              placeholder="Buscar libros, ideas, conceptos..."
-            />
-            <span className="absolute right-3 top-1/2 hidden -translate-y-1/2 rounded-lg bg-slate-100 px-2 py-1 text-xs font-bold text-slate-500 sm:block">
-              ⌘ K
-            </span>
-          </label>
+      <section className="mx-auto w-full max-w-[1380px] px-5 pt-8 sm:px-7 lg:px-10">
+        <header className="grid gap-4 border-b border-slate-950/[0.08] pb-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
+          <div>
+            <h1 className="text-4xl font-black tracking-[-0.04em] text-slate-950">Inicio</h1>
+            <p className="mt-2 text-base text-slate-600">Tu espacio personal de aprendizaje.</p>
+          </div>
 
           <div className="flex items-center justify-end gap-4">
-            <button
-              aria-label="Notificaciones"
-              className="grid h-11 w-11 place-items-center rounded-full text-slate-700 transition hover:bg-white"
-              type="button"
-            >
-              <Bell aria-hidden="true" size={21} />
-            </button>
+            <NotificationBell tone="light" />
             <div className="relative">
               <button
                 aria-expanded={isAccountMenuOpen}

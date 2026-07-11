@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Bell, CheckCheck, Loader2 } from "lucide-react";
 
+import { clientEnv } from "@/lib/env";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/database.types";
 import { cn } from "@/lib/utils/cn";
@@ -32,6 +33,7 @@ const typeLabels: Record<NotificationRow["type"], string> = {
   account: "Cuenta",
   subscription: "Suscripción",
   system: "Ceoteca",
+  achievement: "Logro",
 };
 
 function formatRelativeDate(value: string) {
@@ -57,7 +59,7 @@ function formatRelativeDate(value: string) {
   return `Hace ${diffDays} d`;
 }
 
-export function NotificationBell() {
+export function NotificationBell({ tone = "dark" }: { tone?: "dark" | "light" }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -157,17 +159,62 @@ export function NotificationBell() {
     void loadNotifications();
   }, [loadNotifications]);
 
+  useEffect(() => {
+    if (clientEnv.NEXT_PUBLIC_DEMO_MODE) return;
+
+    const supabase = createBrowserSupabaseClient();
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    async function subscribeToNotifications() {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) return;
+
+      channel = supabase
+        .channel(`notifications-${userData.user.id}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "notifications",
+            filter: `user_id=eq.${userData.user.id}`,
+          },
+          (payload) => {
+            const nextNotification = payload.new as NotificationRow;
+            setNotifications((current) => [
+              nextNotification,
+              ...current.filter((item) => item.id !== nextNotification.id),
+            ].slice(0, 20));
+          },
+        )
+        .subscribe();
+    }
+
+    void subscribeToNotifications();
+    return () => {
+      if (channel) void supabase.removeChannel(channel);
+    };
+  }, []);
+
   return (
     <div className="relative">
       <button
         aria-label="Notificaciones"
-        className="relative grid h-10 w-10 place-items-center rounded-full text-white transition hover:bg-white/[0.06]"
+        className={cn(
+          "relative grid h-10 w-10 place-items-center rounded-full transition",
+          tone === "light"
+            ? "text-slate-700 hover:bg-violet-50 hover:text-violet-700"
+            : "text-white hover:bg-white/[0.06]",
+        )}
         onClick={() => setIsOpen((current) => !current)}
         type="button"
       >
         <Bell aria-hidden="true" size={21} />
         {unreadCount > 0 ? (
-          <span className="absolute right-0.5 top-0.5 grid h-5 min-w-5 place-items-center rounded-full bg-brand-purple px-1 text-[10px] font-semibold text-white ring-2 ring-[#03040b]">
+          <span className={cn(
+            "absolute right-0.5 top-0.5 grid h-5 min-w-5 place-items-center rounded-full bg-brand-purple px-1 text-[10px] font-semibold text-white ring-2",
+            tone === "light" ? "ring-[#fbfaf8]" : "ring-[#03040b]",
+          )}>
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         ) : null}

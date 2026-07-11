@@ -321,9 +321,10 @@ export type Database = {
             | "progress"
             | "recommendation"
             | "ai"
-            | "account"
-            | "subscription"
-            | "system";
+              | "account"
+              | "subscription"
+              | "system"
+              | "achievement";
           title: string;
           body: string;
           href: string | null;
@@ -338,9 +339,10 @@ export type Database = {
             | "progress"
             | "recommendation"
             | "ai"
-            | "account"
-            | "subscription"
-            | "system";
+              | "account"
+              | "subscription"
+              | "system"
+              | "achievement";
           title: string;
           body: string;
           href?: string | null;
@@ -350,6 +352,44 @@ export type Database = {
         Update: {
           read_at?: string | null;
         };
+        Relationships: [];
+      };
+      achievement_definitions: {
+        Row: {
+          code: string;
+          title: string;
+          description: string;
+          icon: string;
+          target: number;
+          position: number;
+          created_at: string;
+        };
+        Insert: Record<string, never>;
+        Update: Record<string, never>;
+        Relationships: [];
+      };
+      user_achievements: {
+        Row: {
+          id: string;
+          user_id: string;
+          achievement_code: string;
+          progress: number;
+          unlocked_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Record<string, never>;
+        Update: Record<string, never>;
+        Relationships: [];
+      };
+      user_activity_days: {
+        Row: {
+          user_id: string;
+          activity_date: string;
+          created_at: string;
+        };
+        Insert: Record<string, never>;
+        Update: Record<string, never>;
         Relationships: [];
       };
       auth_events: {
@@ -419,6 +459,10 @@ export type Database = {
           target_context?: "book" | "site";
         };
         Returns: number;
+      };
+      evaluate_user_achievements: {
+        Args: { target_user_id: string };
+        Returns: undefined;
       };
     };
     Enums: Record<string, never>;
