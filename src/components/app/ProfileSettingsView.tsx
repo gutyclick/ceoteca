@@ -25,6 +25,7 @@ import type { LucideIcon } from "lucide-react";
 import { DashboardSidebar } from "@/components/app/DashboardSidebar";
 import { DashboardAccountMenu } from "@/components/app/DashboardAccountMenu";
 import { NotificationBell } from "@/components/app/NotificationBell";
+import { avatarOptions, defaultAvatarUrl, isCeotecaAvatar } from "@/config/avatars";
 import { plans } from "@/config/plans";
 import { getDailyQuote } from "@/data/daily-quotes";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
@@ -76,15 +77,6 @@ type ViewState =
   | { status: "loading" }
   | { status: "unauthorized" }
   | { status: "ready"; data: ProfileData; notice?: string };
-
-const avatarOptions = [
-  "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=320&q=80",
-  "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=320&q=80",
-  "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=320&q=80",
-  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=320&q=80",
-  "https://images.unsplash.com/photo-1527980965255-d3b416303d12?auto=format&fit=crop&w=320&q=80",
-  "https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?auto=format&fit=crop&w=320&q=80",
-] as const;
 
 function formatDate(value: string | null | undefined) {
   if (!value) {
@@ -205,7 +197,7 @@ function createDemoProfileData(): ProfileData {
     profile: {
       id: "demo-user",
       full_name: "Andrés Gómez",
-      avatar_url: avatarOptions[0],
+      avatar_url: defaultAvatarUrl,
       birth_date: null,
       plan: "pro",
       founder: false,
@@ -789,7 +781,7 @@ export function ProfileSettingsView() {
     setIsSavingAvatar(true);
 
     try {
-      if (!avatarOptions.includes(avatarUrl as (typeof avatarOptions)[number])) {
+      if (!isCeotecaAvatar(avatarUrl)) {
         throw new Error("Selecciona una imagen válida.");
       }
 

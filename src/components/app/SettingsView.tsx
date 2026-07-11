@@ -26,6 +26,7 @@ import type { LucideIcon } from "lucide-react";
 import { DashboardSidebar } from "@/components/app/DashboardSidebar";
 import { DashboardAccountMenu } from "@/components/app/DashboardAccountMenu";
 import { NotificationBell } from "@/components/app/NotificationBell";
+import { avatarOptions, defaultAvatarUrl } from "@/config/avatars";
 import { plans, type PlanKey } from "@/config/plans";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { resolvePlanFromSubscriptions } from "@/lib/subscriptions/resolve";
@@ -92,15 +93,6 @@ const settingsItems: SettingsItem[] = [
     icon: Download,
   },
 ];
-
-const avatarOptions = [
-  "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=320&q=80",
-  "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=320&q=80",
-  "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=320&q=80",
-  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=320&q=80",
-  "https://images.unsplash.com/photo-1527980965255-d3b416303d12?auto=format&fit=crop&w=320&q=80",
-  "https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?auto=format&fit=crop&w=320&q=80",
-] as const;
 
 function getInitials(name: string, email: string) {
   const source = name.trim().length > 0 ? name : email;
@@ -325,7 +317,7 @@ export function SettingsView() {
             email: "usuario@ceoteca.com",
             birthDate: "",
             plan: "free",
-            avatarUrl: avatarOptions[0],
+            avatarUrl: defaultAvatarUrl,
           });
         }
       } finally {
@@ -686,7 +678,7 @@ export function SettingsView() {
                         Elige una imagen prealojada.
                       </p>
                       <div className="mt-4 grid grid-cols-3 gap-2">
-                        {avatarOptions.slice(0, 6).map((avatarUrl) => (
+                        {avatarOptions.map((avatarUrl) => (
                           <button
                             aria-label="Seleccionar imagen de perfil"
                             className={cn(
