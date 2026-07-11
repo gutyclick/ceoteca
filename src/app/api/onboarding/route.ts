@@ -74,6 +74,22 @@ export async function POST(request: NextRequest) {
   const serviceClient = createServiceSupabaseClient();
   const input = parsed.data;
 
+  const { data: profile } = await serviceClient
+    .from("profiles")
+    .select("onboarding_completed")
+    .eq("id", userData.user.id)
+    .maybeSingle();
+
+  if (profile?.onboarding_completed) {
+    return jsonError(
+      {
+        code: "ONBOARDING_ALREADY_COMPLETED",
+        message: "Tu registro ya está completo. Puedes administrar tu plan desde Ajustes.",
+      },
+      409,
+    );
+  }
+
   if (input.starterBookId) {
     const { data: starterBook } = await serviceClient
       .from("books")

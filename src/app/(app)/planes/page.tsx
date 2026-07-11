@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
+import { PlansGate } from "@/components/onboarding/PlansGate";
 import { createBookRepository } from "@/lib/books/repository";
 
 export const metadata: Metadata = {
@@ -16,5 +16,5 @@ export default async function PlansPage() {
     .sort(() => Math.random() - 0.5)
     .slice(0, 5);
 
-  return <OnboardingWizard books={starterBooks} />;
+  return <PlansGate books={starterBooks} />;
 }
