@@ -386,7 +386,7 @@ export function ChatWorkspace({ books }: { books: Book[] }) {
 
   return (
     <main className="min-h-screen bg-[#fbfaf8] pl-0 text-slate-950 sm:pl-[var(--dashboard-sidebar-offset,84px)]">
-      <DashboardSidebar active="chat" tone="light" showProfile />
+      <DashboardSidebar active="chat" tone="light" />
       <section className="flex min-h-screen w-full flex-col px-4 pb-4 pt-6 sm:px-6 lg:px-7">
         <header className="flex items-center justify-between gap-4 pb-5">
           <div>
