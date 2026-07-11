@@ -12,7 +12,6 @@ import {
   Compass,
   Flame,
   LibraryBig,
-  Loader2,
   Lock,
   Pencil,
   MessageCircle,
@@ -24,6 +23,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 
 import { DashboardSidebar } from "@/components/app/DashboardSidebar";
+import { DashboardAccountMenu } from "@/components/app/DashboardAccountMenu";
 import { NotificationBell } from "@/components/app/NotificationBell";
 import { plans } from "@/config/plans";
 import { getDailyQuote } from "@/data/daily-quotes";
@@ -829,17 +829,26 @@ export function ProfileSettingsView() {
 
   if (state.status === "loading") {
     return (
-      <main className="min-h-screen bg-[#fbfaf8] text-slate-950">
-        <section className="mx-auto grid min-h-screen w-full max-w-xl place-items-center px-5">
-          <div className="rounded-[22px] border border-slate-950/[0.08] bg-white p-8 text-center">
-            <Loader2
-              aria-hidden="true"
-              className="mx-auto animate-spin text-violet-700"
-              size={32}
-            />
-            <p className="mt-4 text-sm font-bold text-slate-600">
-              Cargando tu perfil...
-            </p>
+      <main className="min-h-screen bg-[#fbfaf8] pb-12 pl-0 text-slate-950 sm:pl-[var(--dashboard-sidebar-offset,240px)]">
+        <DashboardSidebar active="profile" tone="light" />
+        <section className="mx-auto w-full max-w-[1380px] px-5 pt-8 sm:px-7 lg:px-10">
+          <header className="flex items-start justify-between gap-5 border-b border-slate-950/[0.08] pb-6">
+            <div>
+              <h1 className="text-4xl font-black tracking-[-0.04em] text-slate-950">Mi perfil</h1>
+              <p className="mt-2 text-base text-slate-600">Tu progreso, estadísticas y logros en Ceoteca.</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <NotificationBell tone="light" />
+              <DashboardAccountMenu />
+            </div>
+          </header>
+          <div className="mt-8 grid gap-5" aria-hidden="true">
+            <div className="h-64 animate-pulse rounded-[20px] border border-slate-950/[0.06] bg-white" />
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+              {Array.from({ length: 5 }).map((_, index) => (
+                <div className="h-36 animate-pulse rounded-[18px] border border-slate-950/[0.06] bg-white" key={index} />
+              ))}
+            </div>
           </div>
         </section>
       </main>
@@ -907,7 +916,13 @@ export function ProfileSettingsView() {
             </p>
           </div>
 
-          <NotificationBell tone="light" />
+          <div className="flex items-center gap-3">
+            <NotificationBell tone="light" />
+            <DashboardAccountMenu
+              avatarUrl={data.profile.avatar_url}
+              fullName={displayName}
+            />
+          </div>
         </header>
 
         {notice ? (

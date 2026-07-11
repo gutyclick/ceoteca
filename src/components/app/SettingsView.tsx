@@ -24,6 +24,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 
 import { DashboardSidebar } from "@/components/app/DashboardSidebar";
+import { DashboardAccountMenu } from "@/components/app/DashboardAccountMenu";
 import { NotificationBell } from "@/components/app/NotificationBell";
 import { plans, type PlanKey } from "@/config/plans";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
@@ -554,7 +555,13 @@ export function SettingsView() {
             </p>
           </div>
 
-          <NotificationBell tone="light" />
+          <div className="flex items-center gap-3">
+            <NotificationBell tone="light" />
+            <DashboardAccountMenu
+              avatarUrl={accountForm.avatarUrl}
+              fullName={accountForm.fullName}
+            />
+          </div>
         </header>
 
         <nav

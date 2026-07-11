@@ -221,16 +221,29 @@ export function NotificationBell({ tone = "dark" }: { tone?: "dark" | "light" })
       </button>
 
       {isOpen ? (
-        <div className="absolute right-0 top-12 z-50 w-[min(380px,calc(100vw-7rem))] overflow-hidden rounded-[18px] border border-white/10 bg-[#090b14]/95 shadow-ambient backdrop-blur-xl">
-          <div className="flex items-center justify-between gap-4 border-b border-white/10 p-4">
+        <div className={cn(
+          "absolute right-0 top-12 z-50 w-[min(380px,calc(100vw-2rem))] overflow-hidden rounded-[18px] border",
+          tone === "light"
+            ? "border-slate-950/[0.08] bg-white text-slate-950"
+            : "border-white/10 bg-[#090b14]/95 shadow-ambient backdrop-blur-xl",
+        )}>
+          <div className={cn(
+            "flex items-center justify-between gap-4 border-b p-4",
+            tone === "light" ? "border-slate-950/[0.08]" : "border-white/10",
+          )}>
             <div>
-              <p className="text-sm font-semibold text-white">Notificaciones</p>
-              <p className="mt-1 text-xs text-text-muted">
+              <p className={cn("text-sm font-semibold", tone === "light" ? "text-slate-950" : "text-white")}>Notificaciones</p>
+              <p className={cn("mt-1 text-xs", tone === "light" ? "text-slate-500" : "text-text-muted")}>
                 Actividad importante de tu cuenta
               </p>
             </div>
             <button
-              className="inline-flex min-h-9 items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 text-xs text-text-secondary transition hover:text-white disabled:opacity-50"
+              className={cn(
+                "inline-flex min-h-9 items-center gap-2 rounded-full border px-3 text-xs transition disabled:opacity-50",
+                tone === "light"
+                  ? "border-slate-950/[0.08] bg-slate-50 text-slate-600 hover:text-violet-700"
+                  : "border-white/10 bg-white/[0.04] text-text-secondary hover:text-white",
+              )}
               disabled={isUpdating || unreadCount === 0}
               onClick={() => void markAllAsRead()}
               type="button"
@@ -246,7 +259,7 @@ export function NotificationBell({ tone = "dark" }: { tone?: "dark" | "light" })
 
           <div className="max-h-[440px] overflow-y-auto p-2">
             {isLoading ? (
-              <div className="grid min-h-32 place-items-center text-sm text-text-secondary">
+              <div className={cn("grid min-h-32 place-items-center text-sm", tone === "light" ? "text-slate-500" : "text-text-secondary")}>
                 Cargando notificaciones...
               </div>
             ) : null}
@@ -258,7 +271,12 @@ export function NotificationBell({ tone = "dark" }: { tone?: "dark" | "light" })
             ) : null}
 
             {!isLoading && !error && notifications.length === 0 ? (
-              <div className="rounded-[14px] border border-dashed border-white/15 bg-white/[0.025] p-5 text-sm leading-6 text-text-secondary">
+              <div className={cn(
+                "rounded-[14px] border border-dashed p-5 text-sm leading-6",
+                tone === "light"
+                  ? "border-slate-200 bg-slate-50 text-slate-600"
+                  : "border-white/15 bg-white/[0.025] text-text-secondary",
+              )}>
                 Aún no tienes notificaciones. Cuando haya actividad relevante,
                 aparecerá aquí.
               </div>
@@ -269,24 +287,31 @@ export function NotificationBell({ tone = "dark" }: { tone?: "dark" | "light" })
                   const content = (
                     <div
                       className={cn(
-                        "rounded-[14px] border p-3 transition hover:bg-white/[0.045]",
+                        "rounded-[14px] border p-3 transition",
                         notification.read_at
-                          ? "border-transparent bg-transparent"
-                          : "border-brand-purple/25 bg-brand-purple/10",
+                          ? tone === "light"
+                            ? "border-transparent bg-transparent hover:bg-slate-50"
+                            : "border-transparent bg-transparent hover:bg-white/[0.045]"
+                          : tone === "light"
+                            ? "border-violet-200 bg-violet-50"
+                            : "border-brand-purple/25 bg-brand-purple/10",
                       )}
                     >
                       <div className="flex items-start justify-between gap-3">
-                        <span className="rounded-full bg-white/[0.06] px-2.5 py-1 text-[11px] text-brand-purple">
+                        <span className={cn(
+                          "rounded-full px-2.5 py-1 text-[11px] text-brand-purple",
+                          tone === "light" ? "bg-violet-100" : "bg-white/[0.06]",
+                        )}>
                           {typeLabels[notification.type]}
                         </span>
-                        <span className="text-[11px] text-text-muted">
+                        <span className={cn("text-[11px]", tone === "light" ? "text-slate-400" : "text-text-muted")}>
                           {formatRelativeDate(notification.created_at)}
                         </span>
                       </div>
-                      <p className="mt-3 text-sm font-semibold text-white">
+                      <p className={cn("mt-3 text-sm font-semibold", tone === "light" ? "text-slate-950" : "text-white")}>
                         {notification.title}
                       </p>
-                      <p className="mt-1 text-sm leading-6 text-text-secondary">
+                      <p className={cn("mt-1 text-sm leading-6", tone === "light" ? "text-slate-600" : "text-text-secondary")}>
                         {notification.body}
                       </p>
                     </div>

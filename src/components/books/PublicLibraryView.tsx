@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 
 import { DashboardSidebar } from "@/components/app/DashboardSidebar";
+import { DashboardAccountMenu } from "@/components/app/DashboardAccountMenu";
 import { NotificationBell } from "@/components/app/NotificationBell";
 import { Footer } from "@/components/marketing/Footer";
 import { PublicHeader } from "@/components/marketing/PublicHeader";
@@ -838,6 +839,7 @@ function PrivateLibrary({ books }: { books: Book[] }) {
               Filtros
             </button>
             <NotificationBell tone="light" />
+            <DashboardAccountMenu />
           </div>
         </header>
 
