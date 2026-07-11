@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   ArrowRight,
@@ -10,14 +9,10 @@ import {
   BookOpen,
   BriefcaseBusiness,
   CheckCircle2,
-  ChevronDown,
   ChevronRight,
   CircleDollarSign,
-  ExternalLink,
   Flame,
-  Home,
   Lightbulb,
-  LogOut,
   MoreVertical,
   Send,
   Sparkles,
@@ -28,6 +23,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 
 import { DashboardSidebar } from "@/components/app/DashboardSidebar";
+import { DashboardAccountMenu } from "@/components/app/DashboardAccountMenu";
 import { NotificationBell } from "@/components/app/NotificationBell";
 import type { PlanKey } from "@/config/plans";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
@@ -210,15 +206,12 @@ function ProgressBar({ value }: { value: number }) {
 }
 
 export function HomeView({ books }: HomeViewProps) {
-  const router = useRouter();
   const [accountData, setAccountData] = useState<HomeAccountData>({
     fullName: "Lector Ceoteca",
     plan: "free",
     progress: [],
     chatQuestionsThisMonth: 0,
   });
-  const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
-  const [isSigningOut, setIsSigningOut] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -313,20 +306,6 @@ export function HomeView({ books }: HomeViewProps) {
   const completedBooks = accountData.progress.filter((item) => item.completed).length;
   const learnedMinutes = getLearnedMinutes(accountData.progress, books);
 
-  async function signOut() {
-    setIsSigningOut(true);
-
-    try {
-      const supabase = createBrowserSupabaseClient();
-      await supabase.auth.signOut();
-    } finally {
-      setIsSigningOut(false);
-      setIsAccountMenuOpen(false);
-      router.replace("/login");
-      router.refresh();
-    }
-  }
-
   if (!firstBook) {
     return (
       <main className="min-h-screen bg-[#fbfaf8] text-slate-950">
@@ -353,54 +332,7 @@ export function HomeView({ books }: HomeViewProps) {
 
           <div className="flex items-center justify-end gap-4">
             <NotificationBell tone="light" />
-            <div className="relative">
-              <button
-                aria-expanded={isAccountMenuOpen}
-                aria-label="Abrir menú de cuenta"
-                className="flex items-center gap-2 rounded-full border border-slate-950/[0.08] bg-white p-1.5 pr-3 shadow-sm transition hover:border-violet-200 hover:shadow-[0_14px_36px_rgba(124,58,237,0.10)]"
-                onClick={() => setIsAccountMenuOpen((current) => !current)}
-                type="button"
-              >
-                <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-violet-600 to-fuchsia-500 text-sm font-black text-white">
-                  {firstName.at(0)?.toUpperCase() ?? "C"}
-                </span>
-                <ChevronDown
-                  aria-hidden="true"
-                  className={cn(
-                    "transition-transform",
-                    isAccountMenuOpen && "rotate-180",
-                  )}
-                  size={16}
-                />
-              </button>
-
-              {isAccountMenuOpen ? (
-                <div className="absolute right-0 top-[calc(100%+0.7rem)] z-50 w-64 rounded-[20px] border border-slate-950/[0.08] bg-white p-2 shadow-[0_24px_70px_rgba(15,23,42,0.14)]">
-                  <Link
-                    className="flex items-center justify-between gap-3 rounded-[14px] px-3 py-3 text-sm font-black text-slate-700 transition hover:bg-violet-50 hover:text-violet-700"
-                    href="/home"
-                    onClick={() => setIsAccountMenuOpen(false)}
-                    rel="noreferrer"
-                    target="_blank"
-                  >
-                    <span className="inline-flex items-center gap-3">
-                      <Home aria-hidden="true" size={18} />
-                      Abrir inicio
-                    </span>
-                    <ExternalLink aria-hidden="true" size={15} />
-                  </Link>
-                  <button
-                    className="mt-1 flex w-full items-center gap-3 rounded-[14px] px-3 py-3 text-left text-sm font-black text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
-                    disabled={isSigningOut}
-                    onClick={() => void signOut()}
-                    type="button"
-                  >
-                    <LogOut aria-hidden="true" size={18} />
-                    {isSigningOut ? "Cerrando sesión..." : "Cerrar sesión"}
-                  </button>
-                </div>
-              ) : null}
-            </div>
+            <DashboardAccountMenu />
           </div>
         </header>
 

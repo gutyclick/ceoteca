@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronDown, Home, LogOut, UserRound } from "lucide-react";
+import { ChevronDown, ExternalLink, Home, LogOut, UserRound } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
@@ -102,11 +102,14 @@ export function DashboardAccountMenu({
           </Link>
           <Link
             className="flex items-center gap-3 rounded-[12px] px-3 py-3 text-sm font-bold text-slate-700 transition hover:bg-violet-50 hover:text-violet-700"
-            href="/home"
+            href="/"
             onClick={() => setIsOpen(false)}
+            rel="noreferrer"
+            target="_blank"
           >
             <Home aria-hidden="true" size={17} />
-            Inicio
+            <span className="flex-1">Página de inicio</span>
+            <ExternalLink aria-hidden="true" className="text-slate-400" size={14} />
           </Link>
           <button
             className="flex w-full items-center gap-3 rounded-[12px] px-3 py-3 text-left text-sm font-bold text-rose-600 transition hover:bg-rose-50 disabled:opacity-60"
