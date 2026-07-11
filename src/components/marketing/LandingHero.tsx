@@ -14,7 +14,6 @@ import {
   heroActions,
   heroBookCover,
   heroMiniReads,
-  trustBullets,
 } from "@/data/landing";
 
 const valueItems = [
@@ -86,21 +85,6 @@ export function LandingHero() {
             </ButtonLink>
           </div>
 
-          <div className="mt-6 flex flex-wrap gap-x-7 gap-y-3">
-            {trustBullets.map((item) => {
-              const Icon = item.icon;
-
-              return (
-                <span
-                  className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600"
-                  key={item.label}
-                >
-                  <Icon aria-hidden="true" className="text-slate-500" size={16} />
-                  {item.label}
-                </span>
-              );
-            })}
-          </div>
         </div>
 
         <div className="relative mx-auto hidden min-h-[360px] w-full max-w-[560px] lg:block">

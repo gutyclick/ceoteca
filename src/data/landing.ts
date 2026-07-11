@@ -4,9 +4,7 @@ import {
   BookOpen,
   Bot,
   Brain,
-  CheckCircle2,
   Clock3,
-  Compass,
   Grid3X3,
   Heart,
   LibraryBig,
@@ -245,12 +243,6 @@ export const finalCta = {
     icon: LibraryBig,
   },
 } as const;
-
-export const trustBullets = [
-  { label: "7 días gratis", icon: CheckCircle2 },
-  { label: "Cancela cuando quieras", icon: Clock3 },
-  { label: "Acceso inmediato", icon: Compass },
-] as const;
 
 export const whyCeotecaItems = [
   {
