@@ -19,6 +19,7 @@ import {
   Star,
   TrendingUp,
   Trophy,
+  X,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -182,9 +183,9 @@ function buildActivityItems({
     };
   });
 
-  return [...progressItems, ...chatItems, ...favoriteItems]
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, 8);
+  return [...progressItems, ...chatItems, ...favoriteItems].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  );
 }
 
 function createDemoProfileData(): ProfileData {
@@ -464,13 +465,39 @@ function StreakPanel({ activeDays }: { activeDays: number }) {
 }
 
 function ActivityPanel({ activity }: { activity: ActivityItem[] }) {
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isHistoryOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setIsHistoryOpen(false);
+    }
+
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [isHistoryOpen]);
+
   return (
+    <>
     <section className="rounded-[18px] border border-slate-950/[0.08] bg-white p-6">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-black text-slate-950">Actividad reciente</h2>
-        <Link className="text-sm font-bold text-violet-700" href="/biblioteca">
-          Ver todo
-        </Link>
+        {activity.length > 0 ? (
+          <button
+            className="text-sm font-bold text-violet-700 transition hover:text-violet-900"
+            onClick={() => setIsHistoryOpen(true)}
+            type="button"
+          >
+            Ver todo
+          </button>
+        ) : null}
       </div>
       <div className="mt-5 grid gap-1">
         {activity.length > 0 ? (
@@ -479,7 +506,7 @@ function ActivityPanel({ activity }: { activity: ActivityItem[] }) {
 
             return (
               <Link
-                className="grid grid-cols-[44px_1fr_auto_18px] items-center gap-3 border-b border-slate-950/[0.06] py-4 last:border-b-0"
+                className="grid grid-cols-[44px_minmax(0,1fr)_18px] items-center gap-x-3 border-b border-slate-950/[0.06] py-4 last:border-b-0 sm:grid-cols-[44px_minmax(0,1fr)_auto_18px]"
                 href={item.href}
                 key={item.id}
               >
@@ -494,10 +521,10 @@ function ActivityPanel({ activity }: { activity: ActivityItem[] }) {
                     {item.detail}
                   </span>
                 </span>
-                <span className="whitespace-nowrap text-xs text-slate-500">
+                <span className="col-start-2 mt-1 whitespace-nowrap text-xs text-slate-500 sm:col-start-auto sm:mt-0">
                   {formatRelativeDate(item.createdAt)}
                 </span>
-                <ChevronRight aria-hidden="true" className="text-slate-400" size={16} />
+                <ChevronRight aria-hidden="true" className="col-start-3 row-start-1 text-slate-400 sm:col-start-auto" size={16} />
               </Link>
             );
           })
@@ -508,6 +535,70 @@ function ActivityPanel({ activity }: { activity: ActivityItem[] }) {
         )}
       </div>
     </section>
+
+    {isHistoryOpen ? (
+      <div
+        aria-labelledby="activity-history-title"
+        aria-modal="true"
+        className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-950/30 p-0 backdrop-blur-[2px] sm:items-center sm:p-6"
+        onMouseDown={(event) => {
+          if (event.currentTarget === event.target) setIsHistoryOpen(false);
+        }}
+        role="dialog"
+      >
+        <section className="flex max-h-[88dvh] w-full flex-col rounded-t-[22px] border border-slate-950/[0.08] bg-white sm:max-w-2xl sm:rounded-[22px]">
+          <header className="flex items-start justify-between gap-5 border-b border-slate-950/[0.08] px-5 py-5 sm:px-6">
+            <div>
+              <h2 className="text-xl font-black text-slate-950" id="activity-history-title">
+                Historial de actividad
+              </h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Tus lecturas, favoritos y conversaciones, ordenados por fecha.
+              </p>
+            </div>
+            <button
+              aria-label="Cerrar historial"
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-slate-950/[0.08] text-slate-500 transition hover:bg-slate-50 hover:text-slate-950"
+              onClick={() => setIsHistoryOpen(false)}
+              type="button"
+            >
+              <X aria-hidden="true" size={19} />
+            </button>
+          </header>
+          <div className="overflow-y-auto px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:px-6">
+            {activity.map((item) => {
+              const Icon = item.icon;
+
+              return (
+                <Link
+                  className="grid grid-cols-[44px_minmax(0,1fr)_18px] items-center gap-x-3 border-b border-slate-950/[0.06] py-4 last:border-b-0 sm:grid-cols-[44px_minmax(0,1fr)_auto_18px]"
+                  href={item.href}
+                  key={item.id}
+                  onClick={() => setIsHistoryOpen(false)}
+                >
+                  <span className="grid h-11 w-11 place-items-center rounded-[13px] bg-violet-50 text-violet-700">
+                    <Icon aria-hidden="true" size={21} />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="line-clamp-2 block text-sm font-black text-slate-950">
+                      {item.title}
+                    </span>
+                    <span className="mt-1 line-clamp-2 block text-xs leading-5 text-slate-500">
+                      {item.detail}
+                    </span>
+                  </span>
+                  <span className="col-start-2 mt-1 whitespace-nowrap text-xs text-slate-500 sm:col-start-auto sm:mt-0">
+                    {formatRelativeDate(item.createdAt)}
+                  </span>
+                  <ChevronRight aria-hidden="true" className="col-start-3 row-start-1 text-slate-400 sm:col-start-auto" size={16} />
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      </div>
+    ) : null}
+    </>
   );
 }
 
@@ -603,14 +694,12 @@ export function ProfileSettingsView() {
             .select("*")
             .eq("user_id", userId)
             .eq("role", "user")
-            .order("created_at", { ascending: false })
-            .limit(8),
+            .order("created_at", { ascending: false }),
           supabase
             .from("user_book_favorites")
             .select("*")
             .eq("user_id", userId)
-            .order("created_at", { ascending: false })
-            .limit(8),
+            .order("created_at", { ascending: false }),
           supabase
             .from("user_achievements")
             .select("*")

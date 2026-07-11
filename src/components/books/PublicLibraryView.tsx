@@ -15,7 +15,6 @@ import {
   CircleDot,
   Clock3,
   Crown,
-  Filter,
   Grid3X3,
   LibraryBig,
   List,
@@ -839,13 +838,6 @@ function PrivateLibrary({ books }: { books: Book[] }) {
                 value={query}
               />
             </label>
-            <button
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[14px] border border-slate-950/[0.10] bg-white px-5 text-sm font-bold text-slate-700 transition hover:border-violet-200 hover:text-violet-700"
-              type="button"
-            >
-              <Filter aria-hidden="true" size={18} />
-              Filtros
-            </button>
             <NotificationBell tone="light" />
             <DashboardAccountMenu />
           </div>
