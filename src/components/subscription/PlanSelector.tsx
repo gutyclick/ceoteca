@@ -3,7 +3,6 @@
 import { CheckCircle2, Crown, Loader2, Sparkles } from "lucide-react";
 import { useState } from "react";
 
-import { Card } from "@/components/ui/Card";
 import { planKeys, plans, type PlanKey } from "@/config/plans";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
@@ -104,60 +103,59 @@ export function PlanSelector() {
           className={cn(
             "mx-auto mb-6 max-w-3xl rounded-[16px] border p-4 text-sm leading-6",
             status.type === "success"
-              ? "border-success/30 bg-success/10 text-success"
-              : "border-danger/30 bg-danger/10 text-danger",
+              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+              : "border-rose-200 bg-rose-50 text-rose-700",
           )}
         >
           {status.message}
         </div>
       ) : null}
 
-      <div className="grid gap-5 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {planKeys.map((planKey) => {
           const plan = plans[planKey];
           const isFree = planKey === "free";
           const isLoading = pendingPlan === planKey;
 
           return (
-            <Card
+            <article
               className={cn(
-                "relative flex flex-col overflow-hidden p-6",
-                plan.isRecommended && "border-brand-purple/70",
+                "relative flex min-h-[510px] flex-col overflow-hidden rounded-[20px] border border-slate-950/[0.10] bg-white p-6",
+                plan.isRecommended && "border-violet-400",
                 plan.isFounderOffer &&
-                  "border-brand-purple/80 bg-brand-purple/10 shadow-[0_0_45px_rgba(168,85,247,0.2)]",
+                  "border-orange-300 bg-orange-50/40",
               )}
-              interactive
               key={plan.key}
             >
               {plan.isRecommended ? (
-                <span className="mb-4 inline-flex w-fit items-center gap-1.5 rounded-full bg-brand-purple/20 px-3 py-1 text-xs font-medium text-brand-purple">
+                <span className="mb-4 inline-flex w-fit items-center gap-1.5 rounded-full bg-violet-100 px-3 py-1.5 text-xs font-black text-violet-700">
                   <Sparkles aria-hidden="true" size={14} />
                   Más elegido
                 </span>
               ) : null}
               {plan.isFounderOffer ? (
-                <span className="mb-4 inline-flex w-fit items-center gap-1.5 rounded-full border border-brand-pink/35 bg-brand-pink/15 px-3 py-1 text-xs font-medium text-brand-pink">
+                <span className="mb-4 inline-flex w-fit items-center gap-1.5 rounded-full border border-orange-200 bg-orange-100 px-3 py-1.5 text-xs font-black text-orange-700">
                   <Crown aria-hidden="true" size={14} />
                   Primeros 100
                 </span>
               ) : null}
-              <p className="text-sm text-text-secondary">{plan.tagline}</p>
-              <h2 className="mt-3 text-3xl font-semibold">{plan.name}</h2>
-              <p className="mt-3 text-2xl font-semibold">
+              <p className="text-sm font-semibold text-slate-500">{plan.tagline}</p>
+              <h2 className="mt-3 text-3xl font-black tracking-[-0.03em] text-slate-950">{plan.name}</h2>
+              <p className={cn("mt-3 text-2xl font-black text-slate-950", plan.isFounderOffer && "text-orange-700")}>
                 {formatPlanPrice(planKey)}
               </p>
-              <p className="mt-3 min-h-20 text-sm leading-6 text-text-secondary">
+              <p className="mt-3 min-h-20 text-sm leading-6 text-slate-600">
                 {plan.description}
               </p>
               <ul className="mt-5 flex-1 space-y-3">
                 {plan.highlights.slice(0, 3).map((highlight) => (
                   <li
-                    className="flex gap-2 text-sm leading-6 text-text-secondary"
+                    className="flex gap-2.5 text-sm leading-6 text-slate-700"
                     key={highlight}
                   >
                     <CheckCircle2
                       aria-hidden="true"
-                      className="mt-0.5 shrink-0 text-success"
+                      className={cn("mt-0.5 shrink-0 text-emerald-600", plan.isFounderOffer && "text-orange-600")}
                       size={17}
                     />
                     {highlight}
@@ -166,10 +164,12 @@ export function PlanSelector() {
               </ul>
               <button
                 className={cn(
-                  "mt-7 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-button px-5 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-70",
-                  plan.isRecommended || plan.isFounderOffer
-                    ? "bg-brand-gradient text-white hover:brightness-110"
-                    : "border border-white/10 bg-white/[0.045] text-text-primary hover:border-brand-purple/50",
+                  "mt-7 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[13px] px-5 text-sm font-black transition disabled:cursor-not-allowed disabled:opacity-50",
+                  plan.isRecommended
+                    ? "bg-violet-700 text-white hover:bg-violet-800"
+                    : plan.isFounderOffer
+                      ? "bg-orange-600 text-white hover:bg-orange-700"
+                      : "border border-slate-300 bg-white text-slate-800 hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700",
                 )}
                 disabled={pendingPlan !== null}
                 onClick={() => void handleSelect(planKey)}
@@ -180,7 +180,7 @@ export function PlanSelector() {
                 ) : null}
                 {isFree ? "Activar gratis" : "Continuar a pago"}
               </button>
-            </Card>
+            </article>
           );
         })}
       </div>
