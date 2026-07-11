@@ -20,7 +20,11 @@ export function BookPreviewSection() {
             Cada análisis incluye ideas clave, marcos visuales y ejercicios.
           </p>
         </div>
-        <ButtonLink href="/biblioteca" variant="secondary">
+        <ButtonLink
+          className="border-slate-950/10 bg-white font-black text-slate-800 shadow-none hover:border-violet-200 hover:bg-violet-50 hover:text-violet-800"
+          href="/biblioteca"
+          variant="secondary"
+        >
           Ver toda la biblioteca
         </ButtonLink>
       </div>
@@ -98,7 +102,11 @@ export function BookPreviewSection() {
       </div>
 
       <div className="mt-10 text-center">
-        <ButtonLink href="/biblioteca" variant="ghost">
+        <ButtonLink
+          className="font-black text-violet-700 hover:bg-violet-50 hover:text-violet-900"
+          href="/biblioteca"
+          variant="ghost"
+        >
           Explorar por categorías
           <ArrowRight aria-hidden="true" size={17} />
         </ButtonLink>

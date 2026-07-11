@@ -7,7 +7,7 @@ import { SectionHeading } from "./SectionHeading";
 
 export function HowItWorksSection() {
   return (
-    <section className="ceoteca-container pb-20">
+    <section className="ceoteca-container pb-20 pt-4 sm:pt-6">
       <SectionHeading
         eyebrow="Cómo funciona"
         title="De la lectura al cambio real"

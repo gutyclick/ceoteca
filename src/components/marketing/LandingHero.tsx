@@ -45,7 +45,7 @@ export function LandingHero() {
   const SecondaryIcon = heroActions.secondary.icon;
 
   return (
-    <section className="relative mx-auto grid min-h-[calc(100vh-74px)] w-full max-w-[1480px] content-center px-5 py-8 sm:px-7 lg:py-9 xl:px-9">
+    <section className="relative mx-auto grid min-h-[calc(100vh-74px)] w-full max-w-[1480px] content-center px-5 pb-12 pt-8 sm:px-7 lg:pb-14 lg:pt-9 xl:px-9">
       <div className="absolute right-0 top-0 -z-10 h-[520px] w-[52%] rounded-bl-[6rem] bg-gradient-to-br from-violet-50 via-fuchsia-50 to-transparent" />
       <div className="absolute right-10 top-8 -z-10 hidden h-[360px] w-[360px] rounded-full bg-violet-100/60 blur-3xl lg:block" />
 
@@ -77,7 +77,7 @@ export function LandingHero() {
               <PrimaryIcon aria-hidden="true" size={18} />
             </ButtonLink>
             <ButtonLink
-              className="min-h-12 rounded-[1rem] border-slate-950/10 bg-white px-6 text-slate-950 hover:bg-slate-50"
+              className="min-h-12 rounded-[1rem] border-slate-950/10 bg-white px-6 font-black text-slate-900 shadow-none hover:border-violet-200 hover:bg-violet-50 hover:text-violet-800"
               href={heroActions.secondary.href}
               variant="secondary"
             >
