@@ -4,18 +4,21 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
+  Archive,
   BookOpen,
   Bot,
-  ChevronRight,
   LibraryBig,
   Loader2,
   Menu,
   MessageSquare,
+  MoreHorizontal,
   Plus,
+  RotateCcw,
   Search,
   Send,
   Sparkles,
   Target,
+  Trash2,
   X,
 } from "lucide-react";
 
@@ -34,10 +37,10 @@ type ChatMessage = {
 };
 
 type Conversation =
-  | { key: string; context: "site"; title: string; book: null; conversationId: string | null; lastMessageAt: string | null }
-  | { key: string; context: "book"; title: string; book: Book; conversationId: null; lastMessageAt: string | null };
+  | { key: string; context: "site"; title: string; book: null; conversationId: string | null; lastMessageAt: string | null; archivedAt: string | null }
+  | { key: string; context: "book"; title: string; book: Book; conversationId: null; lastMessageAt: string | null; archivedAt: string | null };
 
-type FilterKey = "all" | "book" | "site";
+type FilterKey = "all" | "book" | "site" | "archived";
 
 type HistoryResponse = {
   data?: {
@@ -60,8 +63,8 @@ type ChatResponse = {
 
 type ConversationsResponse = {
   data?: {
-    conversations: Array<{ id: string; title: string; last_message_at: string }>;
-    startedBooks: Array<{ bookId: string; lastMessageAt: string }>;
+    conversations: Array<{ id: string; title: string; archived_at: string | null; last_message_at: string }>;
+    startedBooks: Array<{ bookId: string; lastMessageAt: string; archivedAt: string | null }>;
   };
   error?: { message: string };
 };
@@ -80,6 +83,7 @@ const draftConversation: Conversation = {
   book: null,
   conversationId: null,
   lastMessageAt: null,
+  archivedAt: null,
 };
 
 const generalSuggestions = [
@@ -161,17 +165,22 @@ export function ChatWorkspace({ books }: { books: Book[] }) {
   const [isSending, setIsSending] = useState(false);
   const [isConversationPanelOpen, setIsConversationPanelOpen] = useState(false);
   const [isLoadingConversations, setIsLoadingConversations] = useState(true);
+  const [openActionKey, setOpenActionKey] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Conversation | null>(null);
+  const [isUpdatingConversation, setIsUpdatingConversation] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const selected = conversations.find((item) => item.key === selectedKey) ?? draftConversation;
   const canUseChat = plans[plan].features.includes("chat");
+  const canSendMessages = canUseChat && !selected.archivedAt;
   const suggestions = selected.context === "site" ? generalSuggestions : bookSuggestions;
 
   const filteredConversations = conversations.filter((conversation) => {
-    const matchesFilter = filter === "all" || conversation.context === filter;
+    const matchesArchive = filter === "archived" ? Boolean(conversation.archivedAt) : !conversation.archivedAt;
+    const matchesFilter = filter === "all" || filter === "archived" || conversation.context === filter;
     const searchTarget = `${conversation.title} ${conversation.book?.author ?? "general"}`.toLocaleLowerCase("es");
-    return matchesFilter && searchTarget.includes(query.trim().toLocaleLowerCase("es"));
+    return matchesArchive && matchesFilter && searchTarget.includes(query.trim().toLocaleLowerCase("es"));
   });
 
   useEffect(() => {
@@ -206,19 +215,21 @@ export function ChatWorkspace({ books }: { books: Book[] }) {
             book: null,
             conversationId: conversation.id,
             lastMessageAt: conversation.last_message_at,
+            archivedAt: conversation.archived_at,
           }));
           const bookConversations: Conversation[] = payload.data.startedBooks.flatMap((item) => {
             const book = bookById.get(item.bookId);
             return book
-              ? [{ key: `book:${book.id}`, context: "book" as const, title: book.title, book, conversationId: null, lastMessageAt: item.lastMessageAt }]
+              ? [{ key: `book:${book.id}`, context: "book" as const, title: book.title, book, conversationId: null, lastMessageAt: item.lastMessageAt, archivedAt: item.archivedAt }]
               : [];
           });
           const loaded = [...generalConversations, ...bookConversations].sort(
             (a, b) => new Date(b.lastMessageAt ?? 0).getTime() - new Date(a.lastMessageAt ?? 0).getTime(),
           );
+          const activeLoaded = loaded.filter((item) => !item.archivedAt);
           const nextConversations = loaded.length > 0 ? loaded : [draftConversation];
           setConversations(nextConversations);
-          setSelectedKey(nextConversations[0].key);
+          setSelectedKey((activeLoaded[0] ?? nextConversations[0]).key);
         }
       }
       if (isMounted) setIsLoadingConversations(false);
@@ -287,13 +298,66 @@ export function ChatWorkspace({ books }: { books: Book[] }) {
     setMessages([]);
     setInput("");
     setError(null);
+    setFilter("all");
     setIsConversationPanelOpen(false);
     window.setTimeout(() => inputRef.current?.focus(), 100);
   }
 
+  async function updateConversation(
+    conversation: Conversation,
+    action: "archive" | "restore" | "delete",
+  ) {
+    const id = conversation.context === "site"
+      ? conversation.conversationId
+      : conversation.book.id;
+    if (!id || isUpdatingConversation) return;
+
+    setIsUpdatingConversation(true);
+    setOpenActionKey(null);
+    setError(null);
+
+    try {
+      const supabase = createBrowserSupabaseClient();
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) throw new Error("Tu sesión expiró. Inicia sesión nuevamente.");
+
+      const response = await fetch("/api/chat/conversations", {
+        method: action === "delete" ? "DELETE" : "PATCH",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ target: conversation.context, id, action }),
+      });
+      const payload = (await response.json()) as { data?: { archivedAt?: string | null; deleted?: boolean }; error?: { message: string } };
+      if (!response.ok || !payload.data) {
+        throw new Error(payload.error?.message ?? "No pudimos actualizar la conversación.");
+      }
+
+      const next = action === "delete"
+        ? conversations.filter((item) => item.key !== conversation.key)
+        : conversations.map((item) => item.key === conversation.key
+          ? { ...item, archivedAt: action === "archive" ? new Date().toISOString() : null }
+          : item);
+      setConversations(next.length > 0 ? next : [draftConversation]);
+
+      if (selectedKey === conversation.key && action !== "restore") {
+        const nextActive = next.find((item) => !item.archivedAt && item.key !== conversation.key) ?? draftConversation;
+        if (!next.some((item) => item.key === draftConversation.key) && nextActive.key === draftConversation.key) {
+          setConversations((current) => [draftConversation, ...current]);
+        }
+        setSelectedKey(nextActive.key);
+        setMessages([]);
+      }
+      setDeleteTarget(null);
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "No pudimos actualizar la conversación.");
+    } finally {
+      setIsUpdatingConversation(false);
+    }
+  }
+
   async function sendMessage() {
     const message = input.trim();
-    if (!message || isSending || !selected || !canUseChat) return;
+    if (!message || isSending || !selected || !canSendMessages) return;
     setInput("");
     setError(null);
     setMessages((current) => [...current, { role: "user", content: message }]);
@@ -322,6 +386,7 @@ export function ChatWorkspace({ books }: { books: Book[] }) {
           book: null,
           conversationId: createPayload.data.conversation.id,
           lastMessageAt: createPayload.data.conversation.last_message_at,
+          archivedAt: null,
         };
         setConversations((current) => [requestConversation, ...current.filter((item) => item.key !== draftConversation.key)]);
       }
@@ -372,9 +437,9 @@ export function ChatWorkspace({ books }: { books: Book[] }) {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
           <input className="h-10 w-full rounded-[12px] border border-slate-950/[0.08] bg-slate-50 pl-9 pr-3 text-sm outline-none focus:border-violet-300" onChange={(event) => setQuery(event.target.value)} placeholder="Buscar conversación" value={query} />
         </label>
-        <div className="mt-3 grid grid-cols-3 rounded-[12px] bg-slate-50 p-1 text-xs font-bold">
-          {(["all", "book", "site"] as FilterKey[]).map((item) => (
-            <button className={cn("rounded-[9px] px-2 py-2 text-slate-500", filter === item && "bg-white text-violet-700")} key={item} onClick={() => setFilter(item)} type="button">{item === "all" ? "Todas" : item === "book" ? "Por libro" : "General"}</button>
+        <div className="mt-3 grid grid-cols-4 rounded-[12px] bg-slate-50 p-1 text-[11px] font-bold">
+          {(["all", "book", "site", "archived"] as FilterKey[]).map((item) => (
+            <button className={cn("rounded-[9px] px-1 py-2 text-slate-500", filter === item && "bg-white text-violet-700")} key={item} onClick={() => setFilter(item)} type="button">{item === "all" ? "Todas" : item === "book" ? "Libros" : item === "site" ? "General" : "Archivo"}</button>
           ))}
         </div>
       </div>
@@ -382,11 +447,21 @@ export function ChatWorkspace({ books }: { books: Book[] }) {
         {isLoadingConversations ? <div className="grid h-24 place-items-center text-slate-400"><Loader2 className="animate-spin" size={20} /></div> : null}
         {!isLoadingConversations && filteredConversations.length === 0 ? <div className="p-5 text-center text-sm leading-6 text-slate-500">No hay conversaciones en esta vista.</div> : null}
         {!isLoadingConversations ? filteredConversations.map((conversation) => (
-          <button className={cn("flex w-full items-center gap-3 rounded-[14px] p-3 text-left transition hover:bg-slate-50", selected.key === conversation.key && "bg-violet-50")} key={conversation.key} onClick={() => selectConversation(conversation.key)} type="button">
-            {conversation.book ? <BookAvatar book={conversation.book} /> : <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[13px] bg-violet-100 text-violet-700"><MessageSquare size={20} /></span>}
-            <span className="min-w-0 flex-1"><span className="line-clamp-2 block text-sm font-black leading-5">{conversation.title}</span><span className="mt-1 block truncate text-xs text-slate-500">{conversation.book?.author ?? "Preguntas generales"}</span></span>
-            <ChevronRight className="shrink-0 text-slate-300" size={16} />
-          </button>
+          <div className="relative flex items-center" key={conversation.key}>
+            <button className={cn("flex min-w-0 flex-1 items-center gap-3 rounded-[14px] p-3 pr-10 text-left transition hover:bg-slate-50", selected.key === conversation.key && "bg-violet-50")} onClick={() => selectConversation(conversation.key)} type="button">
+              {conversation.book ? <BookAvatar book={conversation.book} /> : <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[13px] bg-violet-100 text-violet-700"><MessageSquare size={20} /></span>}
+              <span className="min-w-0 flex-1"><span className="line-clamp-2 block text-sm font-black leading-5">{conversation.title}</span><span className="mt-1 block truncate text-xs text-slate-500">{conversation.book?.author ?? "Preguntas generales"}</span></span>
+            </button>
+            {conversation.key !== draftConversation.key ? (
+              <button aria-label={`Opciones de ${conversation.title}`} className="absolute right-1 grid h-9 w-9 place-items-center rounded-full text-slate-400 transition hover:bg-white hover:text-slate-700" onClick={() => setOpenActionKey((current) => current === conversation.key ? null : conversation.key)} type="button"><MoreHorizontal size={18} /></button>
+            ) : null}
+            {openActionKey === conversation.key ? (
+              <div className="absolute right-2 top-12 z-20 w-40 rounded-[12px] border border-slate-950/[0.08] bg-white p-1.5 shadow-[0_12px_30px_rgba(15,23,42,0.12)]">
+                <button className="flex w-full items-center gap-2 rounded-[9px] px-3 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50" onClick={() => void updateConversation(conversation, conversation.archivedAt ? "restore" : "archive")} type="button">{conversation.archivedAt ? <RotateCcw size={16} /> : <Archive size={16} />}{conversation.archivedAt ? "Restaurar" : "Archivar"}</button>
+                <button className="flex w-full items-center gap-2 rounded-[9px] px-3 py-2 text-left text-sm font-semibold text-rose-600 hover:bg-rose-50" onClick={() => { setOpenActionKey(null); setDeleteTarget(conversation); }} type="button"><Trash2 size={16} />Eliminar</button>
+              </div>
+            ) : null}
+          </div>
         )) : null}
       </div>
     </aside>
@@ -413,6 +488,7 @@ export function ChatWorkspace({ books }: { books: Book[] }) {
               <button aria-label="Abrir conversaciones" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-slate-950/[0.08] lg:hidden" onClick={() => setIsConversationPanelOpen(true)} type="button"><Menu size={19} /></button>
               {selected.book ? <BookAvatar book={selected.book} /> : <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[13px] bg-violet-100 text-violet-700"><Bot size={21} /></span>}
               <div className="min-w-0 flex-1"><h2 className="truncate text-sm font-black sm:text-base">{selected.title}</h2><p className="truncate text-xs text-slate-500">{selected.book ? `Contexto exclusivo de ${selected.book.title}` : "Negocios, productividad, lectura y desarrollo personal"}</p></div>
+              {selected.archivedAt ? <span className="rounded-full bg-slate-100 px-3 py-2 text-xs font-bold text-slate-600">Archivado</span> : null}
               {remainingQuestions !== null && canUseChat ? <span className="hidden rounded-full bg-violet-50 px-3 py-2 text-xs font-bold text-violet-700 sm:block">{remainingQuestions} preguntas disponibles</span> : null}
             </header>
 
@@ -427,14 +503,27 @@ export function ChatWorkspace({ books }: { books: Book[] }) {
             <footer className="border-t border-slate-950/[0.08] bg-white px-3 py-3 sm:px-6 sm:py-4">
               {error ? <p className="mx-auto mb-3 max-w-3xl rounded-[10px] bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700">{error}</p> : null}
               <form className="mx-auto grid max-w-3xl grid-cols-[minmax(0,1fr)_46px] items-end gap-2 rounded-[16px] border border-slate-950/[0.10] bg-white p-2 focus-within:border-violet-300 focus-within:ring-4 focus-within:ring-violet-50" onSubmit={(event) => { event.preventDefault(); void sendMessage(); }}>
-                <textarea className="max-h-32 min-h-11 resize-none bg-transparent px-2 py-2.5 text-sm leading-6 outline-none placeholder:text-slate-400" disabled={!canUseChat || isSending} maxLength={2000} onChange={(event) => setInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void sendMessage(); } }} placeholder={selected.book ? "Pregunta sobre este análisis..." : "Escribe tu mensaje..."} ref={inputRef} rows={1} value={input} />
-                <button aria-label="Enviar mensaje" className="grid h-11 w-11 place-items-center rounded-[13px] bg-violet-700 text-white transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-40" disabled={!canUseChat || isSending || !input.trim()} type="submit"><Send size={18} /></button>
+                <textarea className="max-h-32 min-h-11 resize-none bg-transparent px-2 py-2.5 text-sm leading-6 outline-none placeholder:text-slate-400" disabled={!canSendMessages || isSending} maxLength={2000} onChange={(event) => setInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void sendMessage(); } }} placeholder={selected.archivedAt ? "Restaura esta conversación para continuar" : selected.book ? "Pregunta sobre este análisis..." : "Escribe tu mensaje..."} ref={inputRef} rows={1} value={input} />
+                <button aria-label="Enviar mensaje" className="grid h-11 w-11 place-items-center rounded-[13px] bg-violet-700 text-white transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-40" disabled={!canSendMessages || isSending || !input.trim()} type="submit"><Send size={18} /></button>
               </form>
               <p className="mt-2 text-center text-[11px] text-slate-400">CEO puede cometer errores. Verifica la información importante.</p>
             </footer>
           </section>
         </div>
       </section>
+      {deleteTarget ? (
+        <div className="fixed inset-0 z-[110] grid place-items-center bg-slate-950/30 p-5" role="presentation" onMouseDown={(event) => { if (event.currentTarget === event.target) setDeleteTarget(null); }}>
+          <section aria-labelledby="delete-chat-title" aria-modal="true" className="w-full max-w-md rounded-[20px] border border-slate-950/[0.08] bg-white p-6" role="dialog">
+            <span className="grid h-12 w-12 place-items-center rounded-full bg-rose-50 text-rose-600"><Trash2 size={22} /></span>
+            <h2 className="mt-5 text-xl font-black" id="delete-chat-title">Eliminar conversación</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">Se eliminará permanentemente el historial de <strong className="text-slate-950">{deleteTarget.title}</strong>. Esta acción no se puede deshacer.</p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button className="min-h-11 rounded-[12px] border border-slate-200 px-4 text-sm font-black text-slate-700 hover:bg-slate-50" disabled={isUpdatingConversation} onClick={() => setDeleteTarget(null)} type="button">Cancelar</button>
+              <button className="inline-flex min-h-11 items-center gap-2 rounded-[12px] bg-rose-600 px-4 text-sm font-black text-white hover:bg-rose-700 disabled:opacity-50" disabled={isUpdatingConversation} onClick={() => void updateConversation(deleteTarget, "delete")} type="button">{isUpdatingConversation ? <Loader2 className="animate-spin" size={16} /> : null}Eliminar</button>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </main>
   );
 }

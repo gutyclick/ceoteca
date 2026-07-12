@@ -201,6 +201,7 @@ export type Database = {
           context: "book" | "site";
           book_id: string | null;
           title: string;
+          archived_at: string | null;
           last_message_at: string;
           created_at: string;
           updated_at: string;
@@ -211,13 +212,36 @@ export type Database = {
           context?: "book" | "site";
           book_id?: string | null;
           title?: string;
+          archived_at?: string | null;
           last_message_at?: string;
           created_at?: string;
           updated_at?: string;
         };
         Update: {
           title?: string;
+          archived_at?: string | null;
           last_message_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      chat_book_preferences: {
+        Row: {
+          user_id: string;
+          book_id: string;
+          archived_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          book_id: string;
+          archived_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          archived_at?: string | null;
           updated_at?: string;
         };
         Relationships: [];
