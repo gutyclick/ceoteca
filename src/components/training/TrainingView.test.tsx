@@ -15,6 +15,9 @@ vi.mock("@/components/app/NotificationBell", () => ({
 vi.mock("@/components/app/DashboardAccountMenu", () => ({
   DashboardAccountMenu: () => <button type="button">Cuenta</button>,
 }));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn() }),
+}));
 
 describe("TrainingView", () => {
   it("muestra las cinco secciones y sus datos mock", () => {

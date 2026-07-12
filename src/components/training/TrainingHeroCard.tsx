@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowRight, Clock3, ListChecks, Loader2, Signal } from "lucide-react";
 
 import { BookThumbnailGroup, TrainingIcon, WeeklyStreak } from "@/components/training/TrainingPrimitives";
 import type { TrainingRecommendation } from "@/types/training";
 
 export function TrainingHeroCard({ recommendation, disabled = false }: { recommendation: TrainingRecommendation; disabled?: boolean }) {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [notice, setNotice] = useState("");
 
@@ -14,7 +16,7 @@ export function TrainingHeroCard({ recommendation, disabled = false }: { recomme
     setIsLoading(true);
     setNotice("");
     await new Promise((resolve) => window.setTimeout(resolve, 500));
-    setNotice("El entrenamiento interactivo estará disponible en la próxima fase.");
+    router.push(`/ejercicios/${recommendation.id}`);
     setIsLoading(false);
   }
 
