@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import {
   ArrowRight,
   BookOpen,
+  Dumbbell,
   Gem,
   Home,
   LogOut,
@@ -21,7 +22,7 @@ import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { resolvePlanFromSubscriptions } from "@/lib/subscriptions/resolve";
 import { cn } from "@/lib/utils/cn";
 
-type DashboardSection = "home" | "library" | "chat" | "profile" | "settings";
+type DashboardSection = "home" | "library" | "chat" | "training" | "profile" | "settings";
 
 type DashboardSidebarProps = {
   active: DashboardSection;
@@ -33,6 +34,7 @@ const menuItems = [
   { key: "home", label: "Inicio", href: "/home", icon: Home },
   { key: "library", label: "Biblioteca", href: "/biblioteca", icon: BookOpen },
   { key: "chat", label: "Chat con CEO", href: "/chat", icon: MessageSquare },
+  { key: "training", label: "Ejercicios", href: "/ejercicios", icon: Dumbbell },
   { key: "profile", label: "Perfil", href: "/perfil", icon: User },
   { key: "settings", label: "Ajustes", href: "/configuracion", icon: Settings },
 ] as const;

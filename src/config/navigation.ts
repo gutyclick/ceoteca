@@ -14,6 +14,7 @@ export const privateRoutes = [
   "/libro",
   "/perfil",
   "/chat",
+  "/ejercicios",
   "/planes",
   "/configuracion",
 ] as const;
