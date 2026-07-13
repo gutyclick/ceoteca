@@ -1,0 +1,9 @@
+import { NextRequest } from "next/server";
+import { z } from "zod";
+import { jsonData,jsonError } from "@/lib/api/response";
+import { createServiceSupabaseClient } from "@/lib/supabase/server";
+import { TrainingRoleplayService } from "@/lib/training/roleplay";
+import { getTrainingServerSession } from "@/lib/training/server-auth";
+const schema=z.object({scenarioId:z.string().uuid().optional(),customScenario:z.object({title:z.string().trim().min(4).max(100),character:z.string().trim().min(2).max(80),goal:z.string().trim().min(10).max(500),openingMessage:z.string().trim().min(2).max(600)}).strict().optional()}).strict().refine(value=>Boolean(value.scenarioId)!==Boolean(value.customScenario),"Elige un escenario disponible o crea uno personalizado.");
+const status:Record<string,number>={PLAN_REQUIRED:403,MONTHLY_LIMIT_REACHED:429,CONCURRENT_LIMIT:409,DIFFICULTY_LOCKED:403,CUSTOM_SCENARIO_LOCKED:403,SCENARIO_NOT_FOUND:404};
+export async function POST(request:NextRequest){const auth=await getTrainingServerSession(request);if(!auth)return jsonError({code:"UNAUTHORIZED",message:"Inicia sesión para comenzar."},401);const parsed=schema.safeParse(await request.json().catch(()=>null));if(!parsed.success)return jsonError({code:"INVALID_INPUT",message:"Revisa el escenario solicitado."},400);try{return jsonData(await new TrainingRoleplayService(createServiceSupabaseClient()).start(auth.user.id,parsed.data),201);}catch(error){const code=error instanceof Error?error.message:"START_FAILED";return jsonError({code,message:code==="PLAN_REQUIRED"?"Las simulaciones conversacionales están disponibles desde Pro.":code==="MONTHLY_LIMIT_REACHED"?"Ya utilizaste tus simulaciones de este mes. Puedes practicar con ejercicios deterministas o mejorar a Ilimitado.":"No pudimos iniciar la simulación."},status[code]??500);}}
