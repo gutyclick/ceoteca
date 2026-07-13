@@ -59,23 +59,23 @@ export async function POST(
     .eq("id", auth.user.id)
     .single();
   const plan = profile?.plan ?? "free";
-  const dailyLimit =
+  const now = new Date();
+  const { data: monthlyUsage } = await auth.client.rpc(
+    "get_training_ai_monthly_usage",
+    { p_user_id: auth.user.id, p_month: now.toISOString().slice(0, 10) },
+  );
+  const limit =
     plan === "free"
-      ? serverEnv.TRAINING_AI_DAILY_LIMIT_FREE
+      ? serverEnv.TRAINING_AI_FREE_DEEP_EVALUATIONS_PER_MONTH
       : serverEnv.TRAINING_AI_DAILY_LIMIT_PRO;
-  const start = new Date();
-  start.setHours(0, 0, 0, 0);
-  const { count } = await auth.client
-    .from("training_ai_evaluations")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", auth.user.id)
-    .gte("created_at", start.toISOString());
-  if ((count ?? 0) >= dailyLimit)
+  if ((monthlyUsage ?? 0) >= limit)
     return jsonError(
       {
         code: "AI_QUOTA_REACHED",
         message:
-          "Has utilizado las evaluaciones con IA incluidas hoy. Puedes continuar con autoevaluación.",
+          plan === "free"
+            ? "Ya utilizaste tu evaluación profunda de este mes. Puedes continuar con autoevaluación."
+            : "Has utilizado las evaluaciones con IA incluidas en tu plan.",
       },
       403,
     );

@@ -1,9 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { clientEnv } from "@/lib/env";
-import { createRemoteTraining } from "@/lib/training/api-client";
+import {
+  acceptAdaptiveRecommendation,
+  createRemoteTraining,
+  getAdaptiveRecommendation,
+} from "@/lib/training/api-client";
 import { ArrowRight, Clock3, ListChecks, Loader2, Signal } from "lucide-react";
 
 import {
@@ -23,6 +27,26 @@ export function TrainingHeroCard({
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [notice, setNotice] = useState("");
+  const [duration, setDuration] = useState<3 | 5 | 7 | 10 | 15>(7);
+  const [adaptive, setAdaptive] = useState<Awaited<
+    ReturnType<typeof getAdaptiveRecommendation>
+  > | null>(null);
+
+  useEffect(() => {
+    if (clientEnv.NEXT_PUBLIC_TRAINING_DATA_SOURCE !== "supabase") return;
+    let active = true;
+    getAdaptiveRecommendation(duration)
+      .then((value) => {
+        if (active) setAdaptive(value);
+      })
+      .catch(() => {
+        if (active)
+          setNotice("Usaremos la recomendación editorial disponible.");
+      });
+    return () => {
+      active = false;
+    };
+  }, [duration]);
 
   async function startTraining() {
     setIsLoading(true);
@@ -30,7 +54,9 @@ export function TrainingHeroCard({
     await new Promise((resolve) => window.setTimeout(resolve, 500));
     try {
       if (clientEnv.NEXT_PUBLIC_TRAINING_DATA_SOURCE === "supabase") {
-        const remote = await createRemoteTraining("propuestas-de-valor");
+        const remote = adaptive
+          ? await acceptAdaptiveRecommendation(adaptive.id)
+          : await createRemoteTraining("propuestas-de-valor");
         router.push(`/ejercicios/${remote.sessionId}`);
       } else {
         router.push(`/ejercicios/${recommendation.id}`);
@@ -59,23 +85,53 @@ export function TrainingHeroCard({
           <p className="mt-2 text-sm leading-6 text-slate-600">
             {recommendation.description}
           </p>
+          <label className="mt-4 inline-flex items-center gap-3 text-sm font-bold text-slate-700">
+            Tengo
+            <select
+              aria-label="Duración del entrenamiento"
+              className="min-h-10 rounded-[8px] border border-slate-200 bg-white px-3"
+              value={duration}
+              onChange={(event) =>
+                setDuration(Number(event.target.value) as 3 | 5 | 7 | 10 | 15)
+              }
+            >
+              {[3, 5, 7, 10, 15].map((value) => (
+                <option key={value} value={value}>
+                  {value} min
+                </option>
+              ))}
+            </select>
+          </label>
           <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold text-slate-500">
             <span className="inline-flex items-center gap-2">
               <Clock3 size={16} />
-              {recommendation.durationMinutes} min
+              {adaptive?.calculatedDurationMinutes ??
+                recommendation.durationMinutes}{" "}
+              min
             </span>
             <span className="inline-flex items-center gap-2">
               <ListChecks size={16} />
-              {recommendation.exerciseCount} ejercicios
+              {adaptive?.exerciseIds.length ??
+                recommendation.exerciseCount}{" "}
+              ejercicios
             </span>
             <span className="inline-flex items-center gap-2">
               <Signal size={16} />
-              Nivel {recommendation.level.toLocaleLowerCase("es")}
+              Nivel{" "}
+              {(adaptive?.difficulty ?? recommendation.level).toLocaleLowerCase(
+                "es",
+              )}
             </span>
           </div>
           <p className="mt-4 text-xs leading-5 text-slate-500">
-            Recomendado según tus lecturas y ejercicios anteriores.
+            {adaptive?.explanation.primaryReason ??
+              "Recomendado según tus lecturas y ejercicios anteriores."}
           </p>
+          {adaptive?.includesDeepAIEvaluation ? (
+            <span className="mt-3 inline-flex rounded-full bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700">
+              Evaluación profunda incluida
+            </span>
+          ) : null}
         </div>
         <BookThumbnailGroup books={recommendation.bookCovers} />
         <div className="min-w-0 max-w-full">

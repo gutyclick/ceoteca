@@ -32,6 +32,34 @@ export async function createRemoteTraining(templateSlug: string) {
     body: JSON.stringify({ templateSlug }),
   });
 }
+export async function getAdaptiveRecommendation(
+  durationMinutes: 3 | 5 | 7 | 10 | 15,
+) {
+  return request<{
+    id: string;
+    primarySkillId: string;
+    exerciseIds: string[];
+    difficulty: "beginner" | "intermediate" | "advanced";
+    requestedDurationMinutes: number;
+    calculatedDurationMinutes: number;
+    includesDeepAIEvaluation: boolean;
+    explanation: {
+      primaryReason: string;
+      supportingReasons: string[];
+      includesReview: boolean;
+      includesNewContent: boolean;
+    };
+  }>("/api/training/recommendations", {
+    method: "POST",
+    body: JSON.stringify({ durationMinutes }),
+  });
+}
+export async function acceptAdaptiveRecommendation(recommendationId: string) {
+  return request<{ sessionId: string }>(
+    `/api/training/recommendations/${recommendationId}/accept`,
+    { method: "POST", body: "{}" },
+  );
+}
 
 type Snapshot = {
   id: string;

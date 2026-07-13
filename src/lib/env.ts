@@ -42,6 +42,8 @@ const serverEnvSchema = clientEnvSchema.extend({
     .default(2500),
   TRAINING_AI_DAILY_LIMIT_FREE: z.coerce.number().int().min(0).default(2),
   TRAINING_AI_DAILY_LIMIT_PRO: z.coerce.number().int().min(0).default(30),
+  TRAINING_AI_FREE_DEEP_EVALUATIONS_PER_MONTH: z.coerce.number().int().min(0).default(1),
+  TRAINING_AI_FREE_REVISIONS_PER_EVALUATION: z.coerce.number().int().min(0).default(0),
   TRAINING_AI_MONTHLY_BUDGET_LIMIT: z.coerce.number().min(0).default(100),
   CRON_SECRET: z.string().optional(),
   PAYMENTS_PROVIDER: z.enum(["disabled"]).default("disabled"),

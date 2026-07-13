@@ -44,6 +44,20 @@ export async function POST(
     .select("id", { count: "exact", head: true })
     .eq("original_answer_id", answerId)
     .eq("user_id", auth.user.id);
+  const { data: profile } = await auth.client
+    .from("profiles")
+    .select("plan")
+    .eq("id", auth.user.id)
+    .single();
+  if ((profile?.plan ?? "free") === "free")
+    return jsonError(
+      {
+        code: "REVISION_REEVALUATION_NOT_INCLUDED",
+        message:
+          "La reevaluación de respuestas está disponible en el plan Pro. Puedes guardar tu revisión y usar la checklist de autoevaluación.",
+      },
+      403,
+    );
   if ((count ?? 0) >= 1)
     return jsonError(
       {
@@ -53,11 +67,6 @@ export async function POST(
       403,
     );
   try {
-    const { data: profile } = await auth.client
-      .from("profiles")
-      .select("plan")
-      .eq("id", auth.user.id)
-      .single();
     const evaluated = await new TrainingEvaluationService(auth.client).evaluate(
       {
         userId: auth.user.id,
@@ -72,15 +81,13 @@ export async function POST(
           | "founder",
       },
     );
-    await auth.client
-      .from("training_answer_revisions")
-      .insert({
-        original_answer_id: answerId,
-        user_id: auth.user.id,
-        revision_number: 1,
-        content: parsed.data.answer,
-        evaluation_id: evaluated.evaluationId,
-      });
+    await auth.client.from("training_answer_revisions").insert({
+      original_answer_id: answerId,
+      user_id: auth.user.id,
+      revision_number: 1,
+      content: parsed.data.answer,
+      evaluation_id: evaluated.evaluationId,
+    });
     return jsonData({ ...evaluated, revisionNumber: 1 });
   } catch {
     return jsonError(
