@@ -102,6 +102,17 @@ const serverEnvSchema = clientEnvSchema.extend({
     .min(500)
     .max(20000)
     .default(8000),
+  TRAINING_LEARNING_ANALYTICS_ENABLED: booleanStringSchema,
+  TRAINING_CONTENT_QUALITY_ENABLED: booleanStringSchema,
+  TRAINING_QUALITY_ALERTS_ENABLED: booleanStringSchema,
+  TRAINING_EXPERIMENTS_ENABLED: booleanStringSchema,
+  TRAINING_RETENTION_ANALYTICS_ENABLED: booleanStringSchema,
+  TRAINING_TRANSFER_ANALYTICS_ENABLED: booleanStringSchema,
+  TRAINING_ANALYTICS_MIN_ATTEMPTS: z.coerce.number().int().min(5).default(20),
+  TRAINING_ANALYTICS_MIN_USERS: z.coerce.number().int().min(5).default(10),
+  TRAINING_ANALYTICS_MIN_COHORT_SIZE: z.coerce.number().int().min(5).default(10),
+  TRAINING_ANALYTICS_RETENTION_DAYS: z.coerce.number().int().min(30).max(1095).default(395),
+  TRAINING_EXPERIMENT_SALT: z.string().min(32).optional(),
   CRON_SECRET: z.string().optional(),
   PAYMENTS_PROVIDER: z.enum(["disabled"]).default("disabled"),
   PAYMENTS_SECRET_KEY: z.string().optional(),

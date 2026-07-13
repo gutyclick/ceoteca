@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BookOpenCheck,
+  ChartNoAxesCombined,
   ClipboardCheck,
   FileClock,
   LayoutDashboard,
@@ -13,6 +14,11 @@ import {
 import type { ReactNode } from "react";
 const links = [
   { href: "/admin/training", label: "Resumen", icon: LayoutDashboard },
+  {
+    href: "/admin/training/analytics",
+    label: "Analítica pedagógica",
+    icon: ChartNoAxesCombined,
+  },
   { href: "/admin/training/exercises", label: "Ejercicios", icon: ListChecks },
   {
     href: "/admin/training/ai-generator",

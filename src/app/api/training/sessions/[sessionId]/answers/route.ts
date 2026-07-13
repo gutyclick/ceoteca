@@ -3,6 +3,9 @@ import { z } from "zod";
 import { jsonData, jsonError } from "@/lib/api/response";
 import { exerciseAnswerSchema } from "@/lib/training/schemas";
 import { getTrainingServerSession } from "@/lib/training/server-auth";
+import { randomUUID } from "node:crypto";
+import { createServiceSupabaseClient } from "@/lib/supabase/server";
+import { TrainingAnalyticsService } from "@/lib/training/analytics-service";
 
 const schema = z.object({
   sessionExerciseId: z.string().uuid(),
@@ -61,5 +64,15 @@ export async function POST(
       },
       500,
     );
+  void (async () => {
+    const service = createServiceSupabaseClient();
+    const { data: context } = await service.from("training_session_exercises").select("exercise_id,training_exercises(version,type,difficulty,skill_id,concept_id,cognitive_level)").eq("id", input.sessionExerciseId).maybeSingle();
+    type AnalyticsContext = { exercise_id: string; training_exercises: { version:number; type:string; difficulty:"beginner"|"intermediate"|"advanced"; skill_id:string; concept_id:string; cognitive_level:"recognition"|"recall"|"application"|"transfer"|"synthesis" } | Array<{ version:number; type:string; difficulty:"beginner"|"intermediate"|"advanced"; skill_id:string; concept_id:string; cognitive_level:"recognition"|"recall"|"application"|"transfer"|"synthesis" }> };
+    const analyticsContext = context as unknown as AnalyticsContext | null;
+    const exercise = Array.isArray(analyticsContext?.training_exercises) ? analyticsContext.training_exercises[0] : analyticsContext?.training_exercises;
+    if (!analyticsContext?.exercise_id || !exercise) return;
+    const result = data as { attemptNumber?: number; isCorrect?: boolean; normalizedScore?: number } | null;
+    await new TrainingAnalyticsService(service).recordServerEvent(auth.user.id, { clientEventId: randomUUID(), eventName: "exercise_answer_evaluated", occurredAt: new Date().toISOString(), sessionId, sessionExerciseId: input.sessionExerciseId, exerciseId: analyticsContext.exercise_id, exerciseVersion: Number(exercise.version), skillId: exercise.skill_id, conceptId: exercise.concept_id, attemptNumber: result?.attemptNumber ?? 1, properties: { exercise_type: exercise.type, difficulty: exercise.difficulty, is_correct: result?.isCorrect, normalized_score: result?.normalizedScore, hints_used: input.hintsUsed, retry_used: (result?.attemptNumber ?? 1) > 1, response_time_ms: input.responseTimeMs, cognitive_level: exercise.cognitive_level } });
+  })().catch(() => undefined);
   return jsonData(data);
 }

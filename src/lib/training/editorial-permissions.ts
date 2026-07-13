@@ -17,7 +17,13 @@ export type EditorialAction =
   | "manage_roles"
   | "ai_generate"
   | "ai_review"
-  | "view_costs";
+  | "view_costs"
+  | "analytics_read"
+  | "quality_alert_manage"
+  | "experiment_create"
+  | "experiment_review"
+  | "experiment_manage"
+  | "analytics_settings";
 const permissions: Record<EditorialRole, EditorialAction[]> = {
   admin: [
     "read",
@@ -32,6 +38,12 @@ const permissions: Record<EditorialRole, EditorialAction[]> = {
     "ai_generate",
     "ai_review",
     "view_costs",
+    "analytics_read",
+    "quality_alert_manage",
+    "experiment_create",
+    "experiment_review",
+    "experiment_manage",
+    "analytics_settings",
   ],
   editor: [
     "read",
@@ -41,9 +53,19 @@ const permissions: Record<EditorialRole, EditorialAction[]> = {
     "archive",
     "ai_generate",
     "ai_review",
+    "analytics_read",
+    "quality_alert_manage",
+    "experiment_create",
   ],
-  reviewer: ["read", "review", "ai_review"],
-  viewer: ["read"],
+  reviewer: [
+    "read",
+    "review",
+    "ai_review",
+    "analytics_read",
+    "quality_alert_manage",
+    "experiment_review",
+  ],
+  viewer: ["read", "analytics_read"],
 };
 export function canEditorial(role: EditorialRole, action: EditorialAction) {
   return permissions[role].includes(action);
