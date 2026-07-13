@@ -1,9 +1,14 @@
 import type { ReactNode } from "react";
-import { AdminTrainingShell } from "@/components/training/admin/AdminTrainingShell";
+import type { Metadata } from "next";
+import { AdminAccessGate } from "@/components/training/admin/AdminAccessGate";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 export default function AdminTrainingLayout({
   children,
 }: {
   children: ReactNode;
 }) {
-  return <AdminTrainingShell>{children}</AdminTrainingShell>;
+  return <AdminAccessGate>{children}</AdminAccessGate>;
 }
