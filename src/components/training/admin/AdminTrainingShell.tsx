@@ -8,11 +8,17 @@ import {
   LayoutDashboard,
   ListChecks,
   Scale,
+  WandSparkles,
 } from "lucide-react";
 import type { ReactNode } from "react";
 const links = [
   { href: "/admin/training", label: "Resumen", icon: LayoutDashboard },
   { href: "/admin/training/exercises", label: "Ejercicios", icon: ListChecks },
+  {
+    href: "/admin/training/ai-generator",
+    label: "Asistencia con IA",
+    icon: WandSparkles,
+  },
   {
     href: "/admin/training/templates",
     label: "Plantillas",

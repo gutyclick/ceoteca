@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { editorialRequest } from "@/lib/training/editorial-api";
 type Metadata = {
   skills: Array<{ id: string; name: string }>;
@@ -96,12 +97,20 @@ export function AdminExerciseCreator() {
     "min-h-11 w-full rounded-[8px] border border-slate-200 bg-white px-3";
   return (
     <>
-      <header className="border-b border-slate-200 pb-5">
-        <p className="text-sm font-bold text-violet-700">Paso {step} de 4</p>
-        <h1 className="mt-1 text-3xl font-black">Crear ejercicio</h1>
-        <p className="mt-1 text-slate-500">
-          Borrador editorial guiado, sin JSON manual.
-        </p>
+      <header className="flex flex-wrap items-end justify-between gap-4 border-b border-slate-200 pb-5">
+        <div>
+          <p className="text-sm font-bold text-violet-700">Paso {step} de 4</p>
+          <h1 className="mt-1 text-3xl font-black">Crear ejercicio</h1>
+          <p className="mt-1 text-slate-500">
+            Borrador editorial guiado, sin JSON manual.
+          </p>
+        </div>
+        <Link
+          className="inline-flex min-h-11 items-center rounded-[8px] border border-violet-300 px-4 font-bold text-violet-700"
+          href="/admin/training/ai-generator"
+        >
+          Generar borrador con IA
+        </Link>
       </header>
       <div className="mt-5 flex gap-2" aria-label="Progreso">
         {[1, 2, 3, 4].map((value) => (

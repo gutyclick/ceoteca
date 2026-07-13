@@ -42,9 +42,66 @@ const serverEnvSchema = clientEnvSchema.extend({
     .default(2500),
   TRAINING_AI_DAILY_LIMIT_FREE: z.coerce.number().int().min(0).default(2),
   TRAINING_AI_DAILY_LIMIT_PRO: z.coerce.number().int().min(0).default(30),
-  TRAINING_AI_FREE_DEEP_EVALUATIONS_PER_MONTH: z.coerce.number().int().min(0).default(1),
-  TRAINING_AI_FREE_REVISIONS_PER_EVALUATION: z.coerce.number().int().min(0).default(0),
+  TRAINING_AI_FREE_DEEP_EVALUATIONS_PER_MONTH: z.coerce
+    .number()
+    .int()
+    .min(0)
+    .default(1),
+  TRAINING_AI_FREE_REVISIONS_PER_EVALUATION: z.coerce
+    .number()
+    .int()
+    .min(0)
+    .default(0),
   TRAINING_AI_MONTHLY_BUDGET_LIMIT: z.coerce.number().min(0).default(100),
+  TRAINING_EDITORIAL_AI_ENABLED: booleanStringSchema,
+  TRAINING_EDITORIAL_AI_EXERCISE_GENERATION_ENABLED: booleanStringSchema,
+  TRAINING_EDITORIAL_AI_DISTRACTORS_ENABLED: booleanStringSchema,
+  TRAINING_EDITORIAL_AI_FEEDBACK_ENABLED: booleanStringSchema,
+  TRAINING_EDITORIAL_AI_VARIATIONS_ENABLED: booleanStringSchema,
+  TRAINING_EDITORIAL_AI_RUBRICS_ENABLED: booleanStringSchema,
+  TRAINING_EDITORIAL_AI_REVIEW_ENABLED: booleanStringSchema,
+  TRAINING_EDITORIAL_AI_TEMPLATE_SUGGESTION_ENABLED: booleanStringSchema,
+  TRAINING_EDITORIAL_AI_MONTHLY_BUDGET_USD: z.coerce
+    .number()
+    .min(0)
+    .default(25),
+  TRAINING_EDITORIAL_AI_DAILY_JOB_LIMIT: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .default(30),
+  TRAINING_EDITORIAL_AI_MAX_EXERCISES_PER_JOB: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(5)
+    .default(5),
+  TRAINING_EDITORIAL_AI_MAX_REGENERATIONS_PER_RESULT: z.coerce
+    .number()
+    .int()
+    .min(0)
+    .max(5)
+    .default(2),
+  TRAINING_EDITORIAL_AI_DEFAULT_MODEL: z.string().default("gpt-5.4-mini"),
+  TRAINING_EDITORIAL_AI_FALLBACK_MODEL: z.string().default("gpt-5.4-mini"),
+  TRAINING_EDITORIAL_AI_TIMEOUT_MS: z.coerce
+    .number()
+    .int()
+    .min(1000)
+    .max(60000)
+    .default(20000),
+  TRAINING_EDITORIAL_AI_MAX_RETRIES: z.coerce
+    .number()
+    .int()
+    .min(0)
+    .max(2)
+    .default(1),
+  TRAINING_EDITORIAL_AI_MAX_CONTEXT_CHARS: z.coerce
+    .number()
+    .int()
+    .min(500)
+    .max(20000)
+    .default(8000),
   CRON_SECRET: z.string().optional(),
   PAYMENTS_PROVIDER: z.enum(["disabled"]).default("disabled"),
   PAYMENTS_SECRET_KEY: z.string().optional(),

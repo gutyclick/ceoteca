@@ -34,7 +34,8 @@ describe("CMS editorial", () => {
   it("impide escalada de permisos", () => {
     expect(canEditorial("viewer", "edit")).toBe(false);
     expect(canEditorial("editor", "publish")).toBe(false);
-    expect(canEditorial("reviewer", "publish")).toBe(true);
+    expect(canEditorial("reviewer", "publish")).toBe(false);
+    expect(canEditorial("reviewer", "review")).toBe(true);
     expect(canEditorial("admin", "manage_roles")).toBe(true);
   });
   it("valida un ejercicio publicable", () => {

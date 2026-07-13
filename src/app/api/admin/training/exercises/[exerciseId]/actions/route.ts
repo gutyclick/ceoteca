@@ -4,7 +4,22 @@ import { jsonData, jsonError } from "@/lib/api/response";
 import { requireEditorialAccess } from "@/lib/training/editorial-auth";
 import { ExerciseEditorService } from "@/lib/training/editorial-service";
 const schema = z.object({
-  action: z.enum(["duplicate", "submit_review", "publish", "archive"]),
+  action: z.enum([
+    "duplicate",
+    "submit_review",
+    "approve",
+    "publish",
+    "archive",
+  ]),
+  confirmations: z
+    .object({
+      rightsConfirmed: z.literal(true),
+      accuracyConfirmed: z.literal(true),
+      feedbackConfirmed: z.literal(true),
+      correctAnswerConfirmed: z.literal(true),
+      rubricConfirmed: z.literal(true),
+    })
+    .optional(),
 });
 export async function POST(
   request: NextRequest,
@@ -19,11 +34,13 @@ export async function POST(
   const required =
     parsed.data.action === "publish"
       ? "publish"
-      : parsed.data.action === "archive"
-        ? "archive"
-        : parsed.data.action === "duplicate"
-          ? "create"
-          : "submit_review";
+      : parsed.data.action === "approve"
+        ? "review"
+        : parsed.data.action === "archive"
+          ? "archive"
+          : parsed.data.action === "duplicate"
+            ? "create"
+            : "submit_review";
   const access = await requireEditorialAccess(request, required);
   if (!access)
     return jsonError(
@@ -35,6 +52,19 @@ export async function POST(
   try {
     if (parsed.data.action === "duplicate")
       return jsonData(await service.duplicate(exerciseId));
+    if (parsed.data.action === "approve") {
+      if (!parsed.data.confirmations)
+        return jsonError(
+          {
+            code: "REVIEW_CONFIRMATIONS_REQUIRED",
+            message:
+              "Confirma derechos, exactitud, feedback, respuesta y rúbrica.",
+          },
+          400,
+        );
+      await service.approve(exerciseId, parsed.data.confirmations);
+      return jsonData({ ok: true });
+    }
     const status =
       parsed.data.action === "submit_review"
         ? "in_review"

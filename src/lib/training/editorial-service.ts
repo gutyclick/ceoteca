@@ -17,7 +17,16 @@ export class ExerciseEditorService {
     if (error) throw error;
     return data ?? [];
   }
-  async create(input: ExerciseDraft) {
+  async create(
+    input: ExerciseDraft,
+    provenance?: {
+      origin: "ai_generated" | "ai_assisted";
+      jobId: string;
+      resultId: string;
+      sourceContextType?: string;
+      promptVersion: string;
+    },
+  ) {
     const { data, error } = await this.db
       .from("training_exercises")
       .insert({
@@ -37,24 +46,36 @@ export class ExerciseEditorService {
         status: "draft",
         created_by: this.actorId,
         editorial_compliance: input.compliance,
+        origin: provenance?.origin ?? "manual",
+        ai_job_id: provenance?.jobId ?? null,
+        ai_result_id: provenance?.resultId ?? null,
+        human_reviewed: false,
+        source_context_type: provenance?.sourceContextType ?? null,
+        generation_prompt_version: provenance?.promptVersion ?? null,
       })
       .select("*")
       .single();
     if (error || !data) throw error ?? new Error("CREATE_FAILED");
     if (input.evaluationConfig)
-      await this.db
-        .from("training_exercise_evaluation_rules")
-        .insert({
-          exercise_id: data.id,
-          evaluation_config: input.evaluationConfig,
-        });
+      await this.db.from("training_exercise_evaluation_rules").insert({
+        exercise_id: data.id,
+        evaluation_config: input.evaluationConfig,
+      });
     await this.snapshot(data.id, 1, "draft", input.changeReason);
     await auditEditorial(this.db, {
       actorId: this.actorId,
-      action: "exercise_created",
+      action: provenance ? "ai_draft_created" : "exercise_created",
       entityType: "exercise",
       entityId: data.id,
       version: 1,
+      metadata: provenance
+        ? {
+            generated_with_ai: true,
+            generation_job_id: provenance.jobId,
+            generation_result_id: provenance.resultId,
+            human_reviewed: false,
+          }
+        : undefined,
     });
     return data;
   }
@@ -65,16 +86,14 @@ export class ExerciseEditorService {
       .eq("id", id)
       .single();
     if (data)
-      await this.db
-        .from("training_exercise_versions")
-        .insert({
-          exercise_id: id,
-          version,
-          snapshot: data,
-          status,
-          change_reason: reason ?? null,
-          created_by: this.actorId,
-        });
+      await this.db.from("training_exercise_versions").insert({
+        exercise_id: id,
+        version,
+        snapshot: data,
+        status,
+        change_reason: reason ?? null,
+        created_by: this.actorId,
+      });
   }
   async changeStatus(
     id: string,
@@ -86,6 +105,12 @@ export class ExerciseEditorService {
       .eq("id", id)
       .single();
     if (!exercise) throw new Error("NOT_FOUND");
+    if (
+      status === "published" &&
+      ["ai_generated", "ai_assisted"].includes(exercise.origin) &&
+      exercise.status !== "approved"
+    )
+      throw new Error("HUMAN_REVIEW_REQUIRED");
     if (
       status === "published" &&
       (!exercise.explanation || !exercise.concept_id)
@@ -109,6 +134,54 @@ export class ExerciseEditorService {
       entityType: "exercise",
       entityId: id,
       version: nextVersion,
+    });
+  }
+  async approve(
+    id: string,
+    confirmations: {
+      rightsConfirmed: true;
+      accuracyConfirmed: true;
+      feedbackConfirmed: true;
+      correctAnswerConfirmed: true;
+      rubricConfirmed: true;
+    },
+  ) {
+    const { data: exercise } = await this.db
+      .from("training_exercises")
+      .select("id,status,version,editorial_compliance")
+      .eq("id", id)
+      .maybeSingle();
+    if (!exercise || exercise.status !== "in_review")
+      throw new Error("NOT_IN_REVIEW");
+    const compliance = {
+      ...((exercise.editorial_compliance as Record<string, unknown>) ?? {}),
+      ...confirmations,
+    };
+    const { error } = await this.db
+      .from("training_exercises")
+      .update({
+        status: "approved",
+        version: exercise.version + 1,
+        human_reviewed: true,
+        reviewed_by: this.actorId,
+        reviewed_at: new Date().toISOString(),
+        editorial_compliance: compliance,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id);
+    if (error) throw error;
+    await this.snapshot(
+      id,
+      exercise.version + 1,
+      "approved",
+      "Revisión humana aprobada",
+    );
+    await auditEditorial(this.db, {
+      actorId: this.actorId,
+      action: "exercise_approved",
+      entityType: "exercise",
+      entityId: id,
+      metadata: { humanReviewed: true, confirmations },
     });
   }
   async duplicate(id: string) {

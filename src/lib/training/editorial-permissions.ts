@@ -14,7 +14,10 @@ export type EditorialAction =
   | "publish"
   | "archive"
   | "audit"
-  | "manage_roles";
+  | "manage_roles"
+  | "ai_generate"
+  | "ai_review"
+  | "view_costs";
 const permissions: Record<EditorialRole, EditorialAction[]> = {
   admin: [
     "read",
@@ -26,9 +29,20 @@ const permissions: Record<EditorialRole, EditorialAction[]> = {
     "archive",
     "audit",
     "manage_roles",
+    "ai_generate",
+    "ai_review",
+    "view_costs",
   ],
-  editor: ["read", "create", "edit", "submit_review", "archive"],
-  reviewer: ["read", "review", "publish"],
+  editor: [
+    "read",
+    "create",
+    "edit",
+    "submit_review",
+    "archive",
+    "ai_generate",
+    "ai_review",
+  ],
+  reviewer: ["read", "review", "ai_review"],
   viewer: ["read"],
 };
 export function canEditorial(role: EditorialRole, action: EditorialAction) {
