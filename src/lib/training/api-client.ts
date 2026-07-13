@@ -44,6 +44,10 @@ type Snapshot = {
   hint?: string;
   explanation: string;
   content: Record<string, unknown>;
+  minimumLength?: number;
+  maximumLength?: number;
+  allowRevision?: boolean;
+  maxRevisions?: number;
 };
 export async function getRemoteTraining(
   sessionId: string,
@@ -70,6 +74,10 @@ export async function getRemoteTraining(
         correctOptionIds: [],
         correctValue: false,
         correctOrder: [],
+        minimumLength: snapshot.minimumLength ?? 40,
+        maximumLength: snapshot.maximumLength ?? 2500,
+        allowRevision: snapshot.allowRevision ?? false,
+        maxRevisions: snapshot.maxRevisions ?? 0,
       }) as Exercise,
   );
   return {
@@ -117,4 +125,41 @@ export async function completeRemoteTraining(sessionId: string) {
     `/api/training/sessions/${sessionId}/complete`,
     { method: "POST", body: "{}" },
   );
+}
+
+export async function evaluateRemoteOpenAnswer(
+  sessionId: string,
+  sessionExerciseId: string,
+  answer: ExerciseAnswer,
+) {
+  return request<{
+    evaluationId: string;
+    answerId?: string;
+    status: string;
+    feedback: import("@/lib/training/ai-schemas").OpenEvaluation;
+    cacheHit: boolean;
+  }>(`/api/training/sessions/${sessionId}/open-answers`, {
+    method: "POST",
+    body: JSON.stringify({
+      sessionExerciseId,
+      answer,
+      clientEvaluationId: crypto.randomUUID(),
+    }),
+  });
+}
+
+export async function evaluateRemoteRevision(
+  answerId: string,
+  answer: ExerciseAnswer,
+) {
+  return request<{
+    evaluationId: string;
+    answerId?: string;
+    status: string;
+    feedback: import("@/lib/training/ai-schemas").OpenEvaluation;
+    revisionNumber: number;
+  }>(`/api/training/answers/${answerId}/revisions`, {
+    method: "POST",
+    body: JSON.stringify({ answer, clientEvaluationId: crypto.randomUUID() }),
+  });
 }

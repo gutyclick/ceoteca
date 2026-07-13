@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils/cn";
+import { OpenExerciseFields } from "@/components/training/session/OpenExerciseFields";
 import type {
   Exercise,
   ExerciseAnswer,
@@ -346,6 +347,19 @@ export function ExerciseRenderer({
             onChange={onAnswerChange}
           />
         </div>
+      );
+      break;
+    case "open_response":
+    case "guided_builder":
+    case "decision_justification":
+    case "reflection":
+      content = (
+        <OpenExerciseFields
+          answer={currentAnswer}
+          disabled={disabled}
+          exercise={exercise}
+          onChange={onAnswerChange}
+        />
       );
       break;
     default:

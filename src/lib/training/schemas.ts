@@ -1,16 +1,180 @@
 import { z } from "zod";
 
-const optionSchema = z.object({ id: z.string().min(1), label: z.string().min(1) });
-const base = { id: z.string().min(1), title: z.string().optional(), prompt: z.string().min(1), instruction: z.string().min(1), skill: z.string().min(1), concept: z.string().min(1), difficulty: z.enum(["beginner", "intermediate", "advanced"]), estimatedSeconds: z.number().positive().optional(), hint: z.string().optional(), explanation: z.string().min(1), sourceBook: z.object({ id: z.string(), title: z.string(), author: z.string() }).optional() };
+const optionSchema = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+});
+const base = {
+  id: z.string().min(1),
+  title: z.string().optional(),
+  prompt: z.string().min(1),
+  instruction: z.string().min(1),
+  skill: z.string().min(1),
+  concept: z.string().min(1),
+  difficulty: z.enum(["beginner", "intermediate", "advanced"]),
+  estimatedSeconds: z.number().positive().optional(),
+  hint: z.string().optional(),
+  explanation: z.string().min(1),
+  sourceBook: z
+    .object({ id: z.string(), title: z.string(), author: z.string() })
+    .optional(),
+};
+const openBase = {
+  ...base,
+  context: z.string().optional(),
+  minimumLength: z.number().int().min(1),
+  maximumLength: z.number().int().max(10000),
+  allowRevision: z.boolean(),
+  maxRevisions: z.number().int().min(0).max(5),
+};
 export const exerciseSchema = z.discriminatedUnion("type", [
-  z.object({ ...base, type: z.literal("single_choice"), options: z.array(optionSchema).min(2), correctOptionId: z.string() }),
-  z.object({ ...base, type: z.literal("multiple_choice"), options: z.array(optionSchema).min(2), correctOptionIds: z.array(z.string()).min(1), selectionCount: z.number().positive().optional() }),
-  z.object({ ...base, type: z.literal("true_false"), correctValue: z.boolean() }),
-  z.object({ ...base, type: z.literal("ordering"), items: z.array(optionSchema).min(2), correctOrder: z.array(z.string()).min(2) }),
-  z.object({ ...base, type: z.literal("flashcard"), front: z.string().min(1), back: z.string().min(1) }),
-  z.object({ ...base, type: z.literal("scenario"), context: z.string().min(1), options: z.array(optionSchema).min(2), correctOptionId: z.string(), consequence: z.string(), principle: z.string(), practicalApplication: z.string() }),
+  z.object({
+    ...base,
+    type: z.literal("single_choice"),
+    options: z.array(optionSchema).min(2),
+    correctOptionId: z.string(),
+  }),
+  z.object({
+    ...base,
+    type: z.literal("multiple_choice"),
+    options: z.array(optionSchema).min(2),
+    correctOptionIds: z.array(z.string()).min(1),
+    selectionCount: z.number().positive().optional(),
+  }),
+  z.object({
+    ...base,
+    type: z.literal("true_false"),
+    correctValue: z.boolean(),
+  }),
+  z.object({
+    ...base,
+    type: z.literal("ordering"),
+    items: z.array(optionSchema).min(2),
+    correctOrder: z.array(z.string()).min(2),
+  }),
+  z.object({
+    ...base,
+    type: z.literal("flashcard"),
+    front: z.string().min(1),
+    back: z.string().min(1),
+  }),
+  z.object({
+    ...base,
+    type: z.literal("scenario"),
+    context: z.string().min(1),
+    options: z.array(optionSchema).min(2),
+    correctOptionId: z.string(),
+    consequence: z.string(),
+    principle: z.string(),
+    practicalApplication: z.string(),
+  }),
+  z.object({
+    ...openBase,
+    type: z.literal("open_response"),
+    placeholder: z.string(),
+  }),
+  z.object({
+    ...openBase,
+    type: z.literal("reflection"),
+    placeholder: z.string(),
+  }),
+  z.object({
+    ...openBase,
+    type: z.literal("guided_builder"),
+    fields: z
+      .array(
+        z.object({ id: z.string(), label: z.string(), prompt: z.string() }),
+      )
+      .min(2),
+    template: z.string(),
+  }),
+  z.object({
+    ...openBase,
+    type: z.literal("decision_justification"),
+    options: z.array(optionSchema).min(2),
+  }),
 ]);
-export const trainingSessionSchema = z.object({ id: z.string(), title: z.string(), description: z.string(), category: z.string(), difficulty: z.enum(["beginner", "intermediate", "advanced"]), estimatedMinutes: z.number().positive(), skills: z.array(z.string()), sourceBooks: z.array(z.object({ id: z.string(), title: z.string(), author: z.string(), imagePath: z.string() })), exercises: z.array(exerciseSchema).min(1), status: z.enum(["not_started", "in_progress", "completed", "abandoned"]), midpointEnabled: z.boolean(), masteryBefore: z.number().min(0).max(100) });
-export const exerciseAnswerSchema = z.discriminatedUnion("type", [z.object({ type: z.literal("single_choice"), optionId: z.string() }), z.object({ type: z.literal("multiple_choice"), optionIds: z.array(z.string()) }), z.object({ type: z.literal("true_false"), value: z.boolean() }), z.object({ type: z.literal("ordering"), itemIds: z.array(z.string()) }), z.object({ type: z.literal("flashcard"), rating: z.enum(["forgot", "almost", "knew"]) }), z.object({ type: z.literal("scenario"), optionId: z.string() })]);
-export const progressSchema = z.object({ sessionId: z.string(), currentExerciseIndex: z.number().int().nonnegative(), answers: z.array(z.object({ exerciseId: z.string(), answer: exerciseAnswerSchema, correct: z.boolean(), attempts: z.number().int().positive(), hintUsed: z.boolean(), score: z.number() })), attempts: z.record(z.string(), z.number()), hintsUsed: z.array(z.string()), startedAt: z.string(), updatedAt: z.string(), completedAt: z.string().optional(), status: z.enum(["not_started", "in_progress", "completed", "abandoned"]), midpointSeen: z.boolean() });
-export const resultSchema = z.object({ sessionId: z.string(), correctAnswers: z.number().nonnegative(), incorrectAnswers: z.number().nonnegative(), retriedAnswers: z.number().nonnegative(), hintsUsed: z.number().nonnegative(), completionPercentage: z.number().min(0).max(100), score: z.number().min(0).max(100), masteryBefore: z.number().min(0).max(100), masteryAfter: z.number().min(0).max(100), strengths: z.array(z.string()), areasToReview: z.array(z.string()), durationSeconds: z.number().nonnegative(), completedAt: z.string() });
+export const trainingSessionSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string(),
+  category: z.string(),
+  difficulty: z.enum(["beginner", "intermediate", "advanced"]),
+  estimatedMinutes: z.number().positive(),
+  skills: z.array(z.string()),
+  sourceBooks: z.array(
+    z.object({
+      id: z.string(),
+      title: z.string(),
+      author: z.string(),
+      imagePath: z.string(),
+    }),
+  ),
+  exercises: z.array(exerciseSchema).min(1),
+  status: z.enum(["not_started", "in_progress", "completed", "abandoned"]),
+  midpointEnabled: z.boolean(),
+  masteryBefore: z.number().min(0).max(100),
+});
+export const exerciseAnswerSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("single_choice"), optionId: z.string() }),
+  z.object({
+    type: z.literal("multiple_choice"),
+    optionIds: z.array(z.string()),
+  }),
+  z.object({ type: z.literal("true_false"), value: z.boolean() }),
+  z.object({ type: z.literal("ordering"), itemIds: z.array(z.string()) }),
+  z.object({
+    type: z.literal("flashcard"),
+    rating: z.enum(["forgot", "almost", "knew"]),
+  }),
+  z.object({ type: z.literal("scenario"), optionId: z.string() }),
+  z.object({
+    type: z.enum(["open_response", "reflection"]),
+    text: z.string().max(10000),
+  }),
+  z.object({
+    type: z.literal("guided_builder"),
+    fields: z.record(z.string(), z.string().max(2000)),
+  }),
+  z.object({
+    type: z.literal("decision_justification"),
+    optionId: z.string(),
+    justification: z.string().max(10000),
+  }),
+]);
+export const progressSchema = z.object({
+  sessionId: z.string(),
+  currentExerciseIndex: z.number().int().nonnegative(),
+  answers: z.array(
+    z.object({
+      exerciseId: z.string(),
+      answer: exerciseAnswerSchema,
+      correct: z.boolean(),
+      attempts: z.number().int().positive(),
+      hintUsed: z.boolean(),
+      score: z.number(),
+    }),
+  ),
+  attempts: z.record(z.string(), z.number()),
+  hintsUsed: z.array(z.string()),
+  startedAt: z.string(),
+  updatedAt: z.string(),
+  completedAt: z.string().optional(),
+  status: z.enum(["not_started", "in_progress", "completed", "abandoned"]),
+  midpointSeen: z.boolean(),
+});
+export const resultSchema = z.object({
+  sessionId: z.string(),
+  correctAnswers: z.number().nonnegative(),
+  incorrectAnswers: z.number().nonnegative(),
+  retriedAnswers: z.number().nonnegative(),
+  hintsUsed: z.number().nonnegative(),
+  completionPercentage: z.number().min(0).max(100),
+  score: z.number().min(0).max(100),
+  masteryBefore: z.number().min(0).max(100),
+  masteryAfter: z.number().min(0).max(100),
+  strengths: z.array(z.string()),
+  areasToReview: z.array(z.string()),
+  durationSeconds: z.number().nonnegative(),
+  completedAt: z.string(),
+});

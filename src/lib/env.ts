@@ -10,7 +10,9 @@ const clientEnvSchema = z.object({
   NEXT_PUBLIC_DEMO_MODE: booleanStringSchema,
   NEXT_PUBLIC_SUPABASE_URL: z.string().optional(),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().optional(),
-  NEXT_PUBLIC_TRAINING_DATA_SOURCE: z.enum(["mock", "supabase"]).default("mock"),
+  NEXT_PUBLIC_TRAINING_DATA_SOURCE: z
+    .enum(["mock", "supabase"])
+    .default("mock"),
 });
 
 const serverEnvSchema = clientEnvSchema.extend({
@@ -19,6 +21,28 @@ const serverEnvSchema = clientEnvSchema.extend({
   OPENAI_CHAT_MODEL: z.string().optional(),
   OPENAI_TTS_MODEL: z.string().optional(),
   OPENAI_TTS_VOICE: z.string().optional(),
+  TRAINING_AI_ENABLED: booleanStringSchema,
+  TRAINING_AI_OPEN_RESPONSE_ENABLED: booleanStringSchema,
+  TRAINING_AI_REVISIONS_ENABLED: booleanStringSchema,
+  TRAINING_AI_FALLBACK_ENABLED: booleanStringSchema,
+  TRAINING_AI_DEFAULT_MODEL: z.string().default("gpt-5.4-mini"),
+  TRAINING_AI_FALLBACK_MODEL: z.string().default("gpt-5.4-mini"),
+  TRAINING_AI_TIMEOUT_MS: z.coerce
+    .number()
+    .int()
+    .min(1000)
+    .max(60000)
+    .default(15000),
+  TRAINING_AI_MAX_RETRIES: z.coerce.number().int().min(0).max(2).default(1),
+  TRAINING_AI_MAX_INPUT_CHARS: z.coerce
+    .number()
+    .int()
+    .min(100)
+    .max(10000)
+    .default(2500),
+  TRAINING_AI_DAILY_LIMIT_FREE: z.coerce.number().int().min(0).default(2),
+  TRAINING_AI_DAILY_LIMIT_PRO: z.coerce.number().int().min(0).default(30),
+  TRAINING_AI_MONTHLY_BUDGET_LIMIT: z.coerce.number().min(0).default(100),
   CRON_SECRET: z.string().optional(),
   PAYMENTS_PROVIDER: z.enum(["disabled"]).default("disabled"),
   PAYMENTS_SECRET_KEY: z.string().optional(),
@@ -37,7 +61,8 @@ export const clientEnv = clientEnvSchema.parse({
   NEXT_PUBLIC_DEMO_MODE: process.env.NEXT_PUBLIC_DEMO_MODE,
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-  NEXT_PUBLIC_TRAINING_DATA_SOURCE: process.env.NEXT_PUBLIC_TRAINING_DATA_SOURCE,
+  NEXT_PUBLIC_TRAINING_DATA_SOURCE:
+    process.env.NEXT_PUBLIC_TRAINING_DATA_SOURCE,
 });
 
 export const serverEnv = serverEnvSchema.parse({

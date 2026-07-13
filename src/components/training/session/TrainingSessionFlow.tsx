@@ -14,6 +14,7 @@ import { trainingRepository } from "@/lib/training/repository";
 import { clientEnv } from "@/lib/env";
 import {
   completeRemoteTraining,
+  evaluateRemoteOpenAnswer,
   getRemoteTraining,
   submitRemoteAnswer,
 } from "@/lib/training/api-client";
@@ -32,6 +33,7 @@ import type {
   TrainingSession,
   TrainingSessionProgress,
 } from "@/types/training-engine";
+import type { OpenEvaluation } from "@/lib/training/ai-schemas";
 
 export function TrainingSessionFlow({ sessionId }: { sessionId: string }) {
   const router = useRouter();
@@ -40,6 +42,9 @@ export function TrainingSessionFlow({ sessionId }: { sessionId: string }) {
   const [records, setRecords] = useState<AnswerRecord[]>([]);
   const [answer, setAnswer] = useState<ExerciseAnswer | null>(null);
   const [feedback, setFeedback] = useState<FeedbackState>(null);
+  const [openEvaluation, setOpenEvaluation] = useState<OpenEvaluation | null>(
+    null,
+  );
   const [hint, setHint] = useState("");
   const [exitOpen, setExitOpen] = useState(false);
   const [loadError, setLoadError] = useState("");
@@ -167,8 +172,35 @@ export function TrainingSessionFlow({ sessionId }: { sessionId: string }) {
       (records.find((item) => item.exerciseId === exercise.id)?.attempts ?? 0) +
       1;
     const remote = clientEnv.NEXT_PUBLIC_TRAINING_DATA_SOURCE === "supabase";
+    const open = new Set([
+      "open_response",
+      "guided_builder",
+      "decision_justification",
+      "reflection",
+    ]).has(exercise.type);
     let official = null;
-    if (remote) {
+    if (remote && open) {
+      try {
+        const evaluated = await evaluateRemoteOpenAnswer(
+          sessionId,
+          exercise.id,
+          answer,
+        );
+        setOpenEvaluation(evaluated.feedback);
+        official = {
+          isCorrect: evaluated.feedback.overallScore >= 60,
+          score: evaluated.feedback.overallScore,
+          explanation: evaluated.feedback.summaryFeedback,
+        };
+      } catch {
+        official = {
+          isCorrect: true,
+          score: 50,
+          explanation:
+            "Conservamos tu respuesta. Revísala con la rúbrica y continúa cuando estés listo.",
+        };
+      }
+    } else if (remote) {
       try {
         official = await submitRemoteAnswer(
           sessionId,
@@ -212,6 +244,7 @@ export function TrainingSessionFlow({ sessionId }: { sessionId: string }) {
   function retry() {
     setAnswer(null);
     setFeedback(null);
+    setOpenEvaluation(null);
     setHint("");
     send({ type: "RETRY" });
   }
@@ -238,6 +271,7 @@ export function TrainingSessionFlow({ sessionId }: { sessionId: string }) {
     }
     setAnswer(null);
     setFeedback(null);
+    setOpenEvaluation(null);
     setHint("");
     await save(records, index + 1);
   }
@@ -347,16 +381,56 @@ export function TrainingSessionFlow({ sessionId }: { sessionId: string }) {
           </p>
         ) : null}
         {feedback ? (
-          <FeedbackPanel
-            canRetry={
-              records.find((item) => item.exerciseId === exercise.id)
-                ?.attempts === 1 && exercise.type !== "flashcard"
-            }
-            exercise={exercise}
-            feedback={feedback}
-            onContinue={() => void continueFlow()}
-            onRetry={retry}
-          />
+          <>
+            {openEvaluation ? (
+              <section
+                aria-live="polite"
+                className="mt-6 rounded-[8px] border border-violet-200 bg-violet-50 p-5"
+              >
+                <h2 className="text-lg font-black">
+                  {openEvaluation.verdict === "strong"
+                    ? "Respuesta sólida"
+                    : openEvaluation.verdict === "good_foundation"
+                      ? "Buena base"
+                      : "Puedes hacerla más clara"}
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-slate-700">
+                  {openEvaluation.summaryFeedback}
+                </p>
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <h3 className="text-sm font-black">Lo que hiciste bien</h3>
+                    <ul className="mt-2 space-y-1 text-sm text-slate-700">
+                      {openEvaluation.strengths.map((item) => (
+                        <li key={item}>• {item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black">Qué puedes mejorar</h3>
+                    <ul className="mt-2 space-y-1 text-sm text-slate-700">
+                      {openEvaluation.improvements.map((item) => (
+                        <li key={item}>• {item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+                <p className="mt-4 text-xs text-slate-500">
+                  Evaluación generada por IA según la rúbrica de este ejercicio.
+                </p>
+              </section>
+            ) : null}
+            <FeedbackPanel
+              canRetry={
+                records.find((item) => item.exerciseId === exercise.id)
+                  ?.attempts === 1 && exercise.type !== "flashcard"
+              }
+              exercise={exercise}
+              feedback={feedback}
+              onContinue={() => void continueFlow()}
+              onRetry={retry}
+            />
+          </>
         ) : (
           <div className="mt-7">
             <button
