@@ -11,6 +11,12 @@ import {
   scoreAnswer,
 } from "@/lib/training/evaluation";
 import { trainingRepository } from "@/lib/training/repository";
+import { clientEnv } from "@/lib/env";
+import {
+  completeRemoteTraining,
+  getRemoteTraining,
+  submitRemoteAnswer,
+} from "@/lib/training/api-client";
 import { calculateTrainingResult } from "@/lib/training/results";
 import { createTrainingSessionMachine } from "@/lib/training/session-machine";
 import { ExerciseRenderer } from "@/components/training/session/ExerciseRenderer";
@@ -43,7 +49,11 @@ export function TrainingSessionFlow({ sessionId }: { sessionId: string }) {
   const exercise = session?.exercises[index];
 
   useEffect(() => {
-    if (exercise?.type === "ordering" && answer === null && state.matches("answering")) {
+    if (
+      exercise?.type === "ordering" &&
+      answer === null &&
+      state.matches("answering")
+    ) {
       const initialAnswer: ExerciseAnswer = {
         type: "ordering",
         itemIds: exercise.items.map((item) => item.id),
@@ -57,7 +67,14 @@ export function TrainingSessionFlow({ sessionId }: { sessionId: string }) {
     let active = true;
     (async () => {
       try {
-        const loaded = await trainingRepository.getSession(sessionId);
+        const remote =
+          clientEnv.NEXT_PUBLIC_TRAINING_DATA_SOURCE === "supabase";
+        const remotePayload = remote
+          ? await getRemoteTraining(sessionId)
+          : null;
+        const loaded = remotePayload
+          ? remotePayload.session
+          : await trainingRepository.getSession(sessionId);
         const progress = await trainingRepository.getProgress(sessionId);
         if (!active) return;
         setSession(loaded);
@@ -67,7 +84,10 @@ export function TrainingSessionFlow({ sessionId }: { sessionId: string }) {
         }
         send({
           type: "SESSION_LOADED",
-          restoredIndex: progress?.currentExerciseIndex ?? 0,
+          restoredIndex:
+            progress?.currentExerciseIndex ??
+            remotePayload?.currentExerciseIndex ??
+            0,
         });
       } catch (error) {
         const message =
@@ -146,14 +166,32 @@ export function TrainingSessionFlow({ sessionId }: { sessionId: string }) {
     const attempts =
       (records.find((item) => item.exerciseId === exercise.id)?.attempts ?? 0) +
       1;
-    const correct = evaluateAnswer(exercise, answer);
+    const remote = clientEnv.NEXT_PUBLIC_TRAINING_DATA_SOURCE === "supabase";
+    let official = null;
+    if (remote) {
+      try {
+        official = await submitRemoteAnswer(
+          sessionId,
+          exercise.id,
+          answer,
+          hint ? 1 : 0,
+        );
+      } catch {
+        setLoadError(
+          "No pudimos enviar la respuesta. Tu avance local permanece en este dispositivo; vuelve a intentarlo cuando recuperes conexión.",
+        );
+      }
+    }
+    const correct = official?.isCorrect ?? evaluateAnswer(exercise, answer);
     const record: AnswerRecord = {
       exerciseId: exercise.id,
       answer,
       correct,
       attempts,
       hintUsed: Boolean(hint),
-      score: scoreAnswer(answer, correct, attempts, Boolean(hint)),
+      score:
+        official?.score ??
+        scoreAnswer(answer, correct, attempts, Boolean(hint)),
     };
     const next = [
       ...records.filter((item) => item.exerciseId !== exercise.id),
@@ -162,7 +200,7 @@ export function TrainingSessionFlow({ sessionId }: { sessionId: string }) {
     setRecords(next);
     setFeedback({
       kind: exercise.type === "flashcard" || correct ? "correct" : "incorrect",
-      explanation: exercise.explanation,
+      explanation: official?.explanation ?? exercise.explanation,
       principle:
         exercise.type === "scenario"
           ? exercise.principle
@@ -182,6 +220,8 @@ export function TrainingSessionFlow({ sessionId }: { sessionId: string }) {
     const last = index >= session.exercises.length - 1;
     send({ type: "CONTINUE" });
     if (last) {
+      if (clientEnv.NEXT_PUBLIC_TRAINING_DATA_SOURCE === "supabase")
+        await completeRemoteTraining(session.id);
       const progress = makeProgress(records, index, "completed");
       const result = calculateTrainingResult(
         session,

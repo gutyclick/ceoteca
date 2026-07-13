@@ -18,6 +18,9 @@ vi.mock("@/components/app/DashboardAccountMenu", () => ({
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
+vi.mock("@/lib/env", () => ({
+  clientEnv: { NEXT_PUBLIC_TRAINING_DATA_SOURCE: "mock" },
+}));
 
 describe("TrainingView", () => {
   it("muestra las cinco secciones y sus datos mock", () => {

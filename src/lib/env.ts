@@ -10,6 +10,7 @@ const clientEnvSchema = z.object({
   NEXT_PUBLIC_DEMO_MODE: booleanStringSchema,
   NEXT_PUBLIC_SUPABASE_URL: z.string().optional(),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().optional(),
+  NEXT_PUBLIC_TRAINING_DATA_SOURCE: z.enum(["mock", "supabase"]).default("mock"),
 });
 
 const serverEnvSchema = clientEnvSchema.extend({
@@ -36,6 +37,7 @@ export const clientEnv = clientEnvSchema.parse({
   NEXT_PUBLIC_DEMO_MODE: process.env.NEXT_PUBLIC_DEMO_MODE,
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  NEXT_PUBLIC_TRAINING_DATA_SOURCE: process.env.NEXT_PUBLIC_TRAINING_DATA_SOURCE,
 });
 
 export const serverEnv = serverEnvSchema.parse({
