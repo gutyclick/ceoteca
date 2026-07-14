@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import {
   ArrowDown,
@@ -46,7 +47,15 @@ function ChoiceList({
 }: {
   exercise: Extract<
     Exercise,
-    { type: "single_choice" | "multiple_choice" | "scenario" }
+    {
+      type:
+        | "single_choice"
+        | "multiple_choice"
+        | "scenario"
+        | "visual_single_choice"
+        | "visual_comparison"
+        | "visual_diagnosis";
+    }
   >;
   answer: ExerciseAnswer | null;
   disabled: boolean;
@@ -98,6 +107,55 @@ function ChoiceList({
           </button>
         );
       })}
+    </div>
+  );
+}
+
+function VisualAssets({
+  exercise,
+}: {
+  exercise: Extract<
+    Exercise,
+    {
+      type:
+        | "visual_single_choice"
+        | "visual_comparison"
+        | "visual_diagnosis"
+        | "visual_annotation"
+        | "visual_ranking";
+    }
+  >;
+}) {
+  return (
+    <div className="mb-5">
+      <div className="grid gap-3 sm:grid-cols-2">
+        {exercise.assets.map((asset) => (
+          <figure
+            className="overflow-hidden rounded-[8px] border border-slate-200 bg-white"
+            key={asset.id}
+          >
+            <div className="relative aspect-[4/3] bg-slate-50">
+              <Image
+                alt={asset.altText}
+                className="object-contain p-3"
+                fill
+                sizes="(max-width: 640px) 100vw, 50vw"
+                src={asset.imageUrl}
+                unoptimized
+              />
+            </div>
+            <figcaption className="border-t border-slate-200 p-3 text-sm font-bold text-slate-700">
+              {asset.label}
+            </figcaption>
+          </figure>
+        ))}
+      </div>
+      <details className="mt-3 rounded-[8px] border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
+        <summary className="cursor-pointer font-bold text-slate-800">
+          Descripción accesible
+        </summary>
+        <p className="mt-2 leading-6">{exercise.visualAlternative}</p>
+      </details>
     </div>
   );
 }
@@ -349,10 +407,63 @@ export function ExerciseRenderer({
         </div>
       );
       break;
+    case "visual_single_choice":
+    case "visual_comparison":
+    case "visual_diagnosis":
+      content = (
+        <div>
+          <VisualAssets exercise={exercise} />
+          <ChoiceList
+            answer={currentAnswer}
+            disabled={disabled}
+            exercise={exercise}
+            multiple={false}
+            onChange={onAnswerChange}
+          />
+        </div>
+      );
+      break;
+    case "visual_ranking":
+      content = (
+        <div>
+          <VisualAssets exercise={exercise} />
+          <Ordering
+            answer={
+              currentAnswer?.type === "visual_ranking"
+                ? { type: "ordering", itemIds: currentAnswer.itemIds }
+                : null
+            }
+            disabled={disabled}
+            exercise={{
+              ...exercise,
+              type: "ordering",
+              items: exercise.assets.map((asset) => ({
+                id: asset.id,
+                label: asset.label,
+              })),
+            }}
+            onChange={(answer) => {
+              if (answer.type === "ordering") {
+                onAnswerChange({
+                  type: "visual_ranking",
+                  itemIds: answer.itemIds,
+                });
+              }
+            }}
+          />
+        </div>
+      );
+      break;
     case "open_response":
     case "guided_builder":
     case "decision_justification":
     case "reflection":
+    case "message_response":
+    case "message_comparison":
+    case "tone_adjustment":
+    case "objection_response":
+    case "email_rewrite":
+    case "conversation_diagnosis":
       content = (
         <OpenExerciseFields
           answer={currentAnswer}
@@ -360,6 +471,19 @@ export function ExerciseRenderer({
           exercise={exercise}
           onChange={onAnswerChange}
         />
+      );
+      break;
+    case "visual_annotation":
+      content = (
+        <div>
+          <VisualAssets exercise={exercise} />
+          <OpenExerciseFields
+            answer={currentAnswer}
+            disabled={disabled}
+            exercise={exercise}
+            onChange={onAnswerChange}
+          />
+        </div>
       );
       break;
     default:

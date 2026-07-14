@@ -1,57 +1,226 @@
+import {
+  ArrowRight,
+  Blocks,
+  MessagesSquare,
+  ScanSearch,
+  Target,
+} from "lucide-react";
 import Link from "next/link";
-import { ArrowRight, MessagesSquare } from "lucide-react";
 
-import { DashboardAccountMenu } from "@/components/app/DashboardAccountMenu";
-import { DashboardSidebar } from "@/components/app/DashboardSidebar";
-import { NotificationBell } from "@/components/app/NotificationBell";
 import { ContinueTrainingCard } from "@/components/training/ContinueTrainingCard";
-import { SkillProgressRow } from "@/components/training/TrainingPrimitives";
-import { TrainingCategoryCard } from "@/components/training/TrainingCategoryCard";
+import { TaxonomyIcon } from "@/components/training/TaxonomyIcon";
 import { TrainingHeroCard } from "@/components/training/TrainingHeroCard";
-import { continueTraining, skillProgress, todayTraining, trainingCategories } from "@/data/training";
+import { TrainingPageShell } from "@/components/training/TrainingPageShell";
+import { TrainingProgressOverview } from "@/components/training/TrainingProgressOverview";
+import { TrainingProgressBar } from "@/components/training/TrainingPrimitives";
+import { continueTraining, todayTraining } from "@/data/training";
+import { learningPaths, taxonomyCategories } from "@/lib/training/taxonomy";
 
-export function TrainingView() {
-  const skillColumns = [skillProgress.slice(0, 3), skillProgress.slice(3)];
+const modes = [
+  {
+    slug: "analiza",
+    name: "Analiza",
+    description: "Compara casos y detecta lo que importa.",
+    icon: ScanSearch,
+  },
+  {
+    slug: "construye",
+    name: "Construye",
+    description: "Crea mensajes, propuestas y sistemas.",
+    icon: Blocks,
+  },
+  {
+    slug: "practica",
+    name: "Practica",
+    description: "Toma decisiones y recibe feedback.",
+    icon: Target,
+  },
+] as const;
+
+type TrainingViewFeatures = {
+  taxonomy?: boolean;
+  categories?: boolean;
+  paths?: boolean;
+  modes?: boolean;
+  search?: boolean;
+};
+
+export function TrainingView({
+  features = {},
+}: {
+  features?: TrainingViewFeatures;
+}) {
+  const taxonomyEnabled = features.taxonomy ?? true;
+  const categoriesEnabled = taxonomyEnabled && (features.categories ?? true);
+  const pathsEnabled = taxonomyEnabled && (features.paths ?? true);
+  const modesEnabled = taxonomyEnabled && (features.modes ?? true);
 
   return (
-    <main className="min-h-screen w-full min-w-0 max-w-full overflow-x-clip bg-[#fbfaf8] text-slate-950 [padding-left:var(--dashboard-sidebar-offset,292px)] max-sm:!pl-0">
-      <DashboardSidebar active="training" tone="light" />
-      <div className="mx-auto w-full max-w-[1560px] px-4 pb-12 pt-5 sm:px-6 lg:px-8">
-        <header className="flex min-h-16 min-w-0 items-start justify-between gap-3 border-b border-slate-950/[0.08] pb-5 pl-14 sm:pl-0">
-          <div>
-            <h1 className="text-2xl font-black tracking-[-0.04em] text-slate-950 sm:text-3xl">Ejercicios</h1>
-            <p className="mt-1 text-sm text-slate-500">Entrena lo que aprendes y conviértelo en criterio.</p>
+    <TrainingPageShell
+      description="Entrena lo que aprendes y conviértelo en criterio."
+      search={taxonomyEnabled && (features.search ?? true)}
+      title="Ejercicios"
+    >
+      <div className="space-y-8">
+        <TrainingHeroCard recommendation={todayTraining} />
+
+        <section aria-labelledby="continue-title">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-xl font-black" id="continue-title">
+              Continúa donde lo dejaste
+            </h2>
+            <Link className="text-sm font-bold text-violet-700" href="/perfil">
+              Ver actividad
+            </Link>
           </div>
-          <div className="flex shrink-0 items-center gap-3"><NotificationBell tone="light" /><DashboardAccountMenu /></div>
-        </header>
+          <div className="mt-3 grid gap-4 xl:grid-cols-2">
+            {continueTraining.map((activity) => (
+              <ContinueTrainingCard activity={activity} key={activity.id} />
+            ))}
+          </div>
+        </section>
 
-        <div className="mt-6 space-y-7">
-          <TrainingHeroCard recommendation={todayTraining} />
-
-          <section className="grid gap-4 rounded-[8px] border border-violet-200 bg-white p-5 sm:grid-cols-[1fr_auto] sm:items-center sm:p-6" aria-labelledby="roleplay-title">
-            <div className="flex min-w-0 items-start gap-4"><div className="grid h-12 w-12 shrink-0 place-items-center rounded-[8px] bg-violet-50 text-violet-700"><MessagesSquare size={23}/></div><div><h2 className="text-xl font-black" id="roleplay-title">Simulaciones conversacionales</h2><p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">Practica ventas, liderazgo, negociación y decisiones empresariales con personajes guiados. Recibe una evaluación basada en momentos concretos de la conversación.</p></div></div>
-            <Link className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[8px] bg-violet-600 px-5 text-sm font-bold text-white hover:bg-violet-700" href="/ejercicios/simulaciones">Abrir simulaciones <ArrowRight size={17}/></Link>
-          </section>
-
-          <section aria-labelledby="continue-title">
-            <h2 className="text-xl font-black" id="continue-title">Continúa donde lo dejaste</h2>
-            <div className="mt-3 grid gap-4 xl:grid-cols-2">{continueTraining.map((activity) => <ContinueTrainingCard activity={activity} key={activity.id} />)}</div>
-          </section>
-
-          <section aria-labelledby="categories-title">
-            <h2 className="text-xl font-black" id="categories-title">Explora por categoría</h2>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">{trainingCategories.map((category) => <TrainingCategoryCard category={category} key={category.id} />)}</div>
-          </section>
-
-          <section aria-labelledby="progress-title" className="rounded-[8px] border border-slate-950/[0.08] bg-white p-5 sm:p-6">
-            <h2 className="text-xl font-black" id="progress-title">Tu progreso</h2>
-            <div className="mt-5 grid gap-6 xl:grid-cols-2 xl:divide-x xl:divide-slate-950/[0.08]">
-              {skillColumns.map((column, index) => <div className={`space-y-5 ${index === 1 ? "xl:pl-6" : ""}`} key={column[0]?.id}>{column.map((skill) => <SkillProgressRow key={skill.id} skill={skill} />)}</div>)}
+        {modesEnabled ? (
+          <section aria-labelledby="modes-title">
+            <h2 className="text-xl font-black" id="modes-title">
+              ¿Cómo quieres entrenar?
+            </h2>
+            <div className="mt-3 grid gap-3 md:grid-cols-3">
+              {modes.map((mode) => {
+                const Icon = mode.icon;
+                return (
+                  <Link
+                    className="group flex min-h-28 items-start gap-4 rounded-[8px] border border-slate-200 bg-white p-5 hover:border-violet-300"
+                    href={`/ejercicios?modo=${mode.slug}`}
+                    key={mode.slug}
+                  >
+                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[8px] bg-violet-50 text-violet-700">
+                      <Icon size={22} />
+                    </span>
+                    <span>
+                      <strong className="block text-base font-black">
+                        {mode.name}
+                      </strong>
+                      <span className="mt-1 block text-sm leading-6 text-slate-500">
+                        {mode.description}
+                      </span>
+                    </span>
+                  </Link>
+                );
+              })}
             </div>
-            <div className="mt-6 flex justify-center"><Link className="inline-flex min-h-11 items-center gap-2 rounded-[8px] px-4 text-sm font-bold text-violet-700 hover:bg-violet-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600" href="/perfil">Ver progreso completo <ArrowRight size={16} /></Link></div>
           </section>
-        </div>
+        ) : null}
+
+        {categoriesEnabled ? (
+          <section aria-labelledby="categories-title">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-xl font-black" id="categories-title">
+                Explora por categoría
+              </h2>
+              <Link
+                className="inline-flex items-center gap-1 text-sm font-bold text-violet-700"
+                href="/ejercicios/categorias"
+              >
+                Ver todas <ArrowRight size={15} />
+              </Link>
+            </div>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {taxonomyCategories.map((category, index) => (
+                <Link
+                  className="group flex min-h-40 flex-col rounded-[8px] border border-slate-200 bg-white p-4 hover:border-violet-300"
+                  href={`/ejercicios/categorias/${category.slug}`}
+                  key={category.slug}
+                >
+                  <span className="grid h-10 w-10 place-items-center rounded-[8px] bg-violet-50 text-violet-700">
+                    <TaxonomyIcon name={category.icon} size={20} />
+                  </span>
+                  <h3 className="mt-4 text-sm font-black">{category.name}</h3>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">
+                    {category.shortDescription}
+                  </p>
+                  <span className="mt-auto pt-4 text-xs font-bold text-violet-700">
+                    {category.skills.length} habilidades · {index * 7 + 12}% de
+                    dominio
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        {pathsEnabled ? (
+          <section aria-labelledby="paths-title">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-xl font-black" id="paths-title">
+                  Rutas prácticas
+                </h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  Avanza por módulos con una meta concreta.
+                </p>
+              </div>
+              <Link
+                className="text-sm font-bold text-violet-700"
+                href="/ejercicios/rutas"
+              >
+                Ver rutas
+              </Link>
+            </div>
+            <div className="mt-3 grid gap-3 lg:grid-cols-2 xl:grid-cols-4">
+              {learningPaths.slice(0, 4).map((path, index) => (
+                <Link
+                  className="rounded-[8px] border border-slate-200 bg-white p-4 hover:border-violet-300"
+                  href={`/ejercicios/rutas/${path.slug}`}
+                  key={path.slug}
+                >
+                  <span className="text-xs font-bold text-violet-700">
+                    {path.minutes} min · {path.difficulty}
+                  </span>
+                  <h3 className="mt-2 font-black">{path.name}</h3>
+                  <p className="mt-1 text-sm leading-6 text-slate-500">
+                    {path.promise}
+                  </p>
+                  <div className="mt-4">
+                    <TrainingProgressBar
+                      label={path.name}
+                      value={index === 0 ? 34 : 0}
+                    />
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        <TrainingProgressOverview />
+
+        <section
+          aria-labelledby="roleplay-title"
+          className="grid gap-4 rounded-[8px] border border-violet-200 bg-white p-5 sm:grid-cols-[1fr_auto] sm:items-center sm:p-6"
+        >
+          <div className="flex min-w-0 items-start gap-4">
+            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-[8px] bg-violet-50 text-violet-700">
+              <MessagesSquare size={23} />
+            </div>
+            <div>
+              <h2 className="text-xl font-black" id="roleplay-title">
+                Simulaciones conversacionales
+              </h2>
+              <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">
+                Practica ventas, liderazgo y decisiones empresariales. El acceso
+                y la cuota se validan siempre en el servidor.
+              </p>
+            </div>
+          </div>
+          <Link
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[8px] bg-violet-600 px-5 text-sm font-bold text-white hover:bg-violet-700"
+            href="/ejercicios/simulaciones"
+          >
+            Abrir simulaciones <ArrowRight size={17} />
+          </Link>
+        </section>
       </div>
-    </main>
+    </TrainingPageShell>
   );
 }

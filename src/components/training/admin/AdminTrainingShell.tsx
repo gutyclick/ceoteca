@@ -8,6 +8,7 @@ import {
   FileClock,
   LayoutDashboard,
   ListChecks,
+  Network,
   MessagesSquare,
   Scale,
   WandSparkles,
@@ -21,7 +22,16 @@ const links = [
     icon: ChartNoAxesCombined,
   },
   { href: "/admin/training/exercises", label: "Ejercicios", icon: ListChecks },
-  { href: "/admin/training/roleplay", label: "Simulaciones", icon: MessagesSquare },
+  {
+    href: "/admin/training/taxonomy",
+    label: "Taxonomía y rutas",
+    icon: Network,
+  },
+  {
+    href: "/admin/training/roleplay",
+    label: "Simulaciones",
+    icon: MessagesSquare,
+  },
   {
     href: "/admin/training/ai-generator",
     label: "Asistencia con IA",

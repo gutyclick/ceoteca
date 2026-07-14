@@ -31,6 +31,17 @@ export const exerciseTypeSchema = z.enum([
   "guided_builder",
   "decision_justification",
   "reflection",
+  "visual_single_choice",
+  "visual_comparison",
+  "visual_diagnosis",
+  "visual_annotation",
+  "visual_ranking",
+  "message_response",
+  "message_comparison",
+  "tone_adjustment",
+  "objection_response",
+  "email_rewrite",
+  "conversation_diagnosis",
 ]);
 
 const safeText = (max: number) =>

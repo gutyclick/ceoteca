@@ -8,7 +8,18 @@ export type ExerciseType =
   | "open_response"
   | "guided_builder"
   | "decision_justification"
-  | "reflection";
+  | "reflection"
+  | "visual_single_choice"
+  | "visual_comparison"
+  | "visual_diagnosis"
+  | "visual_annotation"
+  | "visual_ranking"
+  | "message_response"
+  | "message_comparison"
+  | "tone_adjustment"
+  | "objection_response"
+  | "email_rewrite"
+  | "conversation_diagnosis";
 export type TrainingDifficulty = "beginner" | "intermediate" | "advanced";
 export type TrainingSessionStatus =
   | "not_started"
@@ -72,6 +83,32 @@ export type ScenarioExercise = BaseExercise & {
   principle: string;
   practicalApplication: string;
 };
+export type VisualAsset = {
+  id: string;
+  label: string;
+  imageUrl: string;
+  altText: string;
+  description?: string;
+};
+export type VisualChoiceExercise = BaseExercise & {
+  type: "visual_single_choice" | "visual_comparison" | "visual_diagnosis";
+  assets: VisualAsset[];
+  options: ExerciseOption[];
+  correctOptionId: string;
+  visualAlternative: string;
+};
+export type VisualRankingExercise = BaseExercise & {
+  type: "visual_ranking";
+  assets: VisualAsset[];
+  correctOrder: string[];
+  visualAlternative: string;
+};
+export type VisualAnnotationExercise = OpenExerciseBase & {
+  type: "visual_annotation";
+  assets: VisualAsset[];
+  placeholder: string;
+  visualAlternative: string;
+};
 export type OpenField = { id: string; label: string; prompt: string };
 export type OpenExerciseBase = BaseExercise & {
   context?: string;
@@ -81,7 +118,15 @@ export type OpenExerciseBase = BaseExercise & {
   maxRevisions: number;
 };
 export type OpenResponseExercise = OpenExerciseBase & {
-  type: "open_response" | "reflection";
+  type:
+    | "open_response"
+    | "reflection"
+    | "message_response"
+    | "message_comparison"
+    | "tone_adjustment"
+    | "objection_response"
+    | "email_rewrite"
+    | "conversation_diagnosis";
   placeholder: string;
 };
 export type GuidedBuilderExercise = OpenExerciseBase & {
@@ -100,6 +145,9 @@ export type Exercise =
   | OrderingExercise
   | FlashcardExercise
   | ScenarioExercise
+  | VisualChoiceExercise
+  | VisualRankingExercise
+  | VisualAnnotationExercise
   | OpenResponseExercise
   | GuidedBuilderExercise
   | DecisionJustificationExercise;
@@ -113,8 +161,25 @@ export type TrueFalseAnswer = { type: "true_false"; value: boolean };
 export type OrderingAnswer = { type: "ordering"; itemIds: string[] };
 export type FlashcardAnswer = { type: "flashcard"; rating: FlashcardRating };
 export type ScenarioAnswer = { type: "scenario"; optionId: string };
+export type VisualChoiceAnswer = {
+  type: "visual_single_choice" | "visual_comparison" | "visual_diagnosis";
+  optionId: string;
+};
+export type VisualRankingAnswer = { type: "visual_ranking"; itemIds: string[] };
+export type VisualAnnotationAnswer = {
+  type: "visual_annotation";
+  text: string;
+};
 export type OpenResponseAnswer = {
-  type: "open_response" | "reflection";
+  type:
+    | "open_response"
+    | "reflection"
+    | "message_response"
+    | "message_comparison"
+    | "tone_adjustment"
+    | "objection_response"
+    | "email_rewrite"
+    | "conversation_diagnosis";
   text: string;
 };
 export type GuidedBuilderAnswer = {
@@ -133,6 +198,9 @@ export type ExerciseAnswer =
   | OrderingAnswer
   | FlashcardAnswer
   | ScenarioAnswer
+  | VisualChoiceAnswer
+  | VisualRankingAnswer
+  | VisualAnnotationAnswer
   | OpenResponseAnswer
   | GuidedBuilderAnswer
   | DecisionJustificationAnswer;

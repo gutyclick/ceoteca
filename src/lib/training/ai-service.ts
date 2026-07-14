@@ -46,6 +46,13 @@ export class TrainingEvaluationService {
         "guided_builder",
         "decision_justification",
         "reflection",
+        "visual_annotation",
+        "message_response",
+        "message_comparison",
+        "tone_adjustment",
+        "objection_response",
+        "email_rewrite",
+        "conversation_diagnosis",
       ]).has(type)
     )
       throw new Error("NOT_OPEN_EXERCISE");

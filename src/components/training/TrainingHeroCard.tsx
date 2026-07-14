@@ -71,7 +71,7 @@ export function TrainingHeroCard({
   return (
     <section className="w-full min-w-0 max-w-full rounded-[8px] border border-slate-950/[0.08] bg-white p-5 sm:p-6">
       <h2 className="text-lg font-black">Entrenamiento de hoy</h2>
-      <div className="mt-5 grid min-w-0 max-w-full gap-6 lg:grid-cols-[112px_minmax(0,1.35fr)_210px_220px] lg:items-center">
+      <div className="mt-5 grid min-w-0 max-w-full gap-6 md:grid-cols-[112px_minmax(0,1fr)] md:items-center xl:grid-cols-[112px_minmax(0,1.35fr)_210px_220px]">
         <span className="grid aspect-square w-full max-w-[112px] place-items-center rounded-[8px] bg-violet-50 text-violet-700">
           <TrainingIcon icon={recommendation.icon} size={52} />
         </span>

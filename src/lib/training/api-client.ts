@@ -27,6 +27,13 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
   return payload.data;
 }
 
+export function startLearningPath(pathSlug: string) {
+  return request<{ pathId: string; nextHref: string }>(
+    `/api/training/paths/${pathSlug}/start`,
+    { method: "POST" },
+  );
+}
+
 export type RoleplayDifficulty =
   | "fundamentals"
   | "application"

@@ -5,13 +5,15 @@ import type {
   ExerciseAnswer,
   GuidedBuilderExercise,
   OpenResponseExercise,
+  VisualAnnotationExercise,
 } from "@/types/training-engine";
 
 type Props = {
   exercise:
     | OpenResponseExercise
     | GuidedBuilderExercise
-    | DecisionJustificationExercise;
+    | DecisionJustificationExercise
+    | VisualAnnotationExercise;
   answer: ExerciseAnswer | null;
   disabled: boolean;
   onChange: (answer: ExerciseAnswer) => void;

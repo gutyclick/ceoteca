@@ -55,6 +55,17 @@ function selectVaried(candidates: AdaptiveCandidate[], count: number) {
         .length >= 3
     )
       continue;
+    if (
+      candidate.format &&
+      selected.slice(-2).every((item) => item.format === candidate.format)
+    )
+      continue;
+    if (
+      candidate.cognitiveLevel === "recognition" &&
+      selected.filter((item) => item.cognitiveLevel === "recognition").length >=
+        Math.ceil(count / 2)
+    )
+      continue;
     selected.push(candidate);
     if (selected.length >= count) break;
   }
@@ -65,11 +76,28 @@ export class RuleBasedAdaptiveTrainingEngine implements AdaptiveTrainingEngine {
   async buildRecommendation(
     input: AdaptiveTrainingInput,
   ): Promise<AdaptiveTrainingRecommendation> {
-    const ranked = [...input.candidates].sort(
-      (a, b) =>
-        scoreAdaptiveCandidate(b, input.now) -
-        scoreAdaptiveCandidate(a, input.now),
-    );
+    const planRank = { free: 0, pro: 1, founder: 1, unlimited: 2 } as const;
+    const ranked = input.candidates
+      .filter((candidate) => {
+        const required = candidate.minimumPlan ?? "free";
+        if (planRank[input.plan] < planRank[required]) return false;
+        if (
+          candidate.format === "conversational-roleplay" &&
+          input.plan === "free"
+        )
+          return false;
+        if (
+          candidate.format === "visual-analysis" &&
+          !candidate.hasApprovedVisualAssets
+        )
+          return false;
+        return candidate.prerequisiteEligible;
+      })
+      .sort(
+        (a, b) =>
+          scoreAdaptiveCandidate(b, input.now) -
+          scoreAdaptiveCandidate(a, input.now),
+      );
     if (!ranked.length) throw new Error("NO_ELIGIBLE_CONTENT");
     const primarySkillId = ranked[0].skillId;
     const target = durationTargets[input.requestedDurationMinutes];
@@ -88,6 +116,13 @@ export class RuleBasedAdaptiveTrainingEngine implements AdaptiveTrainingEngine {
       "guided_builder",
       "decision_justification",
       "reflection",
+      "visual_annotation",
+      "message_response",
+      "message_comparison",
+      "tone_adjustment",
+      "objection_response",
+      "email_rewrite",
+      "conversation_diagnosis",
     ]);
     const includesDeepAI =
       input.aiQuotaRemaining > 0 &&
@@ -140,6 +175,12 @@ export class RuleBasedAdaptiveTrainingEngine implements AdaptiveTrainingEngine {
         includesReview: selected.some((item) => item.dueReview),
         includesNewContent: selected.some((item) => item.isNew),
         includesDeepAIEvaluation: includesDeepAI,
+        category: ranked[0].categoryId,
+        concept: ranked[0].conceptId,
+        cognitiveLevel: ranked[0].cognitiveLevel,
+        format: ranked[0].format,
+        path: ranked[0].pathId,
+        planEligibility: true,
       },
     };
   }

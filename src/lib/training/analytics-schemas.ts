@@ -38,6 +38,22 @@ export const learningEventNames = [
   "deep_ai_evaluation_failed",
   "deep_ai_evaluation_quota_reached",
   "deep_ai_evaluation_saved_for_later",
+  "training_category_viewed",
+  "training_subcategory_viewed",
+  "training_skill_viewed",
+  "training_concept_viewed",
+  "training_format_selected",
+  "training_mode_selected",
+  "training_path_viewed",
+  "training_path_started",
+  "training_path_module_started",
+  "training_path_module_completed",
+  "visual_exercise_started",
+  "visual_exercise_completed",
+  "message_exercise_started",
+  "message_exercise_completed",
+  "roleplay_recommended",
+  "search_used",
 ] as const;
 
 export const learningEventNameSchema = z.enum(learningEventNames);
@@ -65,19 +81,56 @@ export const learningEventPropertiesSchema = z
     hints_used: z.number().int().min(0).max(20).optional(),
     retry_used: z.boolean().optional(),
     response_time_ms: z.number().int().min(0).max(3_600_000).optional(),
-    feedback_type: z.enum(["correct", "incorrect", "retry", "ai", "fallback"]).optional(),
+    feedback_type: z
+      .enum(["correct", "incorrect", "retry", "ai", "fallback"])
+      .optional(),
     plan: z.enum(["free", "pro", "unlimited", "founder"]).optional(),
     mastery_before_bucket: masteryBucketSchema.optional(),
     mastery_after_bucket: masteryBucketSchema.optional(),
     recommendation_reason: z.string().max(120).optional(),
     experiment_assignments: z
       .record(z.string().uuid())
-      .refine((value) => Object.keys(value).length <= 10, "Demasiadas asignaciones experimentales.")
+      .refine(
+        (value) => Object.keys(value).length <= 10,
+        "Demasiadas asignaciones experimentales.",
+      )
       .optional(),
     client_platform: z.enum(["web", "ios", "android", "unknown"]).optional(),
     app_version: z.string().max(30).optional(),
     option_ids: z.array(z.string().max(100)).max(20).optional(),
-    cognitive_level: z.enum(["recognition", "recall", "application", "transfer", "synthesis"]).optional(),
+    cognitive_level: z
+      .enum([
+        "recognition",
+        "understanding",
+        "application",
+        "analysis",
+        "transfer",
+        "synthesis",
+      ])
+      .optional(),
+    category: z.string().max(100).optional(),
+    subcategory: z.string().max(100).optional(),
+    skill: z.string().max(100).optional(),
+    concept: z.string().max(100).optional(),
+    format: z
+      .enum([
+        "visual-analysis",
+        "case-analysis",
+        "written-response",
+        "conversational-roleplay",
+        "guided-builder",
+        "diagnosis",
+        "decision-simulation",
+        "deterministic-practice",
+      ])
+      .optional(),
+    path: z.string().max(100).optional(),
+    module: z.string().max(100).optional(),
+    score_bucket: z.enum(["unknown", "low", "medium", "high"]).optional(),
+    assistance_level: z.enum(["none", "hint", "guided", "deep"]).optional(),
+    duration_bucket: z
+      .enum(["under_3m", "3_7m", "8_15m", "over_15m"])
+      .optional(),
     ai_evaluation_id: z.string().uuid().optional(),
   })
   .strict();
@@ -158,14 +211,24 @@ export const experimentCreateSchema = z
     name: z.string().trim().min(4).max(140),
     description: z.string().trim().min(10).max(1000),
     hypothesis: z.string().trim().min(15).max(1000),
-    entityType: z.enum(["exercise", "feedback", "distractors", "instruction", "exercise_type", "retry_flow"]),
+    entityType: z.enum([
+      "exercise",
+      "feedback",
+      "distractors",
+      "instruction",
+      "exercise_type",
+      "retry_flow",
+    ]),
     entityId: z.string().uuid().optional(),
     primaryMetric: experimentMetricSchema,
     secondaryMetrics: z.array(experimentMetricSchema).max(6).default([]),
     guardrailMetrics: z.array(experimentMetricSchema).min(1).max(8),
     targetAudience: z
       .object({
-        plans: z.array(z.enum(["free", "pro", "unlimited", "founder"])).max(4).default([]),
+        plans: z
+          .array(z.enum(["free", "pro", "unlimited", "founder"]))
+          .max(4)
+          .default([]),
         minimumAge: z.number().int().min(18).max(100).default(18),
         masteryBuckets: z.array(masteryBucketSchema).max(3).default([]),
       })
@@ -178,18 +241,45 @@ export const experimentCreateSchema = z
   })
   .strict()
   .superRefine((input, ctx) => {
-    const totalWeight = input.variants.reduce((sum, variant) => sum + variant.weight, 0);
+    const totalWeight = input.variants.reduce(
+      (sum, variant) => sum + variant.weight,
+      0,
+    );
     if (Math.abs(totalWeight - 100) > 0.001)
-      ctx.addIssue({ code: "custom", path: ["variants"], message: "Los pesos de las variantes deben sumar 100 %." });
+      ctx.addIssue({
+        code: "custom",
+        path: ["variants"],
+        message: "Los pesos de las variantes deben sumar 100 %.",
+      });
     if (input.variants.filter((variant) => variant.isControl).length !== 1)
-      ctx.addIssue({ code: "custom", path: ["variants"], message: "Debe existir exactamente una variante de control." });
-    if (input.endAt && input.startAt && new Date(input.endAt) <= new Date(input.startAt))
-      ctx.addIssue({ code: "custom", path: ["endAt"], message: "La fecha final debe ser posterior al inicio." });
+      ctx.addIssue({
+        code: "custom",
+        path: ["variants"],
+        message: "Debe existir exactamente una variante de control.",
+      });
+    if (
+      input.endAt &&
+      input.startAt &&
+      new Date(input.endAt) <= new Date(input.startAt)
+    )
+      ctx.addIssue({
+        code: "custom",
+        path: ["endAt"],
+        message: "La fecha final debe ser posterior al inicio.",
+      });
   });
 
 export const experimentActionSchema = z
   .object({
-    action: z.enum(["submit", "approve", "schedule", "start", "pause", "complete", "cancel"]),
+    action: z.enum([
+      "submit",
+      "approve",
+      "schedule",
+      "start",
+      "pause",
+      "complete",
+      "cancel",
+    ]),
     confirmation: z.literal(true),
   })
   .strict();

@@ -9,8 +9,19 @@ const sameSet = (left: string[], right: string[]) =>
 export function isAnswerComplete(answer: ExerciseAnswer | null) {
   if (!answer) return false;
   if (answer.type === "multiple_choice") return answer.optionIds.length > 0;
-  if (answer.type === "ordering") return answer.itemIds.length > 0;
-  if (answer.type === "open_response" || answer.type === "reflection")
+  if (answer.type === "ordering" || answer.type === "visual_ranking")
+    return answer.itemIds.length > 0;
+  if (
+    answer.type === "open_response" ||
+    answer.type === "reflection" ||
+    answer.type === "visual_annotation" ||
+    answer.type === "message_response" ||
+    answer.type === "message_comparison" ||
+    answer.type === "tone_adjustment" ||
+    answer.type === "objection_response" ||
+    answer.type === "email_rewrite" ||
+    answer.type === "conversation_diagnosis"
+  )
     return answer.text.trim().length > 0;
   if (answer.type === "guided_builder")
     return (
@@ -54,10 +65,28 @@ export function evaluateAnswer(
         answer.type === "scenario" &&
         answer.optionId === exercise.correctOptionId
       );
+    case "visual_single_choice":
+    case "visual_comparison":
+    case "visual_diagnosis":
+      return (
+        "optionId" in answer && answer.optionId === exercise.correctOptionId
+      );
+    case "visual_ranking":
+      return (
+        answer.type === "visual_ranking" &&
+        exercise.correctOrder.every((id, index) => answer.itemIds[index] === id)
+      );
     case "open_response":
     case "guided_builder":
     case "decision_justification":
     case "reflection":
+    case "visual_annotation":
+    case "message_response":
+    case "message_comparison":
+    case "tone_adjustment":
+    case "objection_response":
+    case "email_rewrite":
+    case "conversation_diagnosis":
       return false;
   }
 }

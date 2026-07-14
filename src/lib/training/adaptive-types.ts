@@ -1,4 +1,9 @@
 import type { ExerciseType, TrainingDifficulty } from "@/types/training-engine";
+import type {
+  TrainingCognitiveLevel,
+  TrainingFormat,
+  TrainingPlan,
+} from "@/lib/training/taxonomy";
 
 export type AdaptiveCandidate = {
   id: string;
@@ -14,6 +19,12 @@ export type AdaptiveCandidate = {
   lastPracticedAt?: string;
   isNew: boolean;
   prerequisiteEligible: boolean;
+  categoryId?: string;
+  cognitiveLevel?: TrainingCognitiveLevel;
+  format?: TrainingFormat;
+  pathId?: string;
+  minimumPlan?: TrainingPlan;
+  hasApprovedVisualAssets?: boolean;
 };
 export type AdaptiveTrainingInput = {
   userId: string;
@@ -32,6 +43,12 @@ export type RecommendationExplanation = {
   includesReview: boolean;
   includesNewContent: boolean;
   includesDeepAIEvaluation: boolean;
+  category?: string;
+  concept?: string;
+  cognitiveLevel?: TrainingCognitiveLevel;
+  format?: TrainingFormat;
+  path?: string;
+  planEligibility: boolean;
 };
 export type AdaptiveTrainingRecommendation = {
   primarySkillId: string;

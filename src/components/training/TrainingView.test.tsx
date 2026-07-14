@@ -26,13 +26,30 @@ describe("TrainingView", () => {
   it("muestra las cinco secciones y sus datos mock", () => {
     render(<TrainingView />);
 
-    expect(screen.getByRole("heading", { name: "Ejercicios", level: 1 })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Entrenamiento de hoy" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Continúa donde lo dejaste" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Explora por categoría" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Tu progreso" })).toBeInTheDocument();
-    expect(screen.getAllByRole("link", { name: /Explorar/i })).toHaveLength(5);
-    expect(screen.getByText("Finanzas personales")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Ejercicios", level: 1 }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Entrenamiento de hoy" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Continúa donde lo dejaste" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Explora por categoría" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Tu progreso" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Rutas prácticas" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Simulaciones conversacionales" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Finanzas y criterio económico"),
+    ).toBeInTheDocument();
   });
 
   it("permite alcanzar una categoría con teclado", async () => {
@@ -42,9 +59,14 @@ describe("TrainingView", () => {
     const marketing = screen.getByRole("link", { name: /Marketing/i });
     marketing.focus();
     expect(marketing).toHaveFocus();
-    expect(marketing).toHaveAttribute("href", "/ejercicios?categoria=marketing");
+    expect(marketing).toHaveAttribute(
+      "href",
+      "/ejercicios/categorias/marketing-y-marca",
+    );
     await user.keyboard("{Tab}");
-    expect(screen.getByRole("link", { name: /Desarrollo personal/i })).toHaveFocus();
+    expect(
+      screen.getByRole("link", { name: /Ventas y persuasión/i }),
+    ).toHaveFocus();
   });
 });
 
@@ -66,7 +88,11 @@ describe("ContinueTrainingCard", () => {
   });
 
   it("mantiene una estructura estable durante la carga", () => {
-    render(<ContinueTrainingCard activity={{ ...baseActivity, status: "loading" }} />);
+    render(
+      <ContinueTrainingCard
+        activity={{ ...baseActivity, status: "loading" }}
+      />,
+    );
     expect(screen.getByLabelText("Cargando entrenamiento")).toBeInTheDocument();
   });
 });

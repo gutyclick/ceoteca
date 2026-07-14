@@ -27,6 +27,18 @@ const openBase = {
   allowRevision: z.boolean(),
   maxRevisions: z.number().int().min(0).max(5),
 };
+const visualAssetSchema = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  imageUrl: z.string().min(1),
+  altText: z.string().min(8),
+  description: z.string().optional(),
+});
+const visualBase = {
+  ...base,
+  assets: z.array(visualAssetSchema).min(1),
+  visualAlternative: z.string().min(8),
+};
 export const exerciseSchema = z.discriminatedUnion("type", [
   z.object({
     ...base,
@@ -68,11 +80,48 @@ export const exerciseSchema = z.discriminatedUnion("type", [
     principle: z.string(),
     practicalApplication: z.string(),
   }),
+  ...(
+    ["visual_single_choice", "visual_comparison", "visual_diagnosis"] as const
+  ).map((type) =>
+    z.object({
+      ...visualBase,
+      type: z.literal(type),
+      options: z.array(optionSchema).min(2),
+      correctOptionId: z.string(),
+    }),
+  ),
+  z.object({
+    ...visualBase,
+    type: z.literal("visual_ranking"),
+    correctOrder: z.array(z.string()).min(2),
+  }),
+  z.object({
+    ...visualBase,
+    ...openBase,
+    type: z.literal("visual_annotation"),
+    placeholder: z.string(),
+  }),
   z.object({
     ...openBase,
     type: z.literal("open_response"),
     placeholder: z.string(),
   }),
+  ...(
+    [
+      "message_response",
+      "message_comparison",
+      "tone_adjustment",
+      "objection_response",
+      "email_rewrite",
+      "conversation_diagnosis",
+    ] as const
+  ).map((type) =>
+    z.object({
+      ...openBase,
+      type: z.literal(type),
+      placeholder: z.string(),
+    }),
+  ),
   z.object({
     ...openBase,
     type: z.literal("reflection"),
@@ -129,7 +178,29 @@ export const exerciseAnswerSchema = z.discriminatedUnion("type", [
   }),
   z.object({ type: z.literal("scenario"), optionId: z.string() }),
   z.object({
-    type: z.enum(["open_response", "reflection"]),
+    type: z.enum([
+      "visual_single_choice",
+      "visual_comparison",
+      "visual_diagnosis",
+    ]),
+    optionId: z.string(),
+  }),
+  z.object({ type: z.literal("visual_ranking"), itemIds: z.array(z.string()) }),
+  z.object({
+    type: z.literal("visual_annotation"),
+    text: z.string().max(10000),
+  }),
+  z.object({
+    type: z.enum([
+      "open_response",
+      "reflection",
+      "message_response",
+      "message_comparison",
+      "tone_adjustment",
+      "objection_response",
+      "email_rewrite",
+      "conversation_diagnosis",
+    ]),
     text: z.string().max(10000),
   }),
   z.object({
