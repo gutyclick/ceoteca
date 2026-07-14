@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, MessagesSquare } from "lucide-react";
 
 import { DashboardAccountMenu } from "@/components/app/DashboardAccountMenu";
 import { DashboardSidebar } from "@/components/app/DashboardSidebar";
@@ -27,6 +27,11 @@ export function TrainingView() {
 
         <div className="mt-6 space-y-7">
           <TrainingHeroCard recommendation={todayTraining} />
+
+          <section className="grid gap-4 rounded-[8px] border border-violet-200 bg-white p-5 sm:grid-cols-[1fr_auto] sm:items-center sm:p-6" aria-labelledby="roleplay-title">
+            <div className="flex min-w-0 items-start gap-4"><div className="grid h-12 w-12 shrink-0 place-items-center rounded-[8px] bg-violet-50 text-violet-700"><MessagesSquare size={23}/></div><div><h2 className="text-xl font-black" id="roleplay-title">Simulaciones conversacionales</h2><p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">Practica ventas, liderazgo, negociación y decisiones empresariales con personajes guiados. Recibe una evaluación basada en momentos concretos de la conversación.</p></div></div>
+            <Link className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[8px] bg-violet-600 px-5 text-sm font-bold text-white hover:bg-violet-700" href="/ejercicios/simulaciones">Abrir simulaciones <ArrowRight size={17}/></Link>
+          </section>
 
           <section aria-labelledby="continue-title">
             <h2 className="text-xl font-black" id="continue-title">Continúa donde lo dejaste</h2>

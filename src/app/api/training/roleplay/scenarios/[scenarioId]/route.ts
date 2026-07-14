@@ -4,23 +4,22 @@ import {
   getRoleplayContext,
   roleplayRouteError,
 } from "@/lib/training/roleplay-route";
-
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ scenarioId: string }> },
+) {
   const context = await getRoleplayContext(request);
   if (!context)
     return jsonError(
-      {
-        code: "UNAUTHORIZED",
-        message: "Inicia sesión para consultar simulaciones.",
-      },
+      { code: "UNAUTHORIZED", message: "Inicia sesión para ver el escenario." },
       401,
     );
   try {
     return jsonData(
-      await context.service.catalog(context.auth.user.id, {
-        category: request.nextUrl.searchParams.get("category") ?? undefined,
-        difficulty: request.nextUrl.searchParams.get("difficulty") ?? undefined,
-      }),
+      await context.service.scenario(
+        context.auth.user.id,
+        (await params).scenarioId,
+      ),
     );
   } catch (error) {
     return roleplayRouteError(error);

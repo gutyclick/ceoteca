@@ -26,6 +26,182 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
     throw new Error(payload.error?.message ?? "TRAINING_API_ERROR");
   return payload.data;
 }
+
+export type RoleplayDifficulty =
+  | "fundamentals"
+  | "application"
+  | "advanced"
+  | "expert";
+export type RoleplayCategoryDto = {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  icon: string;
+  skill_slugs: string[];
+  scenarioCount: number;
+};
+export type RoleplayScenarioDto = {
+  id: string;
+  slug: string;
+  public_title: string;
+  short_description: string;
+  category_id: string;
+  level: RoleplayDifficulty;
+  minimum_plan: string;
+  estimated_minutes: number;
+  max_turns: number;
+  skill_slugs: string[];
+  character_name: string;
+  canStart: boolean;
+  lockedReason: "plan" | "difficulty" | "quota" | null;
+  category: RoleplayCategoryDto;
+};
+export type RoleplayCatalogDto = {
+  enabled: boolean;
+  access: {
+    plan: string;
+    canStart: boolean;
+    remaining: number | null;
+    monthlyLimit: number | null;
+    unlimited: boolean;
+    levels: RoleplayDifficulty[];
+  };
+  categories: RoleplayCategoryDto[];
+  scenarios: RoleplayScenarioDto[];
+  alternatives: {
+    deterministicExercisesHref: string;
+    unlimitedPlanHref: string;
+  };
+};
+
+export function getRoleplayCatalog(query = "") {
+  return request<RoleplayCatalogDto>(`/api/training/roleplay${query}`);
+}
+export function getRoleplayScenario(idOrSlug: string) {
+  return request<
+    RoleplayScenarioDto & {
+      learner_goal: string;
+      publicConfig: Record<string, unknown>;
+      access: RoleplayCatalogDto["access"];
+    }
+  >(`/api/training/roleplay/scenarios/${idOrSlug}`);
+}
+export function startRoleplay(
+  scenarioId: string,
+  difficulty: RoleplayDifficulty,
+) {
+  return request<{ sessionId: string; openingMessage?: string }>(
+    "/api/training/roleplay/sessions",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        scenarioId,
+        difficulty,
+        clientSessionId: crypto.randomUUID(),
+      }),
+    },
+  );
+}
+export function getRoleplaySession(sessionId: string) {
+  return request<{
+    session: {
+      id: string;
+      status: string;
+      scenario_snapshot: Record<string, unknown>;
+      plan_snapshot: string;
+      difficulty: RoleplayDifficulty;
+      turn_count: number;
+      max_turns: number;
+      started_at: string;
+      resume_expires_at: string;
+      quota_consumed_at: string | null;
+      evaluation_status: string;
+    };
+    messages: Array<{
+      id: string;
+      role: "user" | "character";
+      content: string;
+      turn_number: number;
+      created_at: string;
+    }>;
+  }>(`/api/training/roleplay/sessions/${sessionId}`);
+}
+export function sendRoleplayMessage(
+  sessionId: string,
+  message: string,
+  clientMessageId: string,
+) {
+  return request<{
+    message: {
+      id: string;
+      role: "character";
+      content: string;
+      turn_number: number;
+      created_at: string;
+    };
+    turn: number;
+    idempotent: boolean;
+  }>(`/api/training/roleplay/sessions/${sessionId}/messages`, {
+    method: "POST",
+    body: JSON.stringify({ clientMessageId, message }),
+  });
+}
+export function getRoleplayHint(sessionId: string) {
+  return request<{ hint: string; used: number; limit: number }>(
+    `/api/training/roleplay/sessions/${sessionId}/hint`,
+    { method: "POST", body: "{}" },
+  );
+}
+export function pauseRoleplay(sessionId: string) {
+  return request<{ id: string; resume_expires_at: string }>(
+    `/api/training/roleplay/sessions/${sessionId}/pause`,
+    { method: "POST", body: "{}" },
+  );
+}
+export function resumeRoleplay(sessionId: string) {
+  return request<Awaited<ReturnType<typeof getRoleplaySession>>>(
+    `/api/training/roleplay/sessions/${sessionId}/resume`,
+    { method: "POST", body: "{}" },
+  );
+}
+export function finishRoleplay(sessionId: string) {
+  return request<{ status: string; evaluationId?: string }>(
+    `/api/training/roleplay/sessions/${sessionId}/finish`,
+    { method: "POST", body: JSON.stringify({ reason: "user_ended" }) },
+  );
+}
+export function getRoleplayEvaluation(sessionId: string) {
+  return request<{
+    id: string;
+    status: string;
+    overall_score: number | null;
+    confidence: number | null;
+    outcome: string | null;
+    result:
+      | import("@/lib/training/roleplay-schemas").RoleplayEvaluationOutput
+      | null;
+    completed_at: string | null;
+  }>(`/api/training/roleplay/sessions/${sessionId}/evaluation`);
+}
+export function getRoleplayHistory() {
+  return request<{
+    items: Array<{
+      id: string;
+      status: string;
+      scenario_snapshot: Record<string, unknown>;
+      difficulty: RoleplayDifficulty;
+      turn_count: number;
+      started_at: string;
+      finished_at: string | null;
+      evaluation_status: string;
+      training_roleplay_evaluations: Array<{
+        overall_score: number | null;
+        outcome: string | null;
+      }>;
+    }>;
+  }>("/api/training/roleplay/history");
+}
 export async function createRemoteTraining(templateSlug: string) {
   return request<{ sessionId: string }>("/api/training/sessions", {
     method: "POST",

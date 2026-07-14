@@ -8,6 +8,7 @@ import {
   FileClock,
   LayoutDashboard,
   ListChecks,
+  MessagesSquare,
   Scale,
   WandSparkles,
 } from "lucide-react";
@@ -20,6 +21,7 @@ const links = [
     icon: ChartNoAxesCombined,
   },
   { href: "/admin/training/exercises", label: "Ejercicios", icon: ListChecks },
+  { href: "/admin/training/roleplay", label: "Simulaciones", icon: MessagesSquare },
   {
     href: "/admin/training/ai-generator",
     label: "Asistencia con IA",
