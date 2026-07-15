@@ -10,6 +10,10 @@ import type {
   TrainingHomeViewModel,
   TrainingSkillPageViewModel,
 } from "@/lib/training/navigation-model";
+import type {
+  TrainingPathPageViewModel,
+  TrainingPathsPageViewModel,
+} from "@/lib/training/path-model";
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const supabase = createBrowserSupabaseClient();
@@ -53,9 +57,33 @@ export function getTrainingNavigationSkill(slug: string) {
 }
 
 export function startLearningPath(pathSlug: string) {
-  return request<{ pathId: string; nextHref: string }>(
+  return request<{ path: TrainingPathPageViewModel; nextHref: string }>(
     `/api/training/paths/${pathSlug}/start`,
     { method: "POST" },
+  );
+}
+
+export function getTrainingPaths(query = "") {
+  return request<TrainingPathsPageViewModel>(`/api/training/paths${query}`);
+}
+
+export function getTrainingPath(pathSlug: string) {
+  return request<TrainingPathPageViewModel>(
+    `/api/training/paths/${encodeURIComponent(pathSlug)}`,
+  );
+}
+
+export function continueLearningPath(pathSlug: string) {
+  return request<TrainingPathPageViewModel>(
+    `/api/training/paths/${encodeURIComponent(pathSlug)}/continue`,
+    { method: "POST", body: "{}" },
+  );
+}
+
+export function startTrainingPathItem(itemId: string) {
+  return request<{ sessionId: string | null; href: string }>(
+    `/api/training/path-items/${encodeURIComponent(itemId)}/start`,
+    { method: "POST", body: "{}" },
   );
 }
 
@@ -122,6 +150,7 @@ export function getRoleplayScenario(idOrSlug: string) {
 export function startRoleplay(
   scenarioId: string,
   difficulty: RoleplayDifficulty,
+  pathItemId?: string,
 ) {
   return request<{ sessionId: string; openingMessage?: string }>(
     "/api/training/roleplay/sessions",
@@ -131,6 +160,7 @@ export function startRoleplay(
         scenarioId,
         difficulty,
         clientSessionId: crypto.randomUUID(),
+        pathItemId,
       }),
     },
   );

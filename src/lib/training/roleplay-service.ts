@@ -343,6 +343,7 @@ export class TrainingRoleplayService {
       scenarioId: string;
       difficulty: RoleplayDifficulty;
       clientSessionId: string;
+      pathItemId?: string;
     },
   ) {
     if (!serverEnv.TRAINING_ROLEPLAY_ENABLED)
@@ -373,6 +374,29 @@ export class TrainingRoleplayService {
     const scenario = await this.scenario(userId, input.scenarioId);
     if (scenario.level !== input.difficulty)
       throw new Error("DIFFICULTY_NOT_AVAILABLE");
+    let pathContext: { pathId: string; moduleId: string; itemId: string } | null = null;
+    if (input.pathItemId) {
+      const { data: pathItem, error: pathItemError } = await this.db
+        .from("training_learning_path_module_items")
+        .select("id,module_id,roleplay_scenario_id,training_learning_path_modules(path_id,status)")
+        .eq("id", input.pathItemId)
+        .eq("item_type", "roleplay")
+        .maybeSingle();
+      const moduleRelation = Array.isArray(pathItem?.training_learning_path_modules)
+        ? pathItem.training_learning_path_modules[0]
+        : pathItem?.training_learning_path_modules;
+      if (pathItemError || !pathItem || pathItem.roleplay_scenario_id !== scenario.id || !moduleRelation || moduleRelation.status !== "published")
+        throw new Error("PATH_ITEM_NOT_AVAILABLE");
+      const { data: moduleProgress } = await this.db
+        .from("user_training_path_module_progress")
+        .select("status")
+        .eq("user_id", userId)
+        .eq("module_id", pathItem.module_id)
+        .maybeSingle();
+      if (!moduleProgress || !["available", "in_progress", "completed"].includes(moduleProgress.status))
+        throw new Error("MODULE_LOCKED");
+      pathContext = { pathId: moduleRelation.path_id, moduleId: pathItem.module_id, itemId: pathItem.id };
+    }
     const now = new Date();
     const resumeExpiresAt = new Date(
       now.getTime() + serverEnv.TRAINING_ROLEPLAY_RESUME_WINDOW_HOURS * 3600000,
@@ -405,6 +429,9 @@ export class TrainingRoleplayService {
         client_consumption_id: input.clientSessionId,
         provider_responded_at: now.toISOString(),
         scenario_state: { phase: "opening", disposition: 50 },
+        learning_path_id: pathContext?.pathId ?? null,
+        learning_path_module_id: pathContext?.moduleId ?? null,
+        learning_path_item_id: pathContext?.itemId ?? null,
       })
       .select("id")
       .single();

@@ -22,7 +22,7 @@ type Detail = RoleplayScenarioDto & {
   publicConfig: Record<string, unknown>;
   access: { plan: string; remaining: number | null; unlimited: boolean };
 };
-export function RoleplayPreparationView({ slug }: { slug: string }) {
+export function RoleplayPreparationView({ slug, pathItemId }: { slug: string; pathItemId?: string }) {
   const router = useRouter();
   const [scenario, setScenario] = useState<Detail | null>(null);
   const [error, setError] = useState("");
@@ -43,7 +43,7 @@ export function RoleplayPreparationView({ slug }: { slug: string }) {
     setStarting(true);
     setError("");
     try {
-      const result = await startRoleplay(scenario.id, scenario.level);
+      const result = await startRoleplay(scenario.id, scenario.level, pathItemId);
       router.push(`/ejercicios/simulaciones/sesiones/${result.sessionId}`);
     } catch (cause) {
       setError(

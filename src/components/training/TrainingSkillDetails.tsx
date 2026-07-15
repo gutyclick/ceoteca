@@ -129,6 +129,7 @@ export function TrainingSkillDetails({
               ))}
             </div>
           </section>
+          {data.relatedPaths.length ? <section><div className="flex items-center justify-between gap-3"><h2 className="text-xl font-black">Rutas para seguir avanzando</h2><Link className="text-sm font-bold text-violet-700" href="/ejercicios/rutas">Ver rutas</Link></div><div className="mt-3 grid gap-3 sm:grid-cols-2">{data.relatedPaths.map((path) => <Link className="rounded-[8px] border border-slate-200 bg-white p-4 hover:border-violet-300" href={`/ejercicios/rutas/${path.slug}`} key={path.slug}><h3 className="font-black">{path.name}</h3><span className="mt-2 inline-flex items-center text-sm font-bold text-violet-700">Explorar ruta</span></Link>)}</div></section> : null}
         </div>
         <aside className="h-fit rounded-[8px] border border-violet-200 bg-white p-5 xl:sticky xl:top-5">
           <span className="text-xs font-bold text-violet-700">

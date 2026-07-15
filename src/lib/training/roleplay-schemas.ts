@@ -14,6 +14,7 @@ export const startRoleplaySchema = z
     scenarioId: z.string().uuid(),
     difficulty: roleplayDifficultySchema,
     clientSessionId: z.string().uuid(),
+    pathItemId: z.string().uuid().optional(),
   })
   .strict();
 

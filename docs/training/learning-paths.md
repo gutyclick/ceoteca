@@ -1,7 +1,7 @@
-# Rutas prácticas
+# Rutas de aprendizaje
 
-Una ruta conecta categorías y habilidades con una promesa profesional. Contiene módulos ordenados y cada módulo contiene ejercicios, repasos o role-play.
+Las rutas convierten una promesa profesional en una secuencia ordenada de módulos. Cada módulo contiene items de ejercicio, habilidad, concepto, plantilla o role-play. Las rutas publicadas se consultan en `/ejercicios/rutas`; `/training/paths` existe como alias de compatibilidad.
 
-El inicio se realiza con `start_training_learning_path`; el usuario y su plan se validan en servidor. `complete_training_learning_path_module` desbloquea el siguiente módulo y calcula el progreso. Reanudar no crea otro progreso.
+La lista ofrece recomendadas, rutas en curso y catálogo completo. Sus filtros incluyen búsqueda, categoría, dificultad, duración, progreso y plan. El detalle presenta el objetivo, las habilidades, los módulos, los bloqueos y una única siguiente acción clara.
 
-Las rutas se versionan y se archivan. No se deben reordenar módulos de una versión publicada con usuarios activos; crea una nueva versión editorial.
+El cliente nunca decide el plan, el desbloqueo ni la finalización. Las rutas se versionan y archivan; una ruta publicada con usuarios activos debe recibir una nueva versión editorial en lugar de reordenarse.

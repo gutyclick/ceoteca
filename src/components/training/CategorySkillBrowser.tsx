@@ -265,6 +265,12 @@ export function CategorySkillBrowser({
             No hay habilidades publicadas que coincidan con estos filtros.
           </p>
         ) : null}
+        {resolvedData.pathPreviews.length ? (
+          <section className="mt-8 border-t border-slate-200 pt-6" aria-labelledby="category-paths-title">
+            <div className="flex items-center justify-between gap-3"><div><h2 className="text-xl font-black" id="category-paths-title">Rutas relacionadas</h2><p className="mt-1 text-sm text-slate-500">Avanza por módulos conectados con esta categoría.</p></div><Link className="text-sm font-bold text-violet-700" href="/ejercicios/rutas">Ver todas</Link></div>
+            <div className="mt-4 grid gap-3 lg:grid-cols-2">{resolvedData.pathPreviews.map((path) => <Link className="rounded-[8px] border border-slate-200 bg-white p-4 hover:border-violet-300" href={`/ejercicios/rutas/${path.slug}`} key={path.slug}><span className="text-xs font-bold text-violet-700">{path.moduleCount} módulos · {path.estimatedMinutes} min</span><h3 className="mt-2 font-black">{path.name}</h3><p className="mt-1 text-sm leading-6 text-slate-500">{path.promise}</p></Link>)}</div>
+          </section>
+        ) : null}
       </div>
     </section>
   );
