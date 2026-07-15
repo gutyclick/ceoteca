@@ -2,6 +2,15 @@ import { z } from "zod";
 
 export const learningEventNames = [
   "training_home_viewed",
+  "training_recommendation_viewed",
+  "training_recommendation_started",
+  "training_categories_viewed",
+  "training_category_card_clicked",
+  "training_subcategory_selected",
+  "training_filters_changed",
+  "training_skill_started",
+  "training_locked_content_viewed",
+  "training_path_preview_viewed",
   "recommendation_viewed",
   "recommendation_started",
   "recommendation_dismissed",
@@ -125,6 +134,12 @@ export const learningEventPropertiesSchema = z
       ])
       .optional(),
     path: z.string().max(100).optional(),
+    mode: z.enum(["analiza", "construye", "practica"]).optional(),
+    access_state: z
+      .enum(["available", "partially_available", "locked", "coming_soon"])
+      .optional(),
+    filter_count: z.number().int().min(0).max(20).optional(),
+    source: z.string().max(80).optional(),
     module: z.string().max(100).optional(),
     score_bucket: z.enum(["unknown", "low", "medium", "high"]).optional(),
     assistance_level: z.enum(["none", "hint", "guided", "deep"]).optional(),

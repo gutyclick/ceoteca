@@ -1,8 +1,10 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
+import { type PlanKey } from "@/config/plans";
 import { jsonData, jsonError } from "@/lib/api/response";
 import { RuleBasedAdaptiveTrainingEngine } from "@/lib/training/adaptive-engine";
 import { getTrainingServerSession } from "@/lib/training/server-auth";
+import { getEffectiveSubscriptionForUser } from "@/lib/subscriptions/service";
 import type { AdaptiveCandidate } from "@/lib/training/adaptive-types";
 
 const schema = z.object({
@@ -15,6 +17,13 @@ const schema = z.object({
       z.literal(15),
     ])
     .default(7),
+  skillSlug: z
+    .string()
+    .trim()
+    .min(2)
+    .max(100)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+    .optional(),
 });
 export async function POST(request: NextRequest) {
   const auth = await getTrainingServerSession(request);
@@ -35,6 +44,49 @@ export async function POST(request: NextRequest) {
       },
       400,
     );
+  const requestedSkill = parsed.data.skillSlug
+    ? await auth.client
+        .from("training_skills")
+        .select("id,minimum_plan,status")
+        .eq("slug", parsed.data.skillSlug)
+        .eq("status", "published")
+        .maybeSingle()
+    : null;
+  if (requestedSkill?.error || (parsed.data.skillSlug && !requestedSkill?.data))
+    return jsonError(
+      {
+        code: "SKILL_NOT_FOUND",
+        message: "Esta habilidad no está disponible.",
+      },
+      404,
+    );
+  const effectiveSubscription = await getEffectiveSubscriptionForUser(
+    auth.user.id,
+  );
+  const planRank: Record<PlanKey, number> = {
+    free: 0,
+    pro: 1,
+    founder: 1,
+    unlimited: 2,
+  };
+  const requiredPlan =
+    requestedSkill?.data?.minimum_plan === "unlimited"
+      ? "unlimited"
+      : requestedSkill?.data?.minimum_plan === "pro"
+        ? "pro"
+        : "free";
+  if (
+    requestedSkill?.data &&
+    planRank[effectiveSubscription.plan] < planRank[requiredPlan]
+  )
+    return jsonError(
+      {
+        code: "PLAN_REQUIRED",
+        message: "Esta habilidad requiere un plan superior.",
+      },
+      403,
+    );
+
   const [
     { data: profile },
     { data: exercises },
@@ -102,6 +154,10 @@ export async function POST(request: NextRequest) {
   }
   const disliked = new Set(preferences?.disliked_exercise_types ?? []);
   const candidates: AdaptiveCandidate[] = (exercises ?? [])
+    .filter(
+      (item) =>
+        !requestedSkill?.data || item.skill_id === requestedSkill.data.id,
+    )
     .filter((item) => !disliked.has(item.type))
     .map((item) => ({
       id: item.id,
@@ -125,12 +181,14 @@ export async function POST(request: NextRequest) {
     const recommendation =
       await new RuleBasedAdaptiveTrainingEngine().buildRecommendation({
         userId: auth.user.id,
-        plan: profile?.plan ?? "free",
+        plan: effectiveSubscription.plan,
         requestedDurationMinutes: parsed.data.durationMinutes,
         preferredExerciseTypes: preferences?.preferred_exercise_types ?? [],
         now: new Date().toISOString(),
         aiQuotaRemaining:
-          profile?.plan === "free" ? Math.max(0, 1 - Number(usage ?? 0)) : 30,
+          effectiveSubscription.plan === "free"
+            ? Math.max(0, 1 - Number(usage ?? 0))
+            : 30,
         candidates,
       });
     const key = `${new Date().toISOString().slice(0, 13)}:${parsed.data.durationMinutes}:${recommendation.primarySkillId}`;

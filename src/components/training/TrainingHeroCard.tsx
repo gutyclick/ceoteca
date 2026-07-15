@@ -7,6 +7,7 @@ import {
   acceptAdaptiveRecommendation,
   createRemoteTraining,
   getAdaptiveRecommendation,
+  trackTrainingNavigationEvent,
 } from "@/lib/training/api-client";
 import { ArrowRight, Clock3, ListChecks, Loader2, Signal } from "lucide-react";
 
@@ -16,12 +17,14 @@ import {
   WeeklyStreak,
 } from "@/components/training/TrainingPrimitives";
 import type { TrainingRecommendation } from "@/types/training";
+import type { TrainingHomeViewModel } from "@/lib/training/navigation-model";
+import { todayTraining } from "@/data/training";
 
 export function TrainingHeroCard({
   recommendation,
   disabled = false,
 }: {
-  recommendation: TrainingRecommendation;
+  recommendation: TrainingHomeViewModel["recommendation"];
   disabled?: boolean;
 }) {
   const router = useRouter();
@@ -31,11 +34,34 @@ export function TrainingHeroCard({
   const [adaptive, setAdaptive] = useState<Awaited<
     ReturnType<typeof getAdaptiveRecommendation>
   > | null>(null);
+  const display: TrainingRecommendation = {
+    ...todayTraining,
+    title: recommendation?.title ?? todayTraining.title,
+    category: recommendation?.category ?? todayTraining.category,
+    description: recommendation?.reason ?? todayTraining.description,
+    durationMinutes:
+      recommendation?.durationMinutes ?? todayTraining.durationMinutes,
+    exerciseCount: recommendation?.exerciseCount ?? todayTraining.exerciseCount,
+    level: recommendation
+      ? recommendation.difficulty === "fundamentals"
+        ? "Inicial"
+        : recommendation.difficulty === "application"
+          ? "Intermedio"
+          : "Avanzado"
+      : todayTraining.level,
+  };
+
+  useEffect(() => {
+    void trackTrainingNavigationEvent("training_recommendation_viewed", {
+      skill: recommendation?.skillSlug,
+      source: "training_home",
+    }).catch(() => undefined);
+  }, [recommendation?.skillSlug]);
 
   useEffect(() => {
     if (clientEnv.NEXT_PUBLIC_TRAINING_DATA_SOURCE !== "supabase") return;
     let active = true;
-    getAdaptiveRecommendation(duration)
+    getAdaptiveRecommendation(duration, recommendation?.skillSlug || undefined)
       .then((value) => {
         if (active) setAdaptive(value);
       })
@@ -46,7 +72,7 @@ export function TrainingHeroCard({
     return () => {
       active = false;
     };
-  }, [duration]);
+  }, [duration, recommendation?.skillSlug]);
 
   async function startTraining() {
     setIsLoading(true);
@@ -57,9 +83,13 @@ export function TrainingHeroCard({
         const remote = adaptive
           ? await acceptAdaptiveRecommendation(adaptive.id)
           : await createRemoteTraining("propuestas-de-valor");
+        await trackTrainingNavigationEvent("training_recommendation_started", {
+          skill: recommendation?.skillSlug,
+          source: "training_home",
+        }).catch(() => undefined);
         router.push(`/ejercicios/${remote.sessionId}`);
       } else {
-        router.push(`/ejercicios/${recommendation.id}`);
+        router.push(`/ejercicios/${display.id}`);
       }
     } catch {
       setNotice("No pudimos preparar el entrenamiento. Inténtalo nuevamente.");
@@ -73,17 +103,17 @@ export function TrainingHeroCard({
       <h2 className="text-lg font-black">Entrenamiento de hoy</h2>
       <div className="mt-5 grid min-w-0 max-w-full gap-6 md:grid-cols-[112px_minmax(0,1fr)] md:items-center xl:grid-cols-[112px_minmax(0,1.35fr)_210px_220px]">
         <span className="grid aspect-square w-full max-w-[112px] place-items-center rounded-[8px] bg-violet-50 text-violet-700">
-          <TrainingIcon icon={recommendation.icon} size={52} />
+          <TrainingIcon icon={display.icon} size={52} />
         </span>
         <div className="min-w-0 max-w-full">
           <span className="inline-flex rounded-full bg-violet-50 px-3 py-1.5 text-xs font-bold text-violet-700">
-            {recommendation.category}
+            {display.category}
           </span>
           <h3 className="mt-3 break-words text-xl font-black tracking-[-0.03em] text-slate-950 sm:text-2xl">
-            {recommendation.title}
+            {display.title}
           </h3>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            {recommendation.description}
+            {display.description}
           </p>
           <label className="mt-4 inline-flex items-center gap-3 text-sm font-bold text-slate-700">
             Tengo
@@ -106,21 +136,17 @@ export function TrainingHeroCard({
             <span className="inline-flex items-center gap-2">
               <Clock3 size={16} />
               {adaptive?.calculatedDurationMinutes ??
-                recommendation.durationMinutes}{" "}
+                display.durationMinutes}{" "}
               min
             </span>
             <span className="inline-flex items-center gap-2">
               <ListChecks size={16} />
-              {adaptive?.exerciseIds.length ??
-                recommendation.exerciseCount}{" "}
-              ejercicios
+              {adaptive?.exerciseIds.length ?? display.exerciseCount} ejercicios
             </span>
             <span className="inline-flex items-center gap-2">
               <Signal size={16} />
               Nivel{" "}
-              {(adaptive?.difficulty ?? recommendation.level).toLocaleLowerCase(
-                "es",
-              )}
+              {(adaptive?.difficulty ?? display.level).toLocaleLowerCase("es")}
             </span>
           </div>
           <p className="mt-4 text-xs leading-5 text-slate-500">
@@ -133,9 +159,9 @@ export function TrainingHeroCard({
             </span>
           ) : null}
         </div>
-        <BookThumbnailGroup books={recommendation.bookCovers} />
+        <BookThumbnailGroup books={display.bookCovers} />
         <div className="min-w-0 max-w-full">
-          <WeeklyStreak data={recommendation.streak} />
+          <WeeklyStreak data={display.streak} />
           <button
             className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[8px] bg-violet-700 px-5 text-sm font-black text-white transition duration-200 hover:bg-violet-800 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-slate-300 motion-reduce:transition-none"
             disabled={disabled || isLoading}

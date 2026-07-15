@@ -10,7 +10,6 @@ const navigation = [
   { label: "Inicio", href: "/ejercicios" },
   { label: "Categorías", href: "/ejercicios/categorias" },
   { label: "Rutas", href: "/ejercicios/rutas" },
-  { label: "Simulaciones", href: "/ejercicios/simulaciones" },
   { label: "Repasos", href: "/ejercicios?vista=repasos" },
   { label: "Progreso", href: "/perfil" },
 ];
@@ -20,12 +19,26 @@ export function TrainingPageShell({
   description,
   children,
   search = true,
+  showPaths = true,
+  showSimulations = false,
 }: {
   title: string;
   description: string;
   children: ReactNode;
   search?: boolean;
+  showPaths?: boolean;
+  showSimulations?: boolean;
 }) {
+  const baseNavigation = showPaths
+    ? navigation
+    : navigation.filter((item) => item.href !== "/ejercicios/rutas");
+  const visibleNavigation = showSimulations
+    ? [
+        ...baseNavigation.slice(0, showPaths ? 3 : 2),
+        { label: "Simulaciones", href: "/ejercicios/simulaciones" },
+        ...baseNavigation.slice(showPaths ? 3 : 2),
+      ]
+    : baseNavigation;
   return (
     <main className="min-h-screen w-full min-w-0 overflow-x-clip bg-[#fbfaf8] text-slate-950 [padding-left:var(--dashboard-sidebar-offset,292px)] max-sm:!pl-0">
       <DashboardSidebar active="training" tone="light" />
@@ -48,7 +61,7 @@ export function TrainingPageShell({
           className="mt-4 overflow-x-auto border-b border-slate-200 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           <div className="flex min-w-max gap-6">
-            {navigation.map((item) => (
+            {visibleNavigation.map((item) => (
               <Link
                 className="min-h-11 border-b-2 border-transparent px-1 py-3 text-sm font-bold text-slate-600 hover:border-violet-300 hover:text-violet-700"
                 href={item.href}

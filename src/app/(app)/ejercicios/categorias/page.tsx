@@ -1,43 +1,42 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { TaxonomyIcon } from "@/components/training/TaxonomyIcon";
+import { TrainingCategoriesExplorer } from "@/components/training/TrainingCategoriesExplorer";
 import { TrainingPageShell } from "@/components/training/TrainingPageShell";
-import { taxonomyCategories } from "@/lib/training/taxonomy";
 import { serverEnv } from "@/lib/env";
+import { getTrainingNavigationService } from "@/lib/training/navigation-service";
+import { trainingCategoryFiltersSchema } from "@/lib/training/navigation-schemas";
 
-export default function TrainingCategoriesPage() {
+export default async function TrainingCategoriesPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   if (
     !serverEnv.TRAINING_TAXONOMY_ENABLED ||
     !serverEnv.TRAINING_CATEGORIES_ENABLED
   )
     notFound();
+  const categories = await getTrainingNavigationService().getCategories(
+    "catalog",
+    "free",
+  );
+  const raw = await searchParams;
+  const filters = trainingCategoryFiltersSchema.parse({
+    mode: typeof raw.mode === "string" ? raw.mode : undefined,
+    plan: typeof raw.plan === "string" ? raw.plan : undefined,
+    progress: typeof raw.progress === "string" ? raw.progress : undefined,
+  });
   return (
     <TrainingPageShell
-      description="Elige el área que quieres fortalecer."
+      description="Elige el área que quieres fortalecer y encuentra una habilidad concreta."
       title="Categorías"
     >
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {taxonomyCategories.map((category) => (
-          <Link
-            className="flex min-h-56 flex-col rounded-[8px] border border-slate-200 bg-white p-5 hover:border-violet-300"
-            href={`/ejercicios/categorias/${category.slug}`}
-            key={category.slug}
-          >
-            <span className="grid h-12 w-12 place-items-center rounded-[8px] bg-violet-50 text-violet-700">
-              <TaxonomyIcon name={category.icon} />
-            </span>
-            <h2 className="mt-5 text-lg font-black">{category.name}</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-500">
-              {category.shortDescription}
-            </p>
-            <span className="mt-auto pt-4 text-xs font-bold text-violet-700">
-              {category.subcategories.length} áreas · {category.skills.length}{" "}
-              habilidades iniciales
-            </span>
-          </Link>
-        ))}
-      </div>
+      <TrainingCategoriesExplorer
+        categories={categories}
+        initialMode={filters.mode ?? "all"}
+        initialPlan={filters.plan ?? "all"}
+        initialProgress={filters.progress ?? "all"}
+      />
     </TrainingPageShell>
   );
 }

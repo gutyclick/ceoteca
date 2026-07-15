@@ -4,6 +4,12 @@ import type {
   ExerciseAnswer,
   TrainingSession,
 } from "@/types/training-engine";
+import type {
+  TrainingCategoryCardViewModel,
+  TrainingCategoryPageViewModel,
+  TrainingHomeViewModel,
+  TrainingSkillPageViewModel,
+} from "@/lib/training/navigation-model";
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const supabase = createBrowserSupabaseClient();
@@ -25,6 +31,25 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
   if (!response.ok || !payload.data)
     throw new Error(payload.error?.message ?? "TRAINING_API_ERROR");
   return payload.data;
+}
+
+export function getTrainingNavigationHome() {
+  return request<TrainingHomeViewModel>("/api/training/navigation?view=home");
+}
+export function getTrainingNavigationCategories() {
+  return request<TrainingCategoryCardViewModel[]>(
+    "/api/training/navigation?view=categories",
+  );
+}
+export function getTrainingNavigationCategory(slug: string) {
+  return request<TrainingCategoryPageViewModel>(
+    `/api/training/navigation?view=category&slug=${encodeURIComponent(slug)}`,
+  );
+}
+export function getTrainingNavigationSkill(slug: string) {
+  return request<TrainingSkillPageViewModel>(
+    `/api/training/navigation?view=skill&slug=${encodeURIComponent(slug)}`,
+  );
 }
 
 export function startLearningPath(pathSlug: string) {
@@ -217,6 +242,7 @@ export async function createRemoteTraining(templateSlug: string) {
 }
 export async function getAdaptiveRecommendation(
   durationMinutes: 3 | 5 | 7 | 10 | 15,
+  skillSlug?: string,
 ) {
   return request<{
     id: string;
@@ -234,7 +260,7 @@ export async function getAdaptiveRecommendation(
     };
   }>("/api/training/recommendations", {
     method: "POST",
-    body: JSON.stringify({ durationMinutes }),
+    body: JSON.stringify({ durationMinutes, skillSlug }),
   });
 }
 export async function acceptAdaptiveRecommendation(recommendationId: string) {
@@ -242,6 +268,21 @@ export async function acceptAdaptiveRecommendation(recommendationId: string) {
     `/api/training/recommendations/${recommendationId}/accept`,
     { method: "POST", body: "{}" },
   );
+}
+
+export async function trackTrainingNavigationEvent(
+  eventName: import("@/lib/training/analytics-schemas").LearningEventName,
+  properties: Record<string, unknown> = {},
+) {
+  return request<{ accepted: boolean }>("/api/training/analytics/events", {
+    method: "POST",
+    body: JSON.stringify({
+      clientEventId: crypto.randomUUID(),
+      eventName,
+      occurredAt: new Date().toISOString(),
+      properties,
+    }),
+  });
 }
 
 type Snapshot = {
