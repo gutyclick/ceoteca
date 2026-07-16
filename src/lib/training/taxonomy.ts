@@ -115,25 +115,28 @@ export const taxonomyCategories: TaxonomyCategory[] = [
         "Consistencia verbal",
         "Reconocimiento de marca",
       ]),
-      skill("Identificar una propuesta de valor débil", "Propuesta de valor", [
-        "Relevancia",
-        "Diferenciación",
-        "Resultado observable",
+      skill("Crear propuestas de valor", "Propuesta de valor", [
+        "Público específico",
+        "Problema prioritario",
+        "Resultado verificable",
+        "Diferenciador creíble",
       ]),
       skill("Analizar jerarquía visual", "Identidad visual", [
         "Contraste",
         "Orden de lectura",
         "Legibilidad",
       ]),
-      skill("Escribir titulares claros", "Copywriting", [
-        "Promesa",
-        "Especificidad",
-        "Claridad inmediata",
+      skill("Crear slogans", "Copywriting", [
+        "Brevedad",
+        "Memorabilidad",
+        "Relevancia",
+        "Credibilidad",
       ]),
-      skill("Diseñar una oferta", "Propuesta de valor", [
-        "Valor percibido",
-        "Reducción de riesgo",
+      skill("Evaluar anuncios", "Publicidad", [
+        "Titular",
+        "Claridad de oferta",
         "Llamada a la acción",
+        "Coherencia visual",
       ]),
     ],
   },
@@ -157,11 +160,12 @@ export const taxonomyCategories: TaxonomyCategory[] = [
       "Persuasión ética",
     ],
     skills: [
-      skill(
-        "Hacer preguntas de descubrimiento",
-        "Descubrimiento de necesidades",
-        ["Pregunta abierta", "Impacto", "Prioridad"],
-      ),
+      skill("Descubrir necesidades", "Descubrimiento de necesidades", [
+        "Preguntas abiertas",
+        "Problema real",
+        "Impacto y urgencia",
+        "Escucha activa",
+      ]),
       skill("Responder objeciones", "Manejo de objeciones", [
         "Objeción real",
         "Clarificación",
@@ -172,15 +176,17 @@ export const taxonomyCategories: TaxonomyCategory[] = [
         "Coste de inacción",
         "Diferenciación",
       ]),
-      skill("Escribir seguimiento", "Seguimiento", [
-        "Recapitulación",
-        "Próximo paso",
-        "Persistencia útil",
+      skill("Escribir seguimientos", "Seguimiento", [
+        "Contexto",
+        "Brevedad",
+        "Valor adicional",
+        "CTA de seguimiento",
       ]),
-      skill("Cerrar sin presión", "Cierre", [
-        "Señal de compra",
+      skill("Cerrar con claridad", "Cierre", [
+        "Resumen de acuerdos",
+        "Siguiente paso",
         "Compromiso",
-        "Cierre ético",
+        "Reducción de fricción",
       ]),
     ],
   },

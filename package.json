@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint .",
     "test": "vitest run",
+    "validate:training-mvp": "node scripts/validate-training-mvp.mjs",
     "typecheck": "tsc --noEmit",
     "format": "prettier --check .",
     "format:write": "prettier --write ."
