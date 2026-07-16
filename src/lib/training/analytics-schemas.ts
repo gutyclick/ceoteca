@@ -72,6 +72,14 @@ export const learningEventNames = [
   "message_exercise_completed",
   "roleplay_recommended",
   "search_used",
+  "training_search_used",
+  "training_search_result_clicked",
+  "editorial_taxonomy_created",
+  "editorial_taxonomy_updated",
+  "editorial_path_updated",
+  "editorial_validation_failed",
+  "editorial_content_published",
+  "adaptive_recommendation_generated",
 ] as const;
 
 export const learningEventNameSchema = z.enum(learningEventNames);
@@ -89,6 +97,12 @@ export const serverOnlyLearningEvents = new Set<LearningEventName>([
   "revision_submitted",
   "deep_ai_evaluation_completed",
   "deep_ai_evaluation_failed",
+  "editorial_taxonomy_created",
+  "editorial_taxonomy_updated",
+  "editorial_path_updated",
+  "editorial_validation_failed",
+  "editorial_content_published",
+  "adaptive_recommendation_generated",
 ]);
 
 const masteryBucketSchema = z.enum(["unknown", "low", "medium", "high"]);

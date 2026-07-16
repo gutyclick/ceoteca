@@ -6,6 +6,8 @@ import { RuleBasedAdaptiveTrainingEngine } from "@/lib/training/adaptive-engine"
 import { getTrainingServerSession } from "@/lib/training/server-auth";
 import { getEffectiveSubscriptionForUser } from "@/lib/subscriptions/service";
 import type { AdaptiveCandidate } from "@/lib/training/adaptive-types";
+import { TrainingAdaptiveContextService } from "@/lib/training/adaptive-context-service";
+import { TrainingAnalyticsService } from "@/lib/training/analytics-service";
 
 const schema = z.object({
   durationMinutes: z
@@ -103,7 +105,9 @@ export async function POST(request: NextRequest) {
       .single(),
     auth.client
       .from("training_exercises")
-      .select("id,skill_id,concept_id,type,difficulty,estimated_seconds")
+      .select(
+        "id,skill_id,concept_id,type,difficulty,estimated_seconds,cognitive_level,minimum_plan,training_skills(category_id),training_exercise_formats(is_primary,training_formats(slug))",
+      )
       .eq("status", "published"),
     auth.client
       .from("user_skill_mastery")
@@ -132,14 +136,19 @@ export async function POST(request: NextRequest) {
       p_month: new Date().toISOString().slice(0, 10),
     }),
   ]);
+  const adaptiveContext = await new TrainingAdaptiveContextService(
+    auth.client,
+  ).build(auth.user.id);
   const masteryMap = new Map(
     (mastery ?? []).map((item) => [item.skill_id, item]),
   );
-  const due = new Set(
-    (reviews ?? [])
-      .filter((item) => Date.parse(item.scheduled_for) <= Date.now())
-      .map((item) => `${item.skill_id}:${item.concept_id}`),
-  );
+  const due = adaptiveContext.dueReviewKeys.size
+    ? adaptiveContext.dueReviewKeys
+    : new Set(
+        (reviews ?? [])
+          .filter((item) => Date.parse(item.scheduled_for) <= Date.now())
+          .map((item) => `${item.skill_id}:${item.concept_id}`),
+      );
   const errorMap = new Map<string, number>();
   for (const item of answers ?? []) {
     if (!item.is_correct) {
@@ -153,30 +162,94 @@ export async function POST(request: NextRequest) {
     }
   }
   const disliked = new Set(preferences?.disliked_exercise_types ?? []);
+  const renderers = new Set([
+    "single_choice",
+    "multiple_choice",
+    "true_false",
+    "ordering",
+    "flashcard",
+    "scenario",
+    "open_response",
+    "guided_builder",
+    "decision_justification",
+    "reflection",
+    "visual_single_choice",
+    "visual_comparison",
+    "visual_diagnosis",
+    "visual_annotation",
+    "visual_ranking",
+    "message_response",
+    "message_comparison",
+    "tone_adjustment",
+    "objection_response",
+    "email_rewrite",
+    "conversation_diagnosis",
+  ]);
   const candidates: AdaptiveCandidate[] = (exercises ?? [])
     .filter(
       (item) =>
         !requestedSkill?.data || item.skill_id === requestedSkill.data.id,
     )
     .filter((item) => !disliked.has(item.type))
-    .map((item) => ({
-      id: item.id,
-      skillId: item.skill_id,
-      conceptId: item.concept_id,
-      type: item.type,
-      difficulty: item.difficulty,
-      estimatedSeconds: item.estimated_seconds ?? 50,
-      mastery: Number(masteryMap.get(item.skill_id)?.mastery_score ?? 50),
-      dueReview: due.has(`${item.skill_id}:${item.concept_id}`),
-      recentErrors: errorMap.get(item.id) ?? 0,
-      alignedWithGoal: Boolean(
-        profile?.occupation && item.type !== "flashcard",
-      ),
-      lastPracticedAt:
-        masteryMap.get(item.skill_id)?.last_practiced_at ?? undefined,
-      isNew: !masteryMap.has(item.skill_id),
-      prerequisiteEligible: true,
-    }));
+    .map((item) => {
+      const skillRelation = item.training_skills as unknown as {
+        category_id?: string;
+      } | null;
+      const formatRelations =
+        item.training_exercise_formats as unknown as Array<{
+          is_primary?: boolean;
+          training_formats?: { slug?: string } | Array<{ slug?: string }>;
+        }> | null;
+      const primary =
+        formatRelations?.find((entry) => entry.is_primary) ??
+        formatRelations?.[0];
+      const formatRelation = Array.isArray(primary?.training_formats)
+        ? primary?.training_formats[0]
+        : primary?.training_formats;
+      const format = formatRelation?.slug as
+        AdaptiveCandidate["format"] | undefined;
+      return {
+        id: item.id,
+        skillId: item.skill_id,
+        conceptId: item.concept_id,
+        type: item.type,
+        difficulty: item.difficulty,
+        estimatedSeconds: item.estimated_seconds ?? 50,
+        mastery: Number(masteryMap.get(item.skill_id)?.mastery_score ?? 50),
+        dueReview: due.has(`${item.skill_id}:${item.concept_id}`),
+        recentErrors: errorMap.get(item.id) ?? 0,
+        alignedWithGoal: Boolean(
+          profile?.occupation && item.type !== "flashcard",
+        ),
+        lastPracticedAt:
+          masteryMap.get(item.skill_id)?.last_practiced_at ?? undefined,
+        isNew: !masteryMap.has(item.skill_id),
+        prerequisiteEligible: true,
+        categoryId: skillRelation?.category_id,
+        cognitiveLevel: item.cognitive_level,
+        format,
+        pathId: adaptiveContext.currentModuleExerciseIds.has(item.id)
+          ? (adaptiveContext.activePathId ?? undefined)
+          : undefined,
+        minimumPlan: item.minimum_plan,
+        activeSession: adaptiveContext.activeExerciseIds.has(item.id),
+        activePathModule: adaptiveContext.currentModuleExerciseIds.has(item.id),
+        preferredCategory: Boolean(
+          skillRelation?.category_id &&
+          adaptiveContext.preferredCategoryIds.has(skillRelation.category_id),
+        ),
+        weakSkill: adaptiveContext.weakSkillIds.has(item.skill_id),
+        nextCognitiveLevel:
+          Number(masteryMap.get(item.skill_id)?.mastery_score ?? 0) >= 60 &&
+          ["application", "analysis", "transfer", "synthesis"].includes(
+            item.cognitive_level,
+          ),
+        rendererAvailable: renderers.has(item.type),
+        recentlyUsedFormat: Boolean(
+          format && adaptiveContext.recentFormats.includes(format),
+        ),
+      };
+    });
   try {
     const recommendation =
       await new RuleBasedAdaptiveTrainingEngine().buildRecommendation({
@@ -220,6 +293,17 @@ export async function POST(request: NextRequest) {
       .select("id")
       .single();
     if (error || !data) throw new Error("SAVE_FAILED");
+    await new TrainingAnalyticsService(auth.client).recordServerEvent(
+      auth.user.id,
+      {
+        clientEventId: crypto.randomUUID(),
+        eventName: "adaptive_recommendation_generated",
+        properties: {
+          recommendation_reason: recommendation.explanation.reasonCode,
+          plan: effectiveSubscription.plan,
+        },
+      },
+    );
     return jsonData({ id: data.id, ...recommendation });
   } catch {
     return jsonError(

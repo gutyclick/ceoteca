@@ -1,90 +1,107 @@
-import { AlertTriangle, CheckCircle2, Network, Route } from "lucide-react";
+"use client";
 
-import { learningPaths, taxonomyCategories } from "@/lib/training/taxonomy";
-import { validateTaxonomy } from "@/lib/training/taxonomy-validation";
+import {
+  AlertTriangle,
+  Boxes,
+  CheckCircle2,
+  FolderTree,
+  Route,
+} from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+
+import { EditorialValidationPanel } from "@/components/training/admin/EditorialValidationPanel";
+import {
+  listEditorial,
+  validateEditorial,
+} from "@/lib/training/admin-editorial-client";
+
+const resources = [
+  ["categories", "Categorías"],
+  ["subcategories", "Subcategorías"],
+  ["skills", "Habilidades"],
+  ["concepts", "Conceptos"],
+  ["formats", "Formatos"],
+  ["paths", "Rutas"],
+] as const;
 
 export function AdminTaxonomyDashboard() {
-  const issues = validateTaxonomy(taxonomyCategories, learningPaths);
-  const errors = issues.filter((item) => item.severity === "error");
-  const warnings = issues.filter((item) => item.severity === "warning");
+  const [counts, setCounts] = useState<Record<string, number>>({});
+  const [validation, setValidation] = useState<Awaited<
+    ReturnType<typeof validateEditorial>
+  > | null>(null);
+  useEffect(() => {
+    void Promise.all(
+      resources.map(
+        async ([resource]) =>
+          [resource, (await listEditorial(resource)).items.length] as const,
+      ),
+    ).then((entries) => setCounts(Object.fromEntries(entries)));
+    void validateEditorial().then(setValidation);
+  }, []);
   return (
     <div>
       <header className="border-b border-slate-200 pb-5">
         <h1 className="text-3xl font-black tracking-[-0.04em]">
-          Taxonomía y rutas
+          Taxonomía editorial
         </h1>
         <p className="mt-1 text-sm text-slate-500">
-          Revisa la estructura pedagógica antes de publicar contenido.
+          Administra, valida y publica la estructura pedagógica de Training.
         </p>
       </header>
-      <div className="mt-6 grid gap-4 sm:grid-cols-3">
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {resources.map(([resource, label]) => {
+          const Icon =
+            resource === "paths"
+              ? Route
+              : resource === "categories" || resource === "subcategories"
+                ? FolderTree
+                : Boxes;
+          return (
+            <Link
+              className="rounded-[8px] border border-slate-200 bg-white p-5 transition-colors hover:border-violet-300"
+              href={`/admin/training/${resource}`}
+              key={resource}
+            >
+              <Icon className="text-violet-700" size={22} />
+              <strong className="mt-4 block text-2xl">
+                {counts[resource] ?? "—"}
+              </strong>
+              <span className="text-sm text-slate-500">{label}</span>
+            </Link>
+          );
+        })}
+      </div>
+      <section className="mt-6 grid gap-4 sm:grid-cols-3">
         <article className="rounded-[8px] border border-slate-200 bg-white p-5">
-          <Network className="text-violet-700" size={22} />
+          <AlertTriangle className="text-rose-600" size={22} />
           <strong className="mt-3 block text-2xl">
-            {taxonomyCategories.length}
+            {validation?.summary.errors ?? "—"}
           </strong>
-          <span className="text-sm text-slate-500">categorías</span>
-        </article>
-        <article className="rounded-[8px] border border-slate-200 bg-white p-5">
-          <Route className="text-violet-700" size={22} />
-          <strong className="mt-3 block text-2xl">
-            {learningPaths.length}
-          </strong>
-          <span className="text-sm text-slate-500">rutas</span>
-        </article>
-        <article className="rounded-[8px] border border-slate-200 bg-white p-5">
-          {errors.length ? (
-            <AlertTriangle className="text-rose-600" size={22} />
-          ) : (
-            <CheckCircle2 className="text-emerald-600" size={22} />
-          )}
-          <strong className="mt-3 block text-2xl">{errors.length}</strong>
           <span className="text-sm text-slate-500">errores bloqueantes</span>
         </article>
-      </div>
-      <section className="mt-6 rounded-[8px] border border-slate-200 bg-white p-5">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-black">Estado editorial</h2>
-          <span className="text-sm font-bold text-amber-700">
-            {warnings.length} advertencias
+        <article className="rounded-[8px] border border-slate-200 bg-white p-5">
+          <AlertTriangle className="text-amber-600" size={22} />
+          <strong className="mt-3 block text-2xl">
+            {validation?.summary.warnings ?? "—"}
+          </strong>
+          <span className="text-sm text-slate-500">advertencias</span>
+        </article>
+        <article className="rounded-[8px] border border-slate-200 bg-white p-5">
+          <CheckCircle2 className="text-emerald-600" size={22} />
+          <strong className="mt-3 block text-2xl">Versionado</strong>
+          <span className="text-sm text-slate-500">
+            publicaciones inmutables
           </span>
-        </div>
-        <div className="mt-4 divide-y divide-slate-200">
-          {taxonomyCategories.map((category) => (
-            <div
-              className="grid gap-2 py-4 sm:grid-cols-[1fr_120px_120px] sm:items-center"
-              key={category.slug}
-            >
-              <div>
-                <h3 className="font-black">{category.name}</h3>
-                <p className="mt-1 text-sm text-slate-500">
-                  {category.subcategories.length} subcategorías
-                </p>
-              </div>
-              <span className="text-sm font-bold">
-                {category.skills.length} habilidades
-              </span>
-              <span className="w-fit rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700">
-                Publicado
-              </span>
-            </div>
-          ))}
-        </div>
+        </article>
       </section>
-      {warnings.length ? (
-        <section className="mt-6 rounded-[8px] border border-amber-200 bg-amber-50 p-5">
-          <h2 className="font-black text-amber-950">
-            Advertencias editoriales
-          </h2>
-          <ul className="mt-3 grid gap-2 text-sm text-amber-900">
-            {warnings.slice(0, 12).map((issue) => (
-              <li key={`${issue.code}-${issue.entity}`}>
-                <strong>{issue.entity}:</strong> {issue.message}
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
+      <div className="mt-6">
+        {validation ? (
+          <EditorialValidationPanel issues={validation.issues} />
+        ) : (
+          <div className="h-36 animate-pulse rounded-[8px] bg-slate-100" />
+        )}
+      </div>
     </div>
   );
 }

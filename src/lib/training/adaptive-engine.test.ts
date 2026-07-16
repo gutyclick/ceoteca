@@ -23,6 +23,44 @@ const base: AdaptiveCandidate = {
   prerequisiteEligible: true,
 };
 describe("motor adaptativo", () => {
+  it("prioriza sesión activa, módulo y repaso en ese orden", () => {
+    const now = "2026-07-12T12:00:00Z";
+    const active = scoreAdaptiveCandidate(
+      { ...base, activeSession: true },
+      now,
+    );
+    const path = scoreAdaptiveCandidate(
+      { ...base, activePathModule: true },
+      now,
+    );
+    const review = scoreAdaptiveCandidate({ ...base, dueReview: true }, now);
+    expect(active).toBeGreaterThan(path);
+    expect(path).toBeGreaterThan(review);
+  });
+
+  it("excluye contenido bloqueado, sin renderer y role-play para Free", async () => {
+    const candidates: AdaptiveCandidate[] = [
+      { ...base, id: "locked", minimumPlan: "pro" },
+      { ...base, id: "missing-renderer", rendererAvailable: false },
+      { ...base, id: "roleplay", format: "conversational-roleplay" },
+      {
+        ...base,
+        id: "eligible",
+        format: "deterministic-practice",
+        rendererAvailable: true,
+      },
+    ];
+    const result =
+      await new RuleBasedAdaptiveTrainingEngine().buildRecommendation({
+        userId: "u",
+        plan: "free",
+        requestedDurationMinutes: 3,
+        now: "2026-07-12T12:00:00Z",
+        aiQuotaRemaining: 0,
+        candidates,
+      });
+    expect(result.exerciseIds).toEqual(["eligible"]);
+  });
   it("prioriza repasos y errores recientes", () => {
     const now = "2026-07-12T12:00:00Z";
     expect(

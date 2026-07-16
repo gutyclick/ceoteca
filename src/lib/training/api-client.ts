@@ -14,6 +14,10 @@ import type {
   TrainingPathPageViewModel,
   TrainingPathsPageViewModel,
 } from "@/lib/training/path-model";
+import type {
+  TrainingSearchQuery,
+  TrainingSearchResultViewModel,
+} from "@/lib/training/search-schemas";
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const supabase = createBrowserSupabaseClient();
@@ -73,6 +77,20 @@ export function getTrainingPath(pathSlug: string) {
   );
 }
 
+export function searchTraining(input: TrainingSearchQuery) {
+  const params = new URLSearchParams();
+  Object.entries(input).forEach(([key, value]) => {
+    if (value !== undefined && value !== "") params.set(key, String(value));
+  });
+  return request<{
+    results: TrainingSearchResultViewModel[];
+    total: number;
+    page: number;
+    pageSize: number;
+    pages: number;
+  }>(`/api/training/search?${params}`);
+}
+
 export function continueLearningPath(pathSlug: string) {
   return request<TrainingPathPageViewModel>(
     `/api/training/paths/${encodeURIComponent(pathSlug)}/continue`,
@@ -88,10 +106,7 @@ export function startTrainingPathItem(itemId: string) {
 }
 
 export type RoleplayDifficulty =
-  | "fundamentals"
-  | "application"
-  | "advanced"
-  | "expert";
+  "fundamentals" | "application" | "advanced" | "expert";
 export type RoleplayCategoryDto = {
   id: string;
   slug: string;
@@ -241,8 +256,7 @@ export function getRoleplayEvaluation(sessionId: string) {
     confidence: number | null;
     outcome: string | null;
     result:
-      | import("@/lib/training/roleplay-schemas").RoleplayEvaluationOutput
-      | null;
+      import("@/lib/training/roleplay-schemas").RoleplayEvaluationOutput | null;
     completed_at: string | null;
   }>(`/api/training/roleplay/sessions/${sessionId}/evaluation`);
 }

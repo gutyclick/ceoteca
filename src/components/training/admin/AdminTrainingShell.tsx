@@ -11,9 +11,12 @@ import {
   Network,
   MessagesSquare,
   Scale,
+  Route,
+  Menu,
+  X,
   WandSparkles,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 const links = [
   { href: "/admin/training", label: "Resumen", icon: LayoutDashboard },
   {
@@ -24,9 +27,10 @@ const links = [
   { href: "/admin/training/exercises", label: "Ejercicios", icon: ListChecks },
   {
     href: "/admin/training/taxonomy",
-    label: "Taxonomía y rutas",
+    label: "Taxonomía",
     icon: Network,
   },
+  { href: "/admin/training/paths", label: "Rutas", icon: Route },
   {
     href: "/admin/training/roleplay",
     label: "Simulaciones",
@@ -52,9 +56,36 @@ const links = [
 ];
 export function AdminTrainingShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
   return (
     <div className="min-h-screen bg-[#fbfaf8] text-slate-950">
-      <aside className="fixed inset-y-0 left-0 z-20 hidden w-64 border-r border-slate-200 bg-white p-5 lg:block">
+      <button
+        aria-label="Abrir navegación editorial"
+        className="fixed left-4 top-4 z-30 grid h-11 w-11 place-items-center rounded-[8px] border border-slate-200 bg-white lg:hidden"
+        onClick={() => setMobileOpen(true)}
+        type="button"
+      >
+        <Menu size={20} />
+      </button>
+      {mobileOpen ? (
+        <button
+          aria-label="Cerrar navegación editorial"
+          className="fixed inset-0 z-30 bg-slate-950/20 lg:hidden"
+          onClick={() => setMobileOpen(false)}
+          type="button"
+        />
+      ) : null}
+      <aside
+        className={`fixed inset-y-0 left-0 z-40 w-64 border-r border-slate-200 bg-white p-5 transition-transform lg:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}
+      >
+        <button
+          aria-label="Cerrar navegación"
+          className="absolute right-3 top-3 grid h-10 w-10 place-items-center lg:hidden"
+          onClick={() => setMobileOpen(false)}
+          type="button"
+        >
+          <X size={20} />
+        </button>
         <Link
           className="text-xl font-black text-violet-700"
           href="/admin/training"
@@ -64,9 +95,10 @@ export function AdminTrainingShell({ children }: { children: ReactNode }) {
         <nav className="mt-8 space-y-1" aria-label="Administración de Training">
           {links.map(({ href, label, icon: Icon }) => (
             <Link
-              className={`flex min-h-11 items-center gap-3 rounded-[8px] px-3 text-sm font-bold ${pathname === href ? "bg-violet-50 text-violet-700" : "text-slate-600 hover:bg-slate-50"}`}
+              className={`flex min-h-11 items-center gap-3 rounded-[8px] px-3 text-sm font-bold ${pathname === href || (href !== "/admin/training" && pathname.startsWith(`${href}/`)) ? "bg-violet-50 text-violet-700" : "text-slate-600 hover:bg-slate-50"}`}
               href={href}
               key={href}
+              onClick={() => setMobileOpen(false)}
             >
               <Icon size={18} />
               {label}
@@ -80,7 +112,7 @@ export function AdminTrainingShell({ children }: { children: ReactNode }) {
           Volver a Training
         </Link>
       </aside>
-      <main className="min-w-0 px-4 py-6 sm:px-6 lg:ml-64 lg:px-8">
+      <main className="min-w-0 px-4 pb-6 pt-20 sm:px-6 lg:ml-64 lg:px-8 lg:pt-6">
         <div className="mx-auto max-w-[1440px]">{children}</div>
       </main>
     </div>

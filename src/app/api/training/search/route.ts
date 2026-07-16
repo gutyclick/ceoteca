@@ -1,12 +1,10 @@
 import { NextRequest } from "next/server";
-import { z } from "zod";
-
 import { jsonData, jsonError } from "@/lib/api/response";
 import { serverEnv } from "@/lib/env";
 import { getTrainingServerSession } from "@/lib/training/server-auth";
-import { searchTrainingCatalog } from "@/lib/training/taxonomy";
-
-const querySchema = z.string().trim().min(2).max(80);
+import { TrainingSearchService } from "@/lib/training/search-service";
+import { trainingSearchQuerySchema } from "@/lib/training/search-schemas";
+import { getEffectiveSubscriptionForUser } from "@/lib/subscriptions/service";
 
 export async function GET(request: NextRequest) {
   if (
@@ -29,7 +27,26 @@ export async function GET(request: NextRequest) {
       },
       401,
     );
-  const parsed = querySchema.safeParse(request.nextUrl.searchParams.get("q"));
-  if (!parsed.success) return jsonData({ results: [] });
-  return jsonData({ results: searchTrainingCatalog(parsed.data) });
+  const parsed = trainingSearchQuerySchema.safeParse(
+    Object.fromEntries(request.nextUrl.searchParams),
+  );
+  if (!parsed.success)
+    return jsonError(
+      { code: "INVALID_SEARCH", message: "Revisa los filtros de búsqueda." },
+      400,
+    );
+  const subscription = await getEffectiveSubscriptionForUser(auth.user.id);
+  try {
+    return jsonData(
+      await new TrainingSearchService(auth.client).search(
+        parsed.data,
+        subscription.plan === "founder" ? "pro" : subscription.plan,
+      ),
+    );
+  } catch {
+    return jsonError(
+      { code: "SEARCH_FAILED", message: "No pudimos completar la búsqueda." },
+      500,
+    );
+  }
 }

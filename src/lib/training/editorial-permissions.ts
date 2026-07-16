@@ -50,7 +50,6 @@ const permissions: Record<EditorialRole, EditorialAction[]> = {
     "create",
     "edit",
     "submit_review",
-    "archive",
     "ai_generate",
     "ai_review",
     "analytics_read",

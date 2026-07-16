@@ -1,5 +1,15 @@
-# Búsqueda de Training
+# Búsqueda global de Training
 
-La búsqueda consulta categorías, subcategorías, habilidades, conceptos, rutas y ejercicios. Los resultados locales dan respuesta inmediata y `/api/training/search` valida la consulta con Zod para integraciones de servidor.
+`/training/search` consulta en servidor categorías, subcategorías, habilidades, conceptos, rutas, ejercicios, libros y simulaciones publicadas.
 
-Los resultados incluyen tipo, plan mínimo y URL. El contenido bloqueado solo muestra título y preview autorizado. Los filtros previstos son tipo, categoría, formato, dificultad, plan y duración.
+La consulta se valida con Zod, se normaliza antes de construir filtros PostgREST y conserva sus parámetros en la URL. Incluye debounce, paginación y filtros por tipo, categoría, modo, formato, dificultad, plan y duración.
+
+## Privacidad y acceso
+
+- Solo se seleccionan campos públicos y editoriales seguros.
+- Nunca se devuelven drafts, respuestas correctas, notas privadas ni assets restringidos.
+- El plan efectivo se obtiene en servidor.
+- Un resultado bloqueado conserva título y preview reducido, pero no revela el contenido completo.
+- Los eventos `training_search_used` y `training_search_result_clicked` no contienen el texto privado del usuario.
+
+El buscador del header abre esta vista al presionar Enter.

@@ -25,6 +25,13 @@ export type AdaptiveCandidate = {
   pathId?: string;
   minimumPlan?: TrainingPlan;
   hasApprovedVisualAssets?: boolean;
+  activeSession?: boolean;
+  activePathModule?: boolean;
+  preferredCategory?: boolean;
+  weakSkill?: boolean;
+  nextCognitiveLevel?: boolean;
+  rendererAvailable?: boolean;
+  recentlyUsedFormat?: boolean;
 };
 export type AdaptiveTrainingInput = {
   userId: string;
@@ -49,6 +56,15 @@ export type RecommendationExplanation = {
   format?: TrainingFormat;
   path?: string;
   planEligibility: boolean;
+  reasonCode?:
+    | "active_session"
+    | "active_module"
+    | "due_review"
+    | "weak_skill"
+    | "next_cognitive_level"
+    | "goal"
+    | "format_variety"
+    | "new_content";
 };
 export type AdaptiveTrainingRecommendation = {
   primarySkillId: string;

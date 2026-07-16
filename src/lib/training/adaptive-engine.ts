@@ -15,9 +15,15 @@ export function scoreAdaptiveCandidate(
   now: string,
 ) {
   let score = 0;
+  if (candidate.activeSession) score += adaptiveWeights.activeSession;
+  if (candidate.activePathModule) score += adaptiveWeights.activePathModule;
   if (candidate.dueReview) score += adaptiveWeights.dueReview;
+  if (candidate.weakSkill) score += adaptiveWeights.weakSkill;
+  if (candidate.nextCognitiveLevel) score += adaptiveWeights.nextCognitiveLevel;
   score += Math.min(candidate.recentErrors, 2) * adaptiveWeights.recentError;
   if (candidate.alignedWithGoal) score += adaptiveWeights.goalAlignment;
+  if (candidate.preferredCategory) score += adaptiveWeights.preferredCategory;
+  if (!candidate.recentlyUsedFormat) score += adaptiveWeights.formatVariety;
   if (candidate.mastery < 40) score += adaptiveWeights.lowMastery;
   else if (candidate.mastery < 70) score += adaptiveWeights.mediumMastery;
   if (candidate.isNew) score += adaptiveWeights.newContent;
@@ -57,6 +63,7 @@ function selectVaried(candidates: AdaptiveCandidate[], count: number) {
       continue;
     if (
       candidate.format &&
+      selected.length >= 2 &&
       selected.slice(-2).every((item) => item.format === candidate.format)
     )
       continue;
@@ -79,6 +86,7 @@ export class RuleBasedAdaptiveTrainingEngine implements AdaptiveTrainingEngine {
     const planRank = { free: 0, pro: 1, founder: 1, unlimited: 2 } as const;
     const ranked = input.candidates
       .filter((candidate) => {
+        if (candidate.rendererAvailable === false) return false;
         const required = candidate.minimumPlan ?? "free";
         if (planRank[input.plan] < planRank[required]) return false;
         if (
@@ -102,6 +110,8 @@ export class RuleBasedAdaptiveTrainingEngine implements AdaptiveTrainingEngine {
     const primarySkillId = ranked[0].skillId;
     const target = durationTargets[input.requestedDurationMinutes];
     const ordered = [
+      ...ranked.filter((item) => item.activeSession),
+      ...ranked.filter((item) => item.activePathModule && !item.activeSession),
       ...ranked.filter((item) => item.dueReview),
       ...ranked.filter(
         (item) => item.skillId === primarySkillId && !item.dueReview,
@@ -155,13 +165,21 @@ export class RuleBasedAdaptiveTrainingEngine implements AdaptiveTrainingEngine {
       calculatedDurationMinutes: Math.max(1, Math.round(seconds / 60)),
       includesDeepAIEvaluation: includesDeepAI,
       explanation: {
-        primaryReason: ranked[0].dueReview
-          ? "Tienes un repaso pendiente de esta habilidad."
-          : ranked[0].recentErrors
-            ? "Esta habilidad merece refuerzo por tus intentos recientes."
-            : ranked[0].alignedWithGoal
-              ? "Esta habilidad está alineada con tu objetivo principal."
-              : "Esta práctica equilibra progreso y variedad.",
+        primaryReason: ranked[0].activeSession
+          ? "Continúa la sesión que ya tienes en progreso."
+          : ranked[0].activePathModule
+            ? "Este ejercicio corresponde al módulo actual de tu ruta."
+            : ranked[0].dueReview
+              ? "Tienes un repaso pendiente de esta habilidad."
+              : ranked[0].weakSkill
+                ? "Esta habilidad necesita refuerzo según tu progreso."
+                : ranked[0].nextCognitiveLevel
+                  ? "Es el siguiente paso cognitivo para esta habilidad."
+                  : ranked[0].recentErrors
+                    ? "Esta habilidad merece refuerzo por tus intentos recientes."
+                    : ranked[0].alignedWithGoal
+                      ? "Esta habilidad está alineada con tu objetivo principal."
+                      : "Esta práctica equilibra progreso y variedad.",
         supportingReasons: [
           selected.some((item) => item.dueReview)
             ? "Incluye repasos pendientes."
@@ -181,6 +199,21 @@ export class RuleBasedAdaptiveTrainingEngine implements AdaptiveTrainingEngine {
         format: ranked[0].format,
         path: ranked[0].pathId,
         planEligibility: true,
+        reasonCode: ranked[0].activeSession
+          ? "active_session"
+          : ranked[0].activePathModule
+            ? "active_module"
+            : ranked[0].dueReview
+              ? "due_review"
+              : ranked[0].weakSkill
+                ? "weak_skill"
+                : ranked[0].nextCognitiveLevel
+                  ? "next_cognitive_level"
+                  : ranked[0].alignedWithGoal
+                    ? "goal"
+                    : !ranked[0].recentlyUsedFormat
+                      ? "format_variety"
+                      : "new_content",
       },
     };
   }
