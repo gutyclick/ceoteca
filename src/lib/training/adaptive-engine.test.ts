@@ -61,6 +61,29 @@ describe("motor adaptativo", () => {
       });
     expect(result.exerciseIds).toEqual(["eligible"]);
   });
+  it("admite análisis visual cuando sus recursos están aprobados", async () => {
+    const result =
+      await new RuleBasedAdaptiveTrainingEngine().buildRecommendation({
+        userId: "u",
+        plan: "pro",
+        requestedDurationMinutes: 3,
+        now: "2026-07-12T12:00:00Z",
+        aiQuotaRemaining: 1,
+        candidates: [
+          {
+            ...base,
+            id: "visual",
+            type: "visual_diagnosis",
+            format: "visual-analysis",
+            minimumPlan: "pro",
+            rendererAvailable: true,
+            hasApprovedVisualAssets: true,
+          },
+        ],
+      });
+
+    expect(result.exerciseIds).toEqual(["visual"]);
+  });
   it("prioriza repasos y errores recientes", () => {
     const now = "2026-07-12T12:00:00Z";
     expect(

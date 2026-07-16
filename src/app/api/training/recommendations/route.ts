@@ -8,6 +8,7 @@ import { getEffectiveSubscriptionForUser } from "@/lib/subscriptions/service";
 import type { AdaptiveCandidate } from "@/lib/training/adaptive-types";
 import { TrainingAdaptiveContextService } from "@/lib/training/adaptive-context-service";
 import { TrainingAnalyticsService } from "@/lib/training/analytics-service";
+import { createServiceSupabaseClient } from "@/lib/supabase/server";
 
 const schema = z.object({
   durationMinutes: z
@@ -106,7 +107,7 @@ export async function POST(request: NextRequest) {
     auth.client
       .from("training_exercises")
       .select(
-        "id,skill_id,concept_id,type,difficulty,estimated_seconds,cognitive_level,minimum_plan,training_skills(category_id),training_exercise_formats(is_primary,training_formats(slug))",
+        "id,skill_id,concept_id,type,difficulty,estimated_seconds,cognitive_level,minimum_plan,training_skills(category_id),training_exercise_formats(is_primary,training_formats(slug)),training_exercise_assets(asset_id,training_visual_assets(copyright_status))",
       )
       .eq("status", "published"),
     auth.client
@@ -208,6 +209,18 @@ export async function POST(request: NextRequest) {
         : primary?.training_formats;
       const format = formatRelation?.slug as
         AdaptiveCandidate["format"] | undefined;
+      const assetRelations = item.training_exercise_assets as unknown as Array<{
+        training_visual_assets?:
+          { copyright_status?: string } | Array<{ copyright_status?: string }>;
+      }> | null;
+      const hasApprovedVisualAssets = Boolean(
+        assetRelations?.some((entry) => {
+          const asset = Array.isArray(entry.training_visual_assets)
+            ? entry.training_visual_assets[0]
+            : entry.training_visual_assets;
+          return asset?.copyright_status === "approved";
+        }),
+      );
       return {
         id: item.id,
         skillId: item.skill_id,
@@ -245,13 +258,15 @@ export async function POST(request: NextRequest) {
             item.cognitive_level,
           ),
         rendererAvailable: renderers.has(item.type),
+        hasApprovedVisualAssets,
         recentlyUsedFormat: Boolean(
           format && adaptiveContext.recentFormats.includes(format),
         ),
       };
     });
+  let recommendation;
   try {
-    const recommendation =
+    recommendation =
       await new RuleBasedAdaptiveTrainingEngine().buildRecommendation({
         userId: auth.user.id,
         plan: effectiveSubscription.plan,
@@ -264,47 +279,6 @@ export async function POST(request: NextRequest) {
             : 30,
         candidates,
       });
-    const key = `${new Date().toISOString().slice(0, 13)}:${parsed.data.durationMinutes}:${recommendation.primarySkillId}`;
-    const { data, error } = await auth.client
-      .from("training_recommendations")
-      .upsert(
-        {
-          user_id: auth.user.id,
-          primary_skill_id: recommendation.primarySkillId,
-          secondary_skill_ids: recommendation.secondarySkillIds,
-          selected_concept_ids: [
-            ...new Set(
-              candidates
-                .filter((item) => recommendation.exerciseIds.includes(item.id))
-                .map((item) => item.conceptId),
-            ),
-          ],
-          selected_exercise_ids: recommendation.exerciseIds,
-          requested_duration_minutes: recommendation.requestedDurationMinutes,
-          calculated_duration_minutes: recommendation.calculatedDurationMinutes,
-          priority_snapshot: { candidateCount: candidates.length },
-          explanation: recommendation.explanation,
-          includes_deep_ai_evaluation: recommendation.includesDeepAIEvaluation,
-          idempotency_key: key,
-          expires_at: new Date(Date.now() + 15 * 60_000).toISOString(),
-        },
-        { onConflict: "user_id,idempotency_key" },
-      )
-      .select("id")
-      .single();
-    if (error || !data) throw new Error("SAVE_FAILED");
-    await new TrainingAnalyticsService(auth.client).recordServerEvent(
-      auth.user.id,
-      {
-        clientEventId: crypto.randomUUID(),
-        eventName: "adaptive_recommendation_generated",
-        properties: {
-          recommendation_reason: recommendation.explanation.reasonCode,
-          plan: effectiveSubscription.plan,
-        },
-      },
-    );
-    return jsonData({ id: data.id, ...recommendation });
   } catch {
     return jsonError(
       {
@@ -315,4 +289,68 @@ export async function POST(request: NextRequest) {
       409,
     );
   }
+
+  const key = `${new Date().toISOString().slice(0, 13)}:${parsed.data.durationMinutes}:${recommendation.primarySkillId}`;
+  const { data, error } = await auth.client
+    .from("training_recommendations")
+    .upsert(
+      {
+        user_id: auth.user.id,
+        primary_skill_id: recommendation.primarySkillId,
+        secondary_skill_ids: recommendation.secondarySkillIds,
+        selected_concept_ids: [
+          ...new Set(
+            candidates
+              .filter((item) => recommendation.exerciseIds.includes(item.id))
+              .map((item) => item.conceptId),
+          ),
+        ],
+        selected_exercise_ids: recommendation.exerciseIds,
+        requested_duration_minutes: recommendation.requestedDurationMinutes,
+        calculated_duration_minutes: recommendation.calculatedDurationMinutes,
+        priority_snapshot: { candidateCount: candidates.length },
+        explanation: recommendation.explanation,
+        includes_deep_ai_evaluation: recommendation.includesDeepAIEvaluation,
+        idempotency_key: key,
+        expires_at: new Date(Date.now() + 15 * 60_000).toISOString(),
+      },
+      { onConflict: "user_id,idempotency_key" },
+    )
+    .select("id")
+    .single();
+  if (error || !data) {
+    console.error("No se pudo guardar la recomendación de Training", {
+      code: error?.code,
+    });
+    return jsonError(
+      {
+        code: "RECOMMENDATION_SAVE_FAILED",
+        message:
+          "No pudimos preparar tu sesión en este momento. Inténtalo nuevamente.",
+      },
+      500,
+    );
+  }
+
+  try {
+    await new TrainingAnalyticsService(
+      createServiceSupabaseClient(),
+    ).recordServerEvent(auth.user.id, {
+      clientEventId: crypto.randomUUID(),
+      eventName: "adaptive_recommendation_generated",
+      properties: {
+        recommendation_reason: recommendation.explanation.reasonCode,
+        plan: effectiveSubscription.plan,
+      },
+    });
+  } catch (analyticsError) {
+    console.error("No se pudo registrar la recomendación en Analytics", {
+      message:
+        analyticsError instanceof Error
+          ? analyticsError.message
+          : "UNKNOWN_ANALYTICS_ERROR",
+    });
+  }
+
+  return jsonData({ id: data.id, ...recommendation });
 }
