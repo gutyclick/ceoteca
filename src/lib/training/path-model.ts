@@ -1,22 +1,13 @@
-import type {
-  TrainingAccessState,
-} from "@/lib/training/navigation-model";
+import type { TrainingAccessState } from "@/lib/training/navigation-model";
 import type {
   TrainingDifficulty,
   TrainingPlan,
 } from "@/lib/training/taxonomy-model";
 
 export type TrainingPathStatus =
-  | "available"
-  | "locked"
-  | "in_progress"
-  | "completed"
-  | "coming_soon";
+  "available" | "locked" | "in_progress" | "completed" | "coming_soon";
 export type TrainingPathModuleStatus =
-  | "locked"
-  | "available"
-  | "in_progress"
-  | "completed";
+  "locked" | "available" | "in_progress" | "completed";
 export type TrainingPathItemType =
   | "exercise"
   | "skill_session"
@@ -67,7 +58,12 @@ export type TrainingPathCardViewModel = {
 };
 
 export type TrainingPathNextAction = {
-  label: "Comenzar ruta" | "Continuar ruta" | "Repasar ruta" | "Ver planes" | "Próximamente";
+  label:
+    | "Comenzar ruta"
+    | "Continuar ruta"
+    | "Repasar ruta"
+    | "Ver planes"
+    | "Próximamente";
   kind: "start" | "continue" | "review" | "upgrade" | "disabled";
   href: string | null;
   moduleId: string | null;
@@ -100,7 +96,6 @@ export type TrainingPathFilters = {
   query?: string;
   category?: string;
   difficulty?: TrainingDifficulty;
-  duration?: "short" | "medium" | "long";
   progress?: "all" | "not_started" | "in_progress" | "completed";
   plan?: TrainingPlan;
 };

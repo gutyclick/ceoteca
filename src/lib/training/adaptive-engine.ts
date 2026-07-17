@@ -1,6 +1,6 @@
 import {
   adaptiveWeights,
-  durationTargets,
+  recommendationExerciseTarget,
 } from "@/lib/training/adaptive-config";
 import type {
   AdaptiveCandidate,
@@ -108,7 +108,7 @@ export class RuleBasedAdaptiveTrainingEngine implements AdaptiveTrainingEngine {
       );
     if (!ranked.length) throw new Error("NO_ELIGIBLE_CONTENT");
     const primarySkillId = ranked[0].skillId;
-    const target = durationTargets[input.requestedDurationMinutes];
+    const target = recommendationExerciseTarget;
     const ordered = [
       ...ranked.filter((item) => item.activeSession),
       ...ranked.filter((item) => item.activePathModule && !item.activeSession),
@@ -136,12 +136,7 @@ export class RuleBasedAdaptiveTrainingEngine implements AdaptiveTrainingEngine {
     ]);
     const includesDeepAI =
       input.aiQuotaRemaining > 0 &&
-      input.requestedDurationMinutes >= 7 &&
       selected.some((item) => deepTypes.has(item.type));
-    const seconds = selected.reduce(
-      (sum, item) => sum + item.estimatedSeconds,
-      0,
-    );
     const mastery =
       ranked
         .filter((item) => item.skillId === primarySkillId)
@@ -161,8 +156,6 @@ export class RuleBasedAdaptiveTrainingEngine implements AdaptiveTrainingEngine {
       ].slice(0, 2),
       exerciseIds: selected.map((item) => item.id),
       difficulty: selectDifficulty(mastery, ranked[0].recentErrors),
-      requestedDurationMinutes: input.requestedDurationMinutes,
-      calculatedDurationMinutes: Math.max(1, Math.round(seconds / 60)),
       includesDeepAIEvaluation: includesDeepAI,
       explanation: {
         primaryReason: ranked[0].activeSession
@@ -189,7 +182,6 @@ export class RuleBasedAdaptiveTrainingEngine implements AdaptiveTrainingEngine {
             : "Refuerza conceptos ya iniciados.",
         ],
         skills: [...new Set(selected.map((item) => item.skillId))],
-        estimatedDuration: Math.max(1, Math.round(seconds / 60)),
         includesReview: selected.some((item) => item.dueReview),
         includesNewContent: selected.some((item) => item.isNew),
         includesDeepAIEvaluation: includesDeepAI,

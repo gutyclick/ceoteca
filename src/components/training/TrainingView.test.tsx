@@ -82,7 +82,11 @@ const navigation: TrainingHomeViewModel = {
       accessState: "available",
     },
   ],
-  progressSummary: { skillsPracticed: 0, reviewsPending: 0, minutesTrained: 0 },
+  progressSummary: {
+    skillsPracticed: 0,
+    reviewsPending: 0,
+    exercisesCompleted: 0,
+  },
   reviews: { pending: 0, label: "Estás al día" },
   roleplayPreview: null,
 };

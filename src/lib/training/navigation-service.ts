@@ -76,8 +76,10 @@ type PathContinueRow = {
   path_id: string;
   progress: number | string;
   current_module_id: string | null;
-  training_learning_paths: { name: string; slug: string } | Array<{ name: string; slug: string }>;
-  training_learning_path_modules: { title: string } | Array<{ title: string }> | null;
+  training_learning_paths:
+    { name: string; slug: string } | Array<{ name: string; slug: string }>;
+  training_learning_path_modules:
+    { title: string } | Array<{ title: string }> | null;
 };
 const relationOne = <T>(value: T | T[] | null | undefined) =>
   Array.isArray(value) ? value[0] : value;
@@ -228,7 +230,7 @@ export class SupabaseTrainingNavigationService implements TrainingNavigationServ
     let sessions: SessionSummaryRow[] = [];
     let reviewsPending = 0;
     let skillsPracticed = 0;
-    let minutesTrained = 0;
+    let exercisesCompleted = 0;
     let pathContinue: PathContinueRow[] = [];
 
     if (isUserId(userId)) {
@@ -255,7 +257,9 @@ export class SupabaseTrainingNavigationService implements TrainingNavigationServ
             .gt("total_attempts", 0),
           this.db
             .from("user_training_path_progress")
-            .select("path_id,progress,current_module_id,training_learning_paths(name,slug),training_learning_path_modules(title)")
+            .select(
+              "path_id,progress,current_module_id,training_learning_paths(name,slug),training_learning_path_modules(title)",
+            )
             .eq("user_id", userId)
             .eq("status", "in_progress")
             .order("updated_at", { ascending: false })
@@ -269,9 +273,9 @@ export class SupabaseTrainingNavigationService implements TrainingNavigationServ
         []) as unknown as SessionSummaryRow[];
       reviewsPending = reviewsResponse.count ?? 0;
       skillsPracticed = masteryResponse.count ?? 0;
-      minutesTrained = sessions
+      exercisesCompleted = sessions
         .filter((session) => session.status === "completed")
-        .reduce((sum, session) => sum + (session.estimated_minutes ?? 0), 0);
+        .reduce((sum, session) => sum + session.total_exercises, 0);
       pathContinue = (pathResponse.data ?? []) as unknown as PathContinueRow[];
     }
 
@@ -297,9 +301,11 @@ export class SupabaseTrainingNavigationService implements TrainingNavigationServ
         id: entry.path_id,
         title: currentModule?.title
           ? `${path?.name}: ${currentModule.title}`
-          : path?.name ?? "Ruta en progreso",
+          : (path?.name ?? "Ruta en progreso"),
         progress: Number(entry.progress),
-        href: path?.slug ? `/ejercicios/rutas/${path.slug}` : "/ejercicios/rutas",
+        href: path?.slug
+          ? `/ejercicios/rutas/${path.slug}`
+          : "/ejercicios/rutas",
       };
     });
     const reviewContinueItems = reviewsPending
@@ -325,7 +331,6 @@ export class SupabaseTrainingNavigationService implements TrainingNavigationServ
             category: first.name,
             reason:
               "Recomendado para empezar a construir criterio con una sesión breve.",
-            durationMinutes: 7,
             exerciseCount: null,
             difficulty: "fundamentals",
             accessState: "available",
@@ -359,7 +364,7 @@ export class SupabaseTrainingNavigationService implements TrainingNavigationServ
       progressSummary: {
         skillsPracticed,
         reviewsPending,
-        minutesTrained,
+        exercisesCompleted,
       },
       reviews: {
         pending: reviewsPending,
@@ -417,8 +422,12 @@ export class SupabaseTrainingNavigationService implements TrainingNavigationServ
       .select("path_id")
       .eq("category_id", category.id);
     if (pathRelationError) throw pathRelationError;
-    const categoryPathRelations = (pathRelations ?? []) as unknown as Array<{ path_id: string }>;
-    const relatedPaths = (await this.paths.getPaths({ status: "published" })).filter((path) =>
+    const categoryPathRelations = (pathRelations ?? []) as unknown as Array<{
+      path_id: string;
+    }>;
+    const relatedPaths = (
+      await this.paths.getPaths({ status: "published" })
+    ).filter((path) =>
       categoryPathRelations.some((relation) => relation.path_id === path.id),
     );
     return {
@@ -433,13 +442,17 @@ export class SupabaseTrainingNavigationService implements TrainingNavigationServ
           .length,
       })),
       trainingItems,
-      pathPreviews: await Promise.all(relatedPaths.map(async (path) => ({
-        slug: path.slug, name: path.name, promise: path.promise,
-        estimatedMinutes: path.estimatedMinutes,
-        moduleCount: (await this.paths.getModules(path.id)).length,
-        minimumPlan: path.minimumPlan,
-        accessState: access(path.minimumPlan, plan),
-      }))),
+      pathPreviews: await Promise.all(
+        relatedPaths.map(async (path) => ({
+          slug: path.slug,
+          name: path.name,
+          promise: path.promise,
+          estimatedMinutes: path.estimatedMinutes,
+          moduleCount: (await this.paths.getModules(path.id)).length,
+          minimumPlan: path.minimumPlan,
+          accessState: access(path.minimumPlan, plan),
+        })),
+      ),
       relatedBooks: [],
       reviews: { pending: 0 },
       roleplays: null,
@@ -522,8 +535,12 @@ export class SupabaseTrainingNavigationService implements TrainingNavigationServ
       .select("path_id")
       .eq("skill_id", skill.id);
     if (pathRelationError) throw pathRelationError;
-    const skillPathRelations = (pathRelations ?? []) as unknown as Array<{ path_id: string }>;
-    const relatedPaths = (await this.paths.getPaths({ status: "published" })).filter((path) =>
+    const skillPathRelations = (pathRelations ?? []) as unknown as Array<{
+      path_id: string;
+    }>;
+    const relatedPaths = (
+      await this.paths.getPaths({ status: "published" })
+    ).filter((path) =>
       skillPathRelations.some((relation) => relation.path_id === path.id),
     );
     return {
@@ -565,7 +582,10 @@ export class SupabaseTrainingNavigationService implements TrainingNavigationServ
         slug: format.slug,
         name: format.name,
       })),
-      relatedPaths: relatedPaths.map((path) => ({ slug: path.slug, name: path.name })),
+      relatedPaths: relatedPaths.map((path) => ({
+        slug: path.slug,
+        name: path.name,
+      })),
       relatedBooks: [],
       review: { pending: reviewPending },
       accessState: access(skill.minimumPlan, plan),
@@ -618,7 +638,6 @@ export class StaticTrainingNavigationService implements TrainingNavigationServic
         title: taxonomyCategories[0].skills[0].name,
         category: taxonomyCategories[0].name,
         reason: "Empieza con una sesión corta para descubrir tus fortalezas.",
-        durationMinutes: 7,
         exerciseCount: null,
         difficulty: "fundamentals",
         accessState: "available",
@@ -647,7 +666,7 @@ export class StaticTrainingNavigationService implements TrainingNavigationServic
       progressSummary: {
         skillsPracticed: 0,
         reviewsPending: 0,
-        minutesTrained: 0,
+        exercisesCompleted: 0,
       },
       reviews: { pending: 0, label: "Estás al día" },
       roleplayPreview: null,

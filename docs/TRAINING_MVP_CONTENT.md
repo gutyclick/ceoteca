@@ -11,7 +11,11 @@ El paquete publica contenido original para **Marketing y marca** y **Ventas y pe
 | Marketing y marca   |           5 |        20 |            30 |       10 |        0 |                10 |
 | Ventas y persuasión |           5 |        20 |            30 |        0 |       12 |                 8 |
 
-Cada ejercicio conserva objetivo, concepto, nivel cognitivo, dificultad, formato, instrucciones, evaluación, feedback, errores frecuentes, duración, plan, estado y fuente editorial. Los ejercicios abiertos usan una rúbrica de claridad, contexto y empatía, criterio aplicado y siguiente paso.
+Cada ejercicio conserva objetivo, concepto, nivel cognitivo, dificultad, formato, instrucciones, evaluación, feedback, errores frecuentes, plan, estado y fuente editorial. La duración puede permanecer como metadato interno, pero no se muestra ni determina qué ejercicio recibe el usuario. Los ejercicios abiertos usan una rúbrica de claridad, contexto y empatía, criterio aplicado y siguiente paso.
+
+## Selección de ejercicios
+
+Training no pide al usuario elegir una duración ni intenta completar una cantidad de minutos. El motor selecciona una secuencia variada de hasta seis ejercicios publicados según habilidad, progreso, plan, prerrequisitos y repasos pendientes. Si existen menos ejercicios elegibles, entrega los disponibles sin presentar un error relacionado con el tiempo.
 
 ## Rutas
 

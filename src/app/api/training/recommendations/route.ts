@@ -11,15 +11,6 @@ import { TrainingAnalyticsService } from "@/lib/training/analytics-service";
 import { createServiceSupabaseClient } from "@/lib/supabase/server";
 
 const schema = z.object({
-  durationMinutes: z
-    .union([
-      z.literal(3),
-      z.literal(5),
-      z.literal(7),
-      z.literal(10),
-      z.literal(15),
-    ])
-    .default(7),
   skillSlug: z
     .string()
     .trim()
@@ -41,10 +32,7 @@ export async function POST(request: NextRequest) {
   const parsed = schema.safeParse(await request.json().catch(() => ({})));
   if (!parsed.success)
     return jsonError(
-      {
-        code: "INVALID_DURATION",
-        message: "Selecciona una duración disponible.",
-      },
+      { code: "INVALID_REQUEST", message: "Revisa la solicitud enviada." },
       400,
     );
   const requestedSkill = parsed.data.skillSlug
@@ -270,7 +258,6 @@ export async function POST(request: NextRequest) {
       await new RuleBasedAdaptiveTrainingEngine().buildRecommendation({
         userId: auth.user.id,
         plan: effectiveSubscription.plan,
-        requestedDurationMinutes: parsed.data.durationMinutes,
         preferredExerciseTypes: preferences?.preferred_exercise_types ?? [],
         now: new Date().toISOString(),
         aiQuotaRemaining:
@@ -284,13 +271,13 @@ export async function POST(request: NextRequest) {
       {
         code: "NO_CONTENT",
         message:
-          "No encontramos suficiente contenido para esta duración. Prueba una sesión más corta.",
+          "No encontramos ejercicios disponibles para tu plan y progreso actuales.",
       },
       409,
     );
   }
 
-  const key = `${new Date().toISOString().slice(0, 13)}:${parsed.data.durationMinutes}:${recommendation.primarySkillId}`;
+  const key = `${new Date().toISOString().slice(0, 13)}:${recommendation.primarySkillId}`;
   const { data, error } = await auth.client
     .from("training_recommendations")
     .upsert(
@@ -306,9 +293,12 @@ export async function POST(request: NextRequest) {
           ),
         ],
         selected_exercise_ids: recommendation.exerciseIds,
-        requested_duration_minutes: recommendation.requestedDurationMinutes,
-        calculated_duration_minutes: recommendation.calculatedDurationMinutes,
-        priority_snapshot: { candidateCount: candidates.length },
+        requested_duration_minutes: 0,
+        calculated_duration_minutes: 0,
+        priority_snapshot: {
+          candidateCount: candidates.length,
+          selectionMode: "content_first",
+        },
         explanation: recommendation.explanation,
         includes_deep_ai_evaluation: recommendation.includesDeepAIEvaluation,
         idempotency_key: key,

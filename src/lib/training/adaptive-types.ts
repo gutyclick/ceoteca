@@ -36,7 +36,6 @@ export type AdaptiveCandidate = {
 export type AdaptiveTrainingInput = {
   userId: string;
   plan: "free" | "pro" | "unlimited" | "founder";
-  requestedDurationMinutes: 3 | 5 | 7 | 10 | 15;
   preferredExerciseTypes?: ExerciseType[];
   now: string;
   aiQuotaRemaining: number;
@@ -46,7 +45,6 @@ export type RecommendationExplanation = {
   primaryReason: string;
   supportingReasons: string[];
   skills: string[];
-  estimatedDuration: number;
   includesReview: boolean;
   includesNewContent: boolean;
   includesDeepAIEvaluation: boolean;
@@ -72,8 +70,6 @@ export type AdaptiveTrainingRecommendation = {
   exerciseIds: string[];
   difficulty: TrainingDifficulty;
   explanation: RecommendationExplanation;
-  requestedDurationMinutes: number;
-  calculatedDurationMinutes: number;
   includesDeepAIEvaluation: boolean;
 };
 export interface AdaptiveTrainingEngine {

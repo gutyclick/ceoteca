@@ -15,5 +15,4 @@ export const adaptiveWeights = {
   practicedToday: -12,
   overexposure: -15,
 } as const;
-export const durationTargets = { 3: 3, 5: 5, 7: 8, 10: 10, 15: 14 } as const;
-export const allowedDurations = [3, 5, 7, 10, 15] as const;
+export const recommendationExerciseTarget = 6;

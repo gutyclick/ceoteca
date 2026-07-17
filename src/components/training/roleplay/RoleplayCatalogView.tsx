@@ -236,8 +236,6 @@ export function RoleplayCatalogView({
                     <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-500">
                       <span>{difficultyLabels[scenario.level]}</span>
                       <span>•</span>
-                      <span>{scenario.estimated_minutes} min</span>
-                      <span>•</span>
                       <span>{scenario.max_turns} turnos máx.</span>
                     </div>
                     <Link

@@ -9,7 +9,7 @@ import {
   getAdaptiveRecommendation,
   trackTrainingNavigationEvent,
 } from "@/lib/training/api-client";
-import { ArrowRight, Clock3, ListChecks, Loader2, Signal } from "lucide-react";
+import { ArrowRight, ListChecks, Loader2, Signal } from "lucide-react";
 
 import {
   BookThumbnailGroup,
@@ -30,7 +30,6 @@ export function TrainingHeroCard({
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [notice, setNotice] = useState("");
-  const [duration, setDuration] = useState<3 | 5 | 7 | 10 | 15>(7);
   const [adaptive, setAdaptive] = useState<Awaited<
     ReturnType<typeof getAdaptiveRecommendation>
   > | null>(null);
@@ -39,8 +38,6 @@ export function TrainingHeroCard({
     title: recommendation?.title ?? todayTraining.title,
     category: recommendation?.category ?? todayTraining.category,
     description: recommendation?.reason ?? todayTraining.description,
-    durationMinutes:
-      recommendation?.durationMinutes ?? todayTraining.durationMinutes,
     exerciseCount: recommendation?.exerciseCount ?? todayTraining.exerciseCount,
     level: recommendation
       ? recommendation.difficulty === "fundamentals"
@@ -61,7 +58,7 @@ export function TrainingHeroCard({
   useEffect(() => {
     if (clientEnv.NEXT_PUBLIC_TRAINING_DATA_SOURCE !== "supabase") return;
     let active = true;
-    getAdaptiveRecommendation(duration, recommendation?.skillSlug || undefined)
+    getAdaptiveRecommendation(recommendation?.skillSlug || undefined)
       .then((value) => {
         if (active) setAdaptive(value);
       })
@@ -72,7 +69,7 @@ export function TrainingHeroCard({
     return () => {
       active = false;
     };
-  }, [duration, recommendation?.skillSlug]);
+  }, [recommendation?.skillSlug]);
 
   async function startTraining() {
     setIsLoading(true);
@@ -115,30 +112,7 @@ export function TrainingHeroCard({
           <p className="mt-2 text-sm leading-6 text-slate-600">
             {display.description}
           </p>
-          <label className="mt-4 inline-flex items-center gap-3 text-sm font-bold text-slate-700">
-            Tengo
-            <select
-              aria-label="Duración del entrenamiento"
-              className="min-h-10 rounded-[8px] border border-slate-200 bg-white px-3"
-              value={duration}
-              onChange={(event) =>
-                setDuration(Number(event.target.value) as 3 | 5 | 7 | 10 | 15)
-              }
-            >
-              {[3, 5, 7, 10, 15].map((value) => (
-                <option key={value} value={value}>
-                  {value} min
-                </option>
-              ))}
-            </select>
-          </label>
           <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold text-slate-500">
-            <span className="inline-flex items-center gap-2">
-              <Clock3 size={16} />
-              {adaptive?.calculatedDurationMinutes ??
-                display.durationMinutes}{" "}
-              min
-            </span>
             <span className="inline-flex items-center gap-2">
               <ListChecks size={16} />
               {adaptive?.exerciseIds.length ?? display.exerciseCount} ejercicios

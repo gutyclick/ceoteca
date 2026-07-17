@@ -5,10 +5,7 @@ import type {
 } from "@/lib/training/taxonomy-model";
 
 export type TrainingAccessState =
-  | "available"
-  | "partially_available"
-  | "locked"
-  | "coming_soon";
+  "available" | "partially_available" | "locked" | "coming_soon";
 export type TrainingModeSlug = "analiza" | "construye" | "practica";
 export type TrainingCategoryCardViewModel = {
   slug: string;
@@ -38,7 +35,6 @@ export type TrainingHomeViewModel = {
     title: string;
     category: string;
     reason: string;
-    durationMinutes: number;
     exerciseCount: number | null;
     difficulty: TrainingDifficulty;
     accessState: TrainingAccessState;
@@ -63,7 +59,7 @@ export type TrainingHomeViewModel = {
   progressSummary: {
     skillsPracticed: number;
     reviewsPending: number;
-    minutesTrained: number;
+    exercisesCompleted: number;
   };
   reviews: { pending: number; label: string };
   roleplayPreview: null | {

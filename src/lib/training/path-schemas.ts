@@ -17,10 +17,6 @@ export const trainingPathFiltersSchema = z.object({
     (value) => (value === "" || value == null ? undefined : value),
     z.enum(["fundamentals", "application", "advanced", "expert"]).optional(),
   ),
-  duration: z.preprocess(
-    (value) => (value === "" || value == null ? undefined : value),
-    z.enum(["short", "medium", "long"]).optional(),
-  ),
   progress: z.preprocess(
     (value) => (value === "" || value == null ? "all" : value),
     z.enum(["all", "not_started", "in_progress", "completed"]),

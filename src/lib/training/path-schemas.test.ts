@@ -17,7 +17,6 @@ describe("contratos de rutas de aprendizaje", () => {
         q: "marca",
         category: "marketing",
         difficulty: "application",
-        duration: "medium",
         progress: "in_progress",
         plan: "pro",
       }),
@@ -25,7 +24,6 @@ describe("contratos de rutas de aprendizaje", () => {
       q: "marca",
       category: "marketing",
       difficulty: "application",
-      duration: "medium",
       progress: "in_progress",
       plan: "pro",
     });

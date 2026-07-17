@@ -43,9 +43,6 @@ export function TrainingSearchResult({
       <div className="mt-4 flex flex-wrap gap-2 text-xs font-bold text-slate-500">
         {result.category ? <span>{result.category}</span> : null}
         {result.format ? <span>· {result.format}</span> : null}
-        {result.durationMinutes ? (
-          <span>· {result.durationMinutes} min</span>
-        ) : null}
       </div>
       <Link
         className="mt-auto inline-flex min-h-11 items-center gap-2 pt-4 text-sm font-black text-violet-700"

@@ -3,7 +3,6 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   ArrowLeft,
-  Clock3,
   Loader2,
   LockKeyhole,
   MessagesSquare,
@@ -22,7 +21,13 @@ type Detail = RoleplayScenarioDto & {
   publicConfig: Record<string, unknown>;
   access: { plan: string; remaining: number | null; unlimited: boolean };
 };
-export function RoleplayPreparationView({ slug, pathItemId }: { slug: string; pathItemId?: string }) {
+export function RoleplayPreparationView({
+  slug,
+  pathItemId,
+}: {
+  slug: string;
+  pathItemId?: string;
+}) {
   const router = useRouter();
   const [scenario, setScenario] = useState<Detail | null>(null);
   const [error, setError] = useState("");
@@ -43,7 +48,11 @@ export function RoleplayPreparationView({ slug, pathItemId }: { slug: string; pa
     setStarting(true);
     setError("");
     try {
-      const result = await startRoleplay(scenario.id, scenario.level, pathItemId);
+      const result = await startRoleplay(
+        scenario.id,
+        scenario.level,
+        pathItemId,
+      );
       router.push(`/ejercicios/simulaciones/sesiones/${result.sessionId}`);
     } catch (cause) {
       setError(
@@ -82,7 +91,7 @@ export function RoleplayPreparationView({ slug, pathItemId }: { slug: string; pa
               <p className="mt-4 max-w-2xl leading-7 text-slate-600">
                 {scenario.short_description}
               </p>
-              <div className="mt-8 grid gap-4 sm:grid-cols-3">
+              <div className="mt-8 grid gap-4 sm:grid-cols-2">
                 <div className="rounded-[8px] bg-slate-50 p-4">
                   <Target className="text-violet-600" />
                   <strong className="mt-3 block">Objetivo</strong>
@@ -95,13 +104,6 @@ export function RoleplayPreparationView({ slug, pathItemId }: { slug: string; pa
                   <strong className="mt-3 block">Personaje</strong>
                   <p className="mt-1 text-sm text-slate-600">
                     Conversarás con {scenario.character_name}.
-                  </p>
-                </div>
-                <div className="rounded-[8px] bg-slate-50 p-4">
-                  <Clock3 className="text-violet-600" />
-                  <strong className="mt-3 block">Duración</strong>
-                  <p className="mt-1 text-sm text-slate-600">
-                    Aproximadamente {scenario.estimated_minutes} minutos.
                   </p>
                 </div>
               </div>

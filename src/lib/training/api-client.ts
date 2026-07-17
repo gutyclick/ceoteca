@@ -284,17 +284,12 @@ export async function createRemoteTraining(templateSlug: string) {
     body: JSON.stringify({ templateSlug }),
   });
 }
-export async function getAdaptiveRecommendation(
-  durationMinutes: 3 | 5 | 7 | 10 | 15,
-  skillSlug?: string,
-) {
+export async function getAdaptiveRecommendation(skillSlug?: string) {
   return request<{
     id: string;
     primarySkillId: string;
     exerciseIds: string[];
     difficulty: "beginner" | "intermediate" | "advanced";
-    requestedDurationMinutes: number;
-    calculatedDurationMinutes: number;
     includesDeepAIEvaluation: boolean;
     explanation: {
       primaryReason: string;
@@ -304,7 +299,7 @@ export async function getAdaptiveRecommendation(
     };
   }>("/api/training/recommendations", {
     method: "POST",
-    body: JSON.stringify({ durationMinutes, skillSlug }),
+    body: JSON.stringify({ skillSlug }),
   });
 }
 export async function acceptAdaptiveRecommendation(recommendationId: string) {

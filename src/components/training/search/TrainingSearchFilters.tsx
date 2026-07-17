@@ -13,7 +13,7 @@ const control =
 export function TrainingSearchFilters({ value, onChange }: Props) {
   return (
     <div
-      className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7"
+      className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6"
       aria-label="Filtros de búsqueda"
     >
       <select
@@ -110,25 +110,6 @@ export function TrainingSearchFilters({ value, onChange }: Props) {
         <option value="free">Free</option>
         <option value="pro">Pro</option>
         <option value="unlimited">Unlimited</option>
-      </select>
-      <select
-        aria-label="Duración máxima"
-        className={control}
-        onChange={(event) =>
-          onChange({
-            duration: event.target.value
-              ? Number(event.target.value)
-              : undefined,
-            page: 1,
-          })
-        }
-        value={value.duration ?? ""}
-      >
-        <option value="">Cualquier duración</option>
-        <option value="5">Hasta 5 min</option>
-        <option value="10">Hasta 10 min</option>
-        <option value="15">Hasta 15 min</option>
-        <option value="30">Hasta 30 min</option>
       </select>
     </div>
   );

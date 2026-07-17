@@ -29,7 +29,6 @@ export const trainingSearchQuerySchema = z.object({
     .enum(["fundamentals", "application", "advanced", "expert"])
     .optional(),
   plan: z.enum(trainingPlans).optional(),
-  duration: z.coerce.number().int().min(1).max(120).optional(),
   page: z.coerce.number().int().min(1).max(1000).default(1),
   pageSize: z.coerce.number().int().min(6).max(30).default(12),
 });
@@ -46,7 +45,6 @@ export type TrainingSearchResultViewModel = {
   mode: string | null;
   format: string | null;
   difficulty: string | null;
-  durationMinutes: number | null;
   minimumPlan: "free" | "pro" | "unlimited";
   access: "available" | "locked";
   preview: string;

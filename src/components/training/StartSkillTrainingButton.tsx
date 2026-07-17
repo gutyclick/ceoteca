@@ -60,7 +60,7 @@ export function StartSkillTrainingButton({
     setLoading(true);
     setNotice("");
     try {
-      const recommendation = await getAdaptiveRecommendation(7, skillSlug);
+      const recommendation = await getAdaptiveRecommendation(skillSlug);
       const session = await acceptAdaptiveRecommendation(recommendation.id);
       await trackTrainingNavigationEvent("training_skill_started", {
         skill: skillSlug,

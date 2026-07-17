@@ -26,7 +26,6 @@ export const trainingCategoryPageFiltersSchema = z
     format: z.string().trim().max(100).optional(),
     cognitiveLevel: z.enum(cognitiveLevels).optional(),
     difficulty: z.enum(trainingDifficulties).optional(),
-    duration: z.enum(["short", "medium", "long"]).optional(),
     plan: z.enum(trainingPlans).optional(),
   })
   .catch({});

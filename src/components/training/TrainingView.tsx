@@ -242,7 +242,7 @@ export function TrainingView({
                   key={path.slug}
                 >
                   <span className="text-xs font-bold text-violet-700">
-                    {path.estimatedMinutes} min · {path.moduleCount} módulos
+                    {path.moduleCount} módulos
                   </span>
                   <h3 className="mt-2 font-black">{path.name}</h3>
                   <p className="mt-1 text-sm leading-6 text-slate-500">
@@ -268,7 +268,10 @@ export function TrainingView({
           <div className="mt-3 grid gap-3 sm:grid-cols-3">
             {[
               ["Habilidades practicadas", view.progressSummary.skillsPracticed],
-              ["Minutos entrenados", view.progressSummary.minutesTrained],
+              [
+                "Ejercicios completados",
+                view.progressSummary.exercisesCompleted,
+              ],
               ["Repasos pendientes", view.progressSummary.reviewsPending],
             ].map(([label, value]) => (
               <article

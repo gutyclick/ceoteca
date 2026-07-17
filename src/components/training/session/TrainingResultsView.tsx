@@ -64,7 +64,6 @@ export function TrainingResultsView({ sessionId }: { sessionId: string }) {
         </section>
       </main>
     );
-  const minutes = Math.max(1, Math.round(result.durationSeconds / 60));
   return (
     <main className="min-h-screen bg-[#fbfaf8] px-4 py-10 text-slate-950 sm:px-6">
       <div className="mx-auto max-w-4xl">
@@ -94,12 +93,11 @@ export function TrainingResultsView({ sessionId }: { sessionId: string }) {
               <TrendingUp size={27} />
             </span>
           </div>
-          <div className="mt-7 grid gap-3 sm:grid-cols-4">
+          <div className="mt-7 grid gap-3 sm:grid-cols-3">
             {[
               [result.correctAnswers, "Respuestas correctas"],
               [result.retriedAnswers, "Respuestas mejoradas"],
               [result.areasToReview.length, "Conceptos por reforzar"],
-              [minutes, "Minutos de práctica"],
             ].map(([value, label]) => (
               <div
                 className="rounded-[8px] bg-slate-50 p-4"

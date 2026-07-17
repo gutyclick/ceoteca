@@ -54,7 +54,6 @@ describe("motor adaptativo", () => {
       await new RuleBasedAdaptiveTrainingEngine().buildRecommendation({
         userId: "u",
         plan: "free",
-        requestedDurationMinutes: 3,
         now: "2026-07-12T12:00:00Z",
         aiQuotaRemaining: 0,
         candidates,
@@ -66,7 +65,6 @@ describe("motor adaptativo", () => {
       await new RuleBasedAdaptiveTrainingEngine().buildRecommendation({
         userId: "u",
         plan: "pro",
-        requestedDurationMinutes: 3,
         now: "2026-07-12T12:00:00Z",
         aiQuotaRemaining: 1,
         candidates: [
@@ -99,7 +97,7 @@ describe("motor adaptativo", () => {
     expect(selectDifficulty(90)).toBe("advanced");
     expect(selectDifficulty(90, 2)).toBe("beginner");
   });
-  it("respeta variedad, prerequisitos y duración", async () => {
+  it("respeta variedad y prerrequisitos", async () => {
     const types = [
       "single_choice",
       "single_choice",
@@ -123,7 +121,6 @@ describe("motor adaptativo", () => {
       await new RuleBasedAdaptiveTrainingEngine().buildRecommendation({
         userId: "u",
         plan: "free",
-        requestedDurationMinutes: 7,
         now: "2026-07-12T12:00:00Z",
         aiQuotaRemaining: 1,
         candidates,

@@ -214,16 +214,6 @@ export class TrainingSearchService {
             text(row.difficulty) ||
             text(row.level) ||
             null,
-          durationMinutes:
-            row.estimated_minutes == null &&
-            row.estimated_seconds == null &&
-            row.reading_time == null
-              ? null
-              : Number(
-                  row.estimated_minutes ??
-                    row.reading_time ??
-                    Math.ceil(Number(row.estimated_seconds) / 60),
-                ),
           minimumPlan: required,
           access: available ? "available" : "locked",
         });
@@ -237,11 +227,6 @@ export class TrainingSearchService {
       if (input.difficulty && result.difficulty !== input.difficulty)
         return false;
       if (input.plan && result.minimumPlan !== input.plan) return false;
-      if (
-        input.duration &&
-        (!result.durationMinutes || result.durationMinutes > input.duration)
-      )
-        return false;
       return true;
     });
     const start = (input.page - 1) * input.pageSize;
