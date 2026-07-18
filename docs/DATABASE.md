@@ -115,22 +115,58 @@ unique (user_id, book_id, month)
 
 Para un límite global mensual por usuario, considerar una tabla adicional `monthly_usage`.
 
-### `chat_messages`
+### `chat_conversations`
+
+Una conversación se crea al persistir su primer mensaje válido. Las conversaciones
+generales no tienen libro; las conversaciones de libro requieren `book_id`.
 
 ```sql
 id uuid primary key default gen_random_uuid()
 user_id uuid not null references auth.users(id) on delete cascade
-book_id uuid not null references books(id) on delete cascade
-role text not null
-content text not null
+type text not null check (type in ('general', 'book'))
+book_id uuid references books(id) on delete cascade
+title text not null default 'Nueva conversación'
+title_is_manual boolean not null default false
+status text not null default 'active' check (status in ('active', 'archived'))
+metadata jsonb not null default '{}'::jsonb
+client_creation_key uuid
 created_at timestamptz not null default now()
+updated_at timestamptz not null default now()
+last_message_at timestamptz not null default now()
 ```
 
-Restricción:
+Restricciones principales:
 
 ```sql
-check (role in ('user', 'assistant'))
+check (
+  (type = 'general' and book_id is null) or
+  (type = 'book' and book_id is not null)
+)
+unique (user_id, client_creation_key)
 ```
+
+### `chat_messages`
+
+```sql
+id uuid primary key default gen_random_uuid()
+conversation_id uuid not null references chat_conversations(id) on delete cascade
+user_id uuid not null references auth.users(id) on delete cascade
+book_id uuid references books(id) on delete cascade
+role text not null check (role in ('user', 'assistant', 'system', 'tool'))
+content text not null
+parts jsonb
+status text not null default 'completed'
+  check (status in ('pending', 'streaming', 'completed', 'failed'))
+parent_message_id uuid references chat_messages(id) on delete set null
+metadata jsonb not null default '{}'::jsonb
+client_message_id uuid
+created_at timestamptz not null default now()
+updated_at timestamptz not null default now()
+```
+
+La combinación `(user_id, client_message_id)` es única cuando existe el ID de
+cliente. Esto evita persistir dos veces un mensaje enviado por reintentos o doble
+clic. Todas las lecturas y mutaciones deben validar `user_id` en el servidor.
 
 ### `subscriptions`
 

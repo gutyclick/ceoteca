@@ -29,6 +29,7 @@ type FloatingSiteChatProps = {
 type ChatResponse = {
   data?: {
     message: string;
+    conversation: { id: string };
     remainingQuestions: number | null;
     usage: {
       questionCount: number;
@@ -43,6 +44,7 @@ type ChatResponse = {
 
 type ChatHistoryResponse = {
   data?: {
+    conversation: { id: string } | null;
     messages: ChatConversationMessage[];
     remainingQuestions: number | null;
     usage: {
@@ -94,8 +96,10 @@ export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [remainingQuestions, setRemainingQuestions] = useState<number | null>(null);
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const [suggestionStartIndex, setSuggestionStartIndex] = useState(0);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const creationKeyRef = useRef(crypto.randomUUID());
   const scrollAreaRef = useRef<HTMLDivElement | null>(null);
   const latestAssistantRef = useRef<HTMLDivElement | null>(null);
   const shouldFocusLatestAssistantRef = useRef(false);
@@ -142,6 +146,7 @@ export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
         if (isMounted) {
           const historyMessages = payload.data?.messages ?? [];
           setMessages(historyMessages.length > 0 ? historyMessages : [introMessage]);
+          setConversationId(payload.data?.conversation?.id ?? null);
           setRemainingQuestions(payload.data?.remainingQuestions ?? null);
           window.setTimeout(() => {
             const scrollArea = scrollAreaRef.current;
@@ -225,7 +230,10 @@ export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          context: "site",
+          type: "general",
+          conversationId: conversationId ?? undefined,
+          clientCreationKey: conversationId ? undefined : creationKeyRef.current,
+          clientMessageId: crypto.randomUUID(),
           message: trimmed,
           conversation,
         }),
@@ -243,6 +251,7 @@ export function FloatingSiteChat({ plan }: FloatingSiteChatProps) {
           { role: "assistant", content: payload.data?.message ?? "" },
         ]);
         setRemainingQuestions(payload.data.remainingQuestions);
+        setConversationId(payload.data.conversation?.id ?? conversationId);
       }
     } catch (caughtError) {
       setError(

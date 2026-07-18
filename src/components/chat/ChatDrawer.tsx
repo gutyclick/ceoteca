@@ -18,6 +18,7 @@ type ChatDrawerProps = {
 type ChatResponse = {
   data?: {
     message: string;
+    conversation: { id: string };
     remainingQuestions: number | null;
     usage: {
       questionCount: number;
@@ -49,6 +50,8 @@ export function ChatDrawer({ bookSlug, bookTitle }: ChatDrawerProps) {
   const [error, setError] = useState<string | null>(null);
   const [usage, setUsage] = useState<string>("Sin preguntas todavía.");
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const creationKeyRef = useRef(crypto.randomUUID());
+  const [conversationId, setConversationId] = useState<string | null>(null);
 
   const conversation = useMemo(() => prepareChatConversation(messages), [messages]);
 
@@ -80,7 +83,11 @@ export function ChatDrawer({ bookSlug, bookTitle }: ChatDrawerProps) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          type: "book",
           bookId: bookSlug,
+          conversationId: conversationId ?? undefined,
+          clientCreationKey: conversationId ? undefined : creationKeyRef.current,
+          clientMessageId: crypto.randomUUID(),
           message: trimmed,
           conversation,
         }),
@@ -94,6 +101,7 @@ export function ChatDrawer({ bookSlug, bookTitle }: ChatDrawerProps) {
       const data = payload.data;
 
       if (data) {
+        setConversationId(data.conversation.id);
         setMessages((current) => [
           ...current,
           { role: "assistant", content: data.message },

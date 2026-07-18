@@ -2,145 +2,78 @@ import { NextRequest } from "next/server";
 
 import { plans } from "@/config/plans";
 import { jsonData, jsonError } from "@/lib/api/response";
-import { demoUser } from "@/lib/auth/demo";
 import { createBookRepository } from "@/lib/books/repository";
+import { listConversationMessages, listUserConversations } from "@/lib/chat/conversation-service";
 import { createChatRepository } from "@/lib/chat/repository";
-import { clientEnv } from "@/lib/env";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getEffectiveSubscriptionForUser } from "@/lib/subscriptions/service";
-import type { AppUser } from "@/types";
 
 function getBearerToken(request: NextRequest) {
   const authorization = request.headers.get("authorization");
-
-  if (!authorization?.startsWith("Bearer ")) {
-    return null;
-  }
-
-  return authorization.slice("Bearer ".length).trim();
-}
-
-async function getAuthenticatedUser(
-  request: NextRequest,
-): Promise<{ accessToken?: string; user: AppUser } | null> {
-  if (clientEnv.NEXT_PUBLIC_DEMO_MODE) {
-    return { user: demoUser };
-  }
-
-  const accessToken = getBearerToken(request);
-
-  if (!accessToken) {
-    return null;
-  }
-
-  const supabase = createServerSupabaseClient(accessToken);
-  const { data: authData, error: authError } =
-    await supabase.auth.getUser(accessToken);
-
-  if (authError || !authData.user) {
-    return null;
-  }
-
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("id, full_name, plan")
-    .eq("id", authData.user.id)
-    .maybeSingle();
-
-  if (profileError || !profile) {
-    return null;
-  }
-
-  const effectiveSubscription = await getEffectiveSubscriptionForUser(authData.user.id);
-
-  return {
-    accessToken,
-    user: {
-      id: authData.user.id,
-      email: authData.user.email ?? "",
-      fullName: profile.full_name ?? "Usuario",
-      plan: effectiveSubscription.plan,
-      isDemo: false,
-    },
-  };
+  return authorization?.startsWith("Bearer ")
+    ? authorization.slice("Bearer ".length).trim()
+    : null;
 }
 
 export async function GET(request: NextRequest) {
-  const session = await getAuthenticatedUser(request);
-
-  if (!session) {
-    return jsonError(
-      {
-        code: "UNAUTHORIZED",
-        message: "Inicia sesión para ver tu historial de chat.",
-      },
-      401,
-    );
+  const accessToken = getBearerToken(request);
+  if (!accessToken) {
+    return jsonError({ code: "UNAUTHORIZED", message: "Inicia sesión para ver tu historial de chat." }, 401);
+  }
+  const supabase = createServerSupabaseClient(accessToken);
+  const { data: authData, error: authError } = await supabase.auth.getUser(accessToken);
+  if (authError || !authData.user) {
+    return jsonError({ code: "UNAUTHORIZED", message: "Inicia sesión para ver tu historial de chat." }, 401);
   }
 
   const searchParams = request.nextUrl.searchParams;
-  const context = searchParams.get("context") === "site" ? "site" : "book";
+  const requestedId = searchParams.get("conversationId");
   const bookSlug = searchParams.get("bookId");
-  const conversationId = searchParams.get("conversationId");
-  const bookRepository = createBookRepository();
-  const books =
-    context === "site"
-      ? (await bookRepository.list()).filter((item) => item.isPublished)
-      : [];
-  const book =
-    context === "site"
-      ? books[0]
-      : bookSlug
-        ? await bookRepository.getBySlug(bookSlug)
-        : null;
+  const legacyType = searchParams.get("context") === "book" ? "book" : "general";
+  const conversations = await listUserConversations(authData.user.id);
+  let conversationId = requestedId;
 
-  if (!book || !book.isPublished) {
+  if (!conversationId && legacyType === "book" && bookSlug) {
+    const book = await createBookRepository().getBySlug(bookSlug);
+    conversationId = conversations.find(
+      (item) => item.type === "book" && item.bookId === book?.id && item.status === "active",
+    )?.id ?? null;
+  }
+  if (!conversationId && legacyType === "general") {
+    conversationId = conversations.find(
+      (item) => item.type === "general" && item.status === "active",
+    )?.id ?? null;
+  }
+
+  const subscription = await getEffectiveSubscriptionForUser(authData.user.id);
+  const plan = plans[subscription.plan];
+  const chatRepository = createChatRepository(accessToken);
+  const questionCount = await chatRepository.getMonthlyUsage(authData.user.id);
+  const usage = {
+    questionCount,
+    limit: plan.chatMonthlyLimit,
+  };
+  const remainingQuestions =
+    plan.chatMonthlyLimit === null
+      ? null
+      : Math.max(plan.chatMonthlyLimit - questionCount, 0);
+
+  if (!conversationId) {
+    return jsonData({ conversation: null, messages: [], remainingQuestions, usage });
+  }
+
+  const history = await listConversationMessages(authData.user.id, conversationId);
+  if (!history) {
     return jsonError(
-      {
-        code: "BOOK_NOT_FOUND",
-        message:
-          context === "site"
-            ? "No hay análisis publicados para cargar el historial."
-            : "No encontramos este libro.",
-      },
+      { code: "CONVERSATION_NOT_FOUND", message: "No encontramos esta conversación o no tienes acceso." },
       404,
     );
   }
 
-  if (context === "site" && conversationId) {
-    const supabase = createServerSupabaseClient(session.accessToken);
-    const { data: conversation } = await supabase
-      .from("chat_conversations")
-      .select("id")
-      .eq("id", conversationId)
-      .eq("user_id", session.user.id)
-      .eq("context", "site")
-      .maybeSingle();
-
-    if (!conversation) {
-      return jsonError(
-        { code: "CONVERSATION_NOT_FOUND", message: "No encontramos esta conversación." },
-        404,
-      );
-    }
-  }
-
-  const plan = plans[session.user.plan];
-  const chatRepository = createChatRepository(session.accessToken);
-  const [messages, questionCount] = await Promise.all([
-    chatRepository.listMessages(session.user.id, book.id, context, conversationId),
-    chatRepository.getMonthlyUsage(session.user.id),
-  ]);
-
   return jsonData({
-    messages: messages.slice(-40),
-    remainingQuestions:
-      plan.chatMonthlyLimit === null
-        ? null
-        : Math.max(plan.chatMonthlyLimit - questionCount, 0),
-    usage: {
-      questionCount,
-      limit: plan.chatMonthlyLimit,
-    },
+    conversation: history.conversation,
+    messages: history.messages.slice(-80),
+    remainingQuestions,
+    usage,
   });
 }

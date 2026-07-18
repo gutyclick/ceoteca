@@ -158,7 +158,7 @@ function buildActivityItems({
   }));
 
   const chatItems: ActivityItem[] = chatMessages.map((item) => {
-    const book = bookMap.get(item.book_id);
+    const book = item.book_id ? bookMap.get(item.book_id) : undefined;
 
     return {
       id: `chat-${item.id}`,
@@ -766,7 +766,7 @@ export function ProfileSettingsView() {
         const bookIds = [
           ...new Set([
             ...progressRows.map((item) => item.book_id),
-            ...chatRows.map((item) => item.book_id),
+            ...chatRows.map((item) => item.book_id).filter((id): id is string => Boolean(id)),
             ...favoriteRows.map((item) => item.book_id),
           ]),
         ];

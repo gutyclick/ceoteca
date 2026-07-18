@@ -36,45 +36,42 @@ Nunca incluir detalles sensibles.
 
 ### Objetivo
 
-Responder preguntas relacionadas con el análisis autorizado de un libro.
+Crear una conversación con el primer mensaje o continuar una conversación
+existente. Admite contexto general de Ceoteca y contexto editorial de libro.
 
 ### Request
 
 ```json
 {
+  "conversationId": null,
+  "type": "book",
   "bookId": "uuid-or-slug",
   "message": "¿Cómo aplico esta idea?",
-  "conversation": [
-    {
-      "role": "user",
-      "content": "Mensaje anterior"
-    },
-    {
-      "role": "assistant",
-      "content": "Respuesta anterior"
-    }
-  ]
+  "clientCreationKey": "uuid",
+  "clientMessageId": "uuid"
 }
 ```
 
 ### Validación
 
-- `bookId`: requerido.
+- `conversationId`: requerido para continuar; nulo en el primer envío.
+- `type`: `general` o `book` al crear.
+- `bookId`: requerido solo para `type=book`.
 - `message`: 1 a 2000 caracteres.
-- `conversation`: máximo configurable.
-- Roles permitidos: `user`, `assistant`.
-- Longitud total limitada.
+- `clientCreationKey`: requerido al crear e idempotente por usuario.
+- `clientMessageId`: requerido e idempotente por usuario.
 
 ### Verificaciones de servidor
 
 1. Sesión.
-2. Libro existente.
-3. Libro publicado.
-4. Plan.
-5. Acceso al chat.
+2. Propiedad de la conversación, si existe.
+3. Relación válida entre tipo y libro.
+4. Libro existente y publicado para conversaciones de libro.
+5. Plan y acceso al chat.
 6. Límite mensual.
-7. Rate limit.
-8. Contenido editorial autorizado.
+7. Rate limit y moderación.
+8. Idempotencia de conversación y mensaje.
+9. Contenido editorial autorizado.
 
 ### System prompt base
 
@@ -99,6 +96,16 @@ a la situación del usuario.
 {
   "data": {
     "message": "Respuesta del asistente",
+    "conversation": {
+      "id": "uuid",
+      "type": "book",
+      "bookId": "uuid",
+      "title": "Aplicar una idea al negocio",
+      "status": "active"
+    },
+    "userMessage": {},
+    "assistantMessage": {},
+    "replayed": false,
     "remainingQuestions": 42,
     "usage": {
       "questionCount": 8,

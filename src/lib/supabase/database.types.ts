@@ -176,22 +176,41 @@ export type Database = {
         Row: {
           id: string;
           user_id: string;
-          book_id: string;
+          book_id: string | null;
           context: "book" | "site";
           conversation_id: string | null;
-          role: "user" | "assistant";
+          role: "user" | "assistant" | "system" | "tool";
           content: string;
+          parts: Json | null;
+          status: "pending" | "streaming" | "completed" | "failed";
           created_at: string;
+          updated_at: string;
+          parent_message_id: string | null;
+          metadata: Json;
+          client_message_id: string | null;
         };
         Insert: {
           user_id: string;
-          book_id: string;
+          book_id?: string | null;
           context?: "book" | "site";
           conversation_id?: string | null;
-          role: "user" | "assistant";
+          role: "user" | "assistant" | "system" | "tool";
           content: string;
+          parts?: Json | null;
+          status?: "pending" | "streaming" | "completed" | "failed";
+          updated_at?: string;
+          parent_message_id?: string | null;
+          metadata?: Json;
+          client_message_id?: string | null;
         };
-        Update: Record<string, never>;
+        Update: {
+          content?: string;
+          parts?: Json | null;
+          status?: "pending" | "streaming" | "completed" | "failed";
+          updated_at?: string;
+          parent_message_id?: string | null;
+          metadata?: Json;
+        };
         Relationships: [];
       };
       chat_conversations: {
@@ -199,9 +218,14 @@ export type Database = {
           id: string;
           user_id: string;
           context: "book" | "site";
+          type: "general" | "book";
           book_id: string | null;
           title: string;
           archived_at: string | null;
+          status: "active" | "archived";
+          metadata: Json;
+          title_is_manual: boolean;
+          client_creation_key: string | null;
           last_message_at: string;
           created_at: string;
           updated_at: string;
@@ -210,9 +234,14 @@ export type Database = {
           id?: string;
           user_id: string;
           context?: "book" | "site";
+          type: "general" | "book";
           book_id?: string | null;
           title?: string;
           archived_at?: string | null;
+          status?: "active" | "archived";
+          metadata?: Json;
+          title_is_manual?: boolean;
+          client_creation_key?: string | null;
           last_message_at?: string;
           created_at?: string;
           updated_at?: string;
@@ -220,6 +249,9 @@ export type Database = {
         Update: {
           title?: string;
           archived_at?: string | null;
+          status?: "active" | "archived";
+          metadata?: Json;
+          title_is_manual?: boolean;
           last_message_at?: string;
           updated_at?: string;
         };

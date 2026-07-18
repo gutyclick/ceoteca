@@ -1,0 +1,119 @@
+import type { Json } from "@/lib/supabase/database.types";
+
+export const conversationTypes = ["general", "book"] as const;
+export const conversationStatuses = ["active", "archived"] as const;
+export const messageRoles = ["user", "assistant", "system", "tool"] as const;
+export const messageStatuses = ["pending", "streaming", "completed", "failed"] as const;
+
+export type ConversationType = (typeof conversationTypes)[number];
+export type ConversationStatus = (typeof conversationStatuses)[number];
+export type MessageRole = (typeof messageRoles)[number];
+export type MessageStatus = (typeof messageStatuses)[number];
+
+export type ChatConversation = {
+  id: string;
+  userId: string;
+  type: ConversationType;
+  bookId: string | null;
+  title: string;
+  status: ConversationStatus;
+  createdAt: string;
+  updatedAt: string;
+  lastMessageAt: string;
+  metadata: Json;
+  titleIsManual: boolean;
+};
+
+export type StoredChatMessage = {
+  id: string;
+  conversationId: string;
+  role: MessageRole;
+  content: string;
+  parts: Json | null;
+  status: MessageStatus;
+  createdAt: string;
+  updatedAt: string;
+  parentMessageId: string | null;
+  metadata: Json;
+};
+
+export type ChatConversationRow = {
+  id: string;
+  user_id: string;
+  type: ConversationType;
+  book_id: string | null;
+  title: string;
+  status: ConversationStatus;
+  created_at: string;
+  updated_at: string;
+  last_message_at: string;
+  metadata: Json;
+  title_is_manual: boolean;
+};
+
+export type ChatMessageRow = {
+  id: string;
+  conversation_id: string | null;
+  role: MessageRole;
+  content: string;
+  parts: Json | null;
+  status: MessageStatus;
+  created_at: string;
+  updated_at: string;
+  parent_message_id: string | null;
+  metadata: Json;
+};
+
+export function mapConversation(row: ChatConversationRow): ChatConversation {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    type: row.type,
+    bookId: row.book_id,
+    title: row.title,
+    status: row.status,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    lastMessageAt: row.last_message_at,
+    metadata: row.metadata,
+    titleIsManual: row.title_is_manual,
+  };
+}
+
+export function mapStoredMessage(row: ChatMessageRow): StoredChatMessage | null {
+  if (!row.conversation_id) return null;
+
+  return {
+    id: row.id,
+    conversationId: row.conversation_id,
+    role: row.role,
+    content: row.content,
+    parts: row.parts,
+    status: row.status,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    parentMessageId: row.parent_message_id,
+    metadata: row.metadata,
+  };
+}
+
+export function generateConversationTitle(message: string) {
+  const words = message
+    .replace(/[¿?¡!.,;:()\[\]{}"“”]/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  const selected = words.slice(0, 7);
+
+  if (selected.length >= 3) return selected.join(" ");
+  if (selected.length === 2) return `Conversación sobre ${selected.join(" ")}`;
+  if (selected.length === 1) return `Conversación sobre ${selected[0]}`;
+  return "Nueva conversación";
+}
+
+export function sortConversations(conversations: ChatConversation[]) {
+  return [...conversations].sort(
+    (left, right) =>
+      new Date(right.lastMessageAt).getTime() - new Date(left.lastMessageAt).getTime(),
+  );
+}

@@ -231,7 +231,10 @@ export class SupabaseChatRepository implements ChatRepository {
       throw new Error(error.message);
     }
 
-    return data ?? [];
+    return (data ?? []).filter(
+      (message): message is { role: "user" | "assistant"; content: string } =>
+        message.role === "user" || message.role === "assistant",
+    );
   }
 }
 
