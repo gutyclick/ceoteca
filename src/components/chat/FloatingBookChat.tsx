@@ -7,16 +7,17 @@ import {
   Loader2,
   MessageCircle,
   RefreshCw,
-  Send,
   Sparkles,
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { RichChatMessage } from "@/components/chat/RichChatMessage";
+import { ChatComposer } from "@/components/chat/ChatComposer";
 import { Card } from "@/components/ui/Card";
 import { plans, type PlanKey } from "@/config/plans";
 import { prepareChatConversation } from "@/lib/chat/conversation";
+import { clearChatDraft, readChatDraft, writeChatDraft, type ChatDraftScope } from "@/lib/chat/drafts";
 import { canAccessFeature } from "@/lib/permissions";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import type { ChatConversationMessage } from "@/lib/validation/chat";
@@ -104,6 +105,7 @@ export function FloatingBookChat({
   const [error, setError] = useState<string | null>(null);
   const [remainingQuestions, setRemainingQuestions] = useState<number | null>(null);
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [suggestionStartIndex, setSuggestionStartIndex] = useState(0);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const creationKeyRef = useRef(crypto.randomUUID());
@@ -118,6 +120,12 @@ export function FloatingBookChat({
     hasChatAccess && displayedRemainingQuestions !== null;
 
   const conversation = useMemo(() => prepareChatConversation(messages), [messages]);
+  const draftScope = useMemo<ChatDraftScope | null>(() => userId ? ({
+    userId,
+    type: "book",
+    conversationId,
+    bookId: book.id,
+  }) : null, [book.id, conversationId, userId]);
   const isVisible = isPanel || isOpen;
 
   useEffect(() => {
@@ -127,6 +135,17 @@ export function FloatingBookChat({
     creationKeyRef.current = crypto.randomUUID();
     setError(null);
   }, [book.slug, introMessage]);
+
+  useEffect(() => {
+    if (!draftScope) return;
+    setInput(readChatDraft(draftScope));
+  }, [draftScope]);
+
+  useEffect(() => {
+    if (!draftScope) return;
+    const timeout = window.setTimeout(() => writeChatDraft(draftScope, input), 350);
+    return () => window.clearTimeout(timeout);
+  }, [draftScope, input]);
 
   useEffect(() => {
     if (!isVisible || !hasChatAccess) {
@@ -143,6 +162,7 @@ export function FloatingBookChat({
         const supabase = createBrowserSupabaseClient();
         const { data: sessionData } = await supabase.auth.getSession();
         const accessToken = sessionData.session?.access_token;
+        setUserId(sessionData.session?.user.id ?? null);
 
         if (!accessToken) {
           throw new Error("Inicia sesión para ver tu historial.");
@@ -230,6 +250,7 @@ export function FloatingBookChat({
 
     setError(null);
     setInput("");
+    if (draftScope) clearChatDraft(draftScope);
     setMessages((current) => [...current, { role: "user", content: trimmed }]);
     setIsLoading(true);
 
@@ -274,6 +295,7 @@ export function FloatingBookChat({
         setConversationId(payload.data.conversation?.id ?? conversationId);
       }
     } catch (caughtError) {
+      setInput(trimmed);
       setError(
         caughtError instanceof Error
           ? caughtError.message
@@ -513,45 +535,20 @@ export function FloatingBookChat({
                     {error}
                   </div>
                 ) : null}
-                <form
-                  className={cn(
-                    "grid grid-cols-[1fr_48px] gap-2 rounded-[18px] border p-2 focus-within:border-brand-purple/70 focus-within:ring-2 focus-within:ring-brand-purple/25",
-                    isPanel
-                      ? "border-slate-950/[0.08] bg-slate-50"
-                      : "border-white/10 bg-white/[0.045]",
-                  )}
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    void sendMessage(input);
-                  }}
-                >
-                  <textarea
-                    className={cn(
-                      "max-h-28 min-h-11 resize-none bg-transparent px-2 py-2 text-sm leading-6 outline-none placeholder:text-text-muted",
-                      isPanel ? "text-slate-900" : "text-white",
-                    )}
-                    maxLength={2000}
-                    onChange={(event) => setInput(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter" && !event.shiftKey) {
-                        event.preventDefault();
-                        void sendMessage(input);
-                      }
-                    }}
-                    placeholder="Pregúntale a CEO sobre este análisis..."
-                    ref={inputRef}
-                    rows={1}
-                    value={input}
-                  />
-                  <button
-                    aria-label="Enviar pregunta"
-                    className="grid h-11 w-11 place-items-center rounded-[14px] bg-brand-gradient text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-45"
-                    disabled={isLoading || input.trim().length === 0}
-                    type="submit"
-                  >
-                    <Send aria-hidden="true" className="translate-x-px" size={18} />
-                  </button>
-                </form>
+                <ChatComposer
+                  disabled={isHistoryLoading}
+                  disabledReason={isHistoryLoading ? "Estamos preparando el contexto de este análisis." : undefined}
+                  isSubmitting={isLoading}
+                  locked={!hasChatAccess || displayedRemainingQuestions === 0}
+                  lockedReason={!hasChatAccess ? "Chat con CEO no está incluido en tu plan actual." : displayedRemainingQuestions === 0 ? "Has alcanzado el límite de consultas de tu plan." : undefined}
+                  maxHeight={112}
+                  onChange={setInput}
+                  onSubmit={() => void sendMessage(input)}
+                  placeholder="Pregunta sobre este análisis…"
+                  textareaRef={inputRef}
+                  tone={isPanel ? "light" : "dark"}
+                  value={input}
+                />
               </footer>
             </>
           ) : (

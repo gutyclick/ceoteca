@@ -20,4 +20,6 @@ export type BookChatResult = {
 export interface AIProvider {
   answerBookQuestion(input: BookChatInput): Promise<BookChatResult>;
   answerSiteQuestion(input: SiteChatInput): Promise<BookChatResult>;
+  streamBookQuestion(input: BookChatInput, signal?: AbortSignal): AsyncIterable<string>;
+  streamSiteQuestion(input: SiteChatInput, signal?: AbortSignal): AsyncIterable<string>;
 }

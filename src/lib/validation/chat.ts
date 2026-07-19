@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { chatComposerMaxLength } from "@/config/chat";
+
 export const chatMessageSchema = z.object({
   role: z.enum(["user", "assistant"]),
   content: z.string().min(1).max(6000),
@@ -13,10 +15,15 @@ export const chatRequestSchema = z
     conversationId: z.string().uuid("La conversación no es válida.").optional(),
     clientCreationKey: z.string().uuid("La clave de creación no es válida.").optional(),
     clientMessageId: z.string().uuid("El identificador del mensaje no es válido."),
+    stream: z.boolean().default(false),
     message: z
       .string()
+      .trim()
       .min(1, "Escribe una pregunta.")
-      .max(2000, "La pregunta no puede superar 2000 caracteres."),
+      .max(
+        chatComposerMaxLength,
+        "Tu mensaje es demasiado largo. Reduce el contenido para continuar.",
+      ),
     conversation: z.array(chatMessageSchema).max(12).default([]),
   })
   .superRefine((value, context) => {

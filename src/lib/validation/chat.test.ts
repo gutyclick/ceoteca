@@ -37,4 +37,30 @@ describe("chatRequestSchema", () => {
     });
     expect(result.success).toBe(true);
   });
+
+  it("recorta solo los extremos y conserva saltos internos", () => {
+    const result = chatRequestSchema.safeParse({
+      type: "general",
+      conversationId: ids.creation,
+      clientMessageId: ids.message,
+      message: "  Primera línea\n\nSegunda línea  ",
+    });
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.message).toBe("Primera línea\n\nSegunda línea");
+  });
+
+  it("rechaza contenido que supera el límite sin truncarlo", () => {
+    const result = chatRequestSchema.safeParse({
+      type: "general",
+      conversationId: ids.creation,
+      clientMessageId: ids.message,
+      message: "a".repeat(2_001),
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.flatten().fieldErrors.message?.[0]).toBe(
+        "Tu mensaje es demasiado largo. Reduce el contenido para continuar.",
+      );
+    }
+  });
 });

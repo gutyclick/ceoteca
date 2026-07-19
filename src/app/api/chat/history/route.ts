@@ -5,7 +5,7 @@ import { jsonData, jsonError } from "@/lib/api/response";
 import { createBookRepository } from "@/lib/books/repository";
 import { listConversationMessages, listUserConversations } from "@/lib/chat/conversation-service";
 import { createChatRepository } from "@/lib/chat/repository";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createServerSupabaseClient, createServiceSupabaseClient } from "@/lib/supabase/server";
 import { getEffectiveSubscriptionForUser } from "@/lib/subscriptions/service";
 
 function getBearerToken(request: NextRequest) {
@@ -29,6 +29,7 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const requestedId = searchParams.get("conversationId");
   const bookSlug = searchParams.get("bookId");
+  const before = searchParams.get("before") ?? undefined;
   const legacyType = searchParams.get("context") === "book" ? "book" : "general";
   const conversations = await listUserConversations(authData.user.id);
   let conversationId = requestedId;
@@ -62,7 +63,7 @@ export async function GET(request: NextRequest) {
     return jsonData({ conversation: null, messages: [], remainingQuestions, usage });
   }
 
-  const history = await listConversationMessages(authData.user.id, conversationId);
+  const history = await listConversationMessages(authData.user.id, conversationId, { before, limit: 40 });
   if (!history) {
     return jsonError(
       { code: "CONVERSATION_NOT_FOUND", message: "No encontramos esta conversación o no tienes acceso." },
@@ -70,9 +71,17 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  const visibleMessages = history.messages;
+  const assistantIds = visibleMessages.filter((message) => message.role === "assistant").map((message) => message.id);
+  const feedback = assistantIds.length
+    ? await createServiceSupabaseClient().from("chat_message_feedback").select("message_id,rating,reason").eq("user_id", authData.user.id).in("message_id", assistantIds)
+    : { data: [] };
+
   return jsonData({
     conversation: history.conversation,
-    messages: history.messages.slice(-80),
+    messages: visibleMessages,
+    hasMore: history.hasMore,
+    feedback: feedback.data ?? [],
     remainingQuestions,
     usage,
   });

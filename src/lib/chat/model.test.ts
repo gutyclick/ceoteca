@@ -22,7 +22,7 @@ describe("generateConversationTitle", () => {
   it("genera un título descriptivo de un máximo de siete palabras", () => {
     expect(
       generateConversationTitle("¿Cómo puedo validar una idea de negocio sin gastar demasiado?"),
-    ).toBe("Cómo puedo validar una idea de negocio");
+    ).toBe("Validar idea negocio gastar demasiado");
   });
 
   it("completa mensajes muy cortos con un título legible", () => {

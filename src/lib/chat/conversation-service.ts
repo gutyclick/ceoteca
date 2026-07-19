@@ -13,7 +13,7 @@ import { createServiceSupabaseClient } from "@/lib/supabase/server";
 const conversationFields =
   "id,user_id,type,book_id,title,status,created_at,updated_at,last_message_at,metadata,title_is_manual";
 const messageFields =
-  "id,conversation_id,role,content,parts,status,created_at,updated_at,parent_message_id,metadata";
+  "id,conversation_id,role,content,parts,status,created_at,updated_at,parent_message_id,metadata,client_message_id";
 
 export async function listUserConversations(userId: string) {
   const client = createServiceSupabaseClient();
@@ -96,7 +96,7 @@ export async function ensureConversation(input: EnsureConversationInput) {
 export async function listConversationMessages(
   userId: string,
   conversationId: string,
-  options: { completedOnly?: boolean } = {},
+  options: { completedOnly?: boolean; before?: string; limit?: number } = {},
 ) {
   const conversation = await getUserConversation(userId, conversationId);
   if (!conversation) return null;
@@ -108,12 +108,20 @@ export async function listConversationMessages(
     .eq("conversation_id", conversationId)
     .eq("user_id", userId);
   if (options.completedOnly) query = query.eq("status", "completed");
-  const { data, error } = await query.order("created_at", { ascending: true });
+  if (options.before) query = query.lt("created_at", options.before);
+  const requestedLimit = options.limit ? Math.min(Math.max(options.limit, 1), 80) : null;
+  if (requestedLimit) query = query.limit(requestedLimit + 1);
+  const { data, error } = await query.order("created_at", { ascending: requestedLimit === null });
   if (error) throw new Error(error.message);
+
+  const rows = (data ?? []) as ChatMessageRow[];
+  const hasMore = requestedLimit !== null && rows.length > requestedLimit;
+  const selectedRows = requestedLimit ? rows.slice(0, requestedLimit).reverse() : rows;
 
   return {
     conversation,
-    messages: ((data ?? []) as ChatMessageRow[])
+    hasMore,
+    messages: selectedRows
       .map(mapStoredMessage)
       .filter((message): message is StoredChatMessage => message !== null),
   };
@@ -139,6 +147,19 @@ export async function claimUserMessage(input: ClaimMessageInput) {
   if (existing) {
     const existingMessage = mapStoredMessage(existing as ChatMessageRow);
     if (!existingMessage) throw new Error("Invalid stored message");
+    if (existingMessage.status === "failed") {
+      const { error: retryError } = await client
+        .from("chat_messages")
+        .update({ status: "pending", content: input.content, metadata: {} })
+        .eq("id", existingMessage.id)
+        .eq("user_id", input.userId);
+      if (retryError) throw new Error(retryError.message);
+      return {
+        created: true as const,
+        userMessage: { ...existingMessage, content: input.content, status: "pending" as const, metadata: {} },
+        assistantMessage: null,
+      };
+    }
     const { data: assistant, error: assistantError } = await client
       .from("chat_messages")
       .select(messageFields)
@@ -190,6 +211,34 @@ export async function claimUserMessage(input: ClaimMessageInput) {
   return { created: true as const, userMessage, assistantMessage: null };
 }
 
+export async function generateAndPersistConversationTitle(input: {
+  userId: string;
+  conversation: ChatConversation;
+  message: string;
+}) {
+  if (input.conversation.titleIsManual || input.conversation.title !== "Nueva conversación") {
+    return input.conversation.title;
+  }
+
+  const title = generateConversationTitle(input.message);
+  const client = createServiceSupabaseClient();
+  const { data, error } = await client
+    .from("chat_conversations")
+    .update({ title })
+    .eq("id", input.conversation.id)
+    .eq("user_id", input.userId)
+    .eq("title_is_manual", false)
+    .eq("title", "Nueva conversación")
+    .select("title")
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  if (data?.title) return data.title;
+
+  const currentConversation = await getUserConversation(input.userId, input.conversation.id);
+  return currentConversation?.title ?? input.conversation.title;
+}
+
 export async function completeMessageTurn(input: {
   userId: string;
   conversation: ChatConversation;
@@ -199,16 +248,21 @@ export async function completeMessageTurn(input: {
 }) {
   const client = createServiceSupabaseClient();
   const now = new Date().toISOString();
-  const title = input.conversation.titleIsManual || input.conversation.title !== "Nueva conversación"
-    ? input.conversation.title
-    : generateConversationTitle(input.userContent);
+  const title = input.conversation.title;
 
-  const [userUpdate, assistantInsert, conversationUpdate] = await Promise.all([
-    client
-      .from("chat_messages")
-      .update({ status: "completed" })
-      .eq("id", input.userMessageId)
-      .eq("user_id", input.userId),
+  const { data: completedUserMessage, error: userUpdateError } = await client
+    .from("chat_messages")
+    .update({ status: "completed" })
+    .eq("id", input.userMessageId)
+    .eq("user_id", input.userId)
+    .eq("status", "pending")
+    .select("id")
+    .maybeSingle();
+  if (userUpdateError || !completedUserMessage) {
+    throw new Error(userUpdateError?.message ?? "Message is no longer active");
+  }
+
+  const [assistantInsert, conversationUpdate] = await Promise.all([
     client
       .from("chat_messages")
       .insert({
@@ -227,7 +281,6 @@ export async function completeMessageTurn(input: {
     client
       .from("chat_conversations")
       .update({
-        title,
         last_message_at: now,
         status: "active",
         archived_at: null,
@@ -236,10 +289,9 @@ export async function completeMessageTurn(input: {
       .eq("user_id", input.userId),
   ]);
 
-  if (userUpdate.error || assistantInsert.error || conversationUpdate.error) {
+  if (assistantInsert.error || conversationUpdate.error) {
     throw new Error(
-      userUpdate.error?.message ??
-        assistantInsert.error?.message ??
+      assistantInsert.error?.message ??
         conversationUpdate.error?.message ??
         "Message completion failed",
     );
@@ -250,11 +302,52 @@ export async function completeMessageTurn(input: {
   return { assistantMessage, title, lastMessageAt: now };
 }
 
+export async function cancelMessageTurn(input: {
+  userId: string;
+  clientMessageId: string;
+  partialContent: string;
+}) {
+  const client = createServiceSupabaseClient();
+  const { data: userMessage, error } = await client
+    .from("chat_messages")
+    .update({ status: input.partialContent.trim() ? "completed" : "failed", metadata: { stopped: true } })
+    .eq("user_id", input.userId)
+    .eq("client_message_id", input.clientMessageId)
+    .in("status", ["pending", "streaming"])
+    .select(messageFields)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!userMessage || !input.partialContent.trim()) return { cancelled: Boolean(userMessage), assistantMessage: null };
+
+  const mappedUser = mapStoredMessage(userMessage as ChatMessageRow);
+  if (!mappedUser) return { cancelled: false, assistantMessage: null };
+  const conversation = await getUserConversation(input.userId, mappedUser.conversationId);
+  if (!conversation) return { cancelled: false, assistantMessage: null };
+  const { data: assistant, error: assistantError } = await client
+    .from("chat_messages")
+    .insert({
+      user_id: input.userId,
+      book_id: conversation.bookId,
+      context: conversation.type === "book" ? "book" : "site",
+      conversation_id: mappedUser.conversationId,
+      role: "assistant",
+      content: input.partialContent.trim(),
+      status: "stopped",
+      parent_message_id: mappedUser.id,
+      metadata: { stoppedAt: new Date().toISOString() },
+    })
+    .select(messageFields)
+    .single();
+  if (assistantError) throw new Error(assistantError.message);
+  return { cancelled: true, assistantMessage: mapStoredMessage(assistant as ChatMessageRow) };
+}
+
 export async function failMessageTurn(userId: string, messageId: string, reason: string) {
   const client = createServiceSupabaseClient();
   await client
     .from("chat_messages")
     .update({ status: "failed", metadata: { failureReason: reason.slice(0, 300) } })
     .eq("id", messageId)
-    .eq("user_id", userId);
+    .eq("user_id", userId)
+    .in("status", ["pending", "streaming"]);
 }

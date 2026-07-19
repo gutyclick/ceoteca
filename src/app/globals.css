@@ -69,6 +69,17 @@ a {
   }
 }
 
+@keyframes chat-message-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .ceoteca-container {
   width: min(100%, 1280px);
   margin-inline: auto;

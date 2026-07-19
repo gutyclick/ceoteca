@@ -65,4 +65,22 @@ export class MockAIProvider implements AIProvider {
       message: `### Ruta sugerida\n1. Empieza por **${matchingBook.title}**, porque conecta con ${matchingBook.category.toLowerCase()}.\n2. Revisa sus ideas clave y elige un ejercicio concreto.\n3. Aplícalo durante 7 días y vuelve a ajustar.\n${alternatives ? `\nTambién podrías explorar **${alternatives}**.` : ""}\n\nSi quieres comprar el libro completo, busca una edición legal en librerías reconocidas o en la tienda oficial de tu país.`,
     };
   }
+
+  async *streamBookQuestion(input: BookChatInput): AsyncIterable<string> {
+    const result = await this.answerBookQuestion(input);
+    yield* streamMockText(result.message);
+  }
+
+  async *streamSiteQuestion(input: SiteChatInput): AsyncIterable<string> {
+    const result = await this.answerSiteQuestion(input);
+    yield* streamMockText(result.message);
+  }
+}
+
+async function* streamMockText(message: string) {
+  const chunks = message.match(/.{1,48}(?:\s|$)/g) ?? [message];
+  for (const chunk of chunks) {
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    yield chunk;
+  }
 }

@@ -3,7 +3,7 @@ import type { Json } from "@/lib/supabase/database.types";
 export const conversationTypes = ["general", "book"] as const;
 export const conversationStatuses = ["active", "archived"] as const;
 export const messageRoles = ["user", "assistant", "system", "tool"] as const;
-export const messageStatuses = ["pending", "streaming", "completed", "failed"] as const;
+export const messageStatuses = ["pending", "streaming", "completed", "stopped", "failed"] as const;
 
 export type ConversationType = (typeof conversationTypes)[number];
 export type ConversationStatus = (typeof conversationStatuses)[number];
@@ -35,6 +35,7 @@ export type StoredChatMessage = {
   updatedAt: string;
   parentMessageId: string | null;
   metadata: Json;
+  clientMessageId: string | null;
 };
 
 export type ChatConversationRow = {
@@ -62,6 +63,7 @@ export type ChatMessageRow = {
   updated_at: string;
   parent_message_id: string | null;
   metadata: Json;
+  client_message_id: string | null;
 };
 
 export function mapConversation(row: ChatConversationRow): ChatConversation {
@@ -94,18 +96,27 @@ export function mapStoredMessage(row: ChatMessageRow): StoredChatMessage | null 
     updatedAt: row.updated_at,
     parentMessageId: row.parent_message_id,
     metadata: row.metadata,
+    clientMessageId: row.client_message_id,
   };
 }
 
 export function generateConversationTitle(message: string) {
+  const ignoredWords = new Set([
+    "a", "al", "algo", "ayúdame", "como", "cómo", "con", "de", "el", "en", "es",
+    "esta", "este", "hacer", "la", "las", "le", "lo", "los", "me", "mi", "para",
+    "pero", "puedo", "que", "qué", "quiero", "se", "sin", "soy", "su", "un", "una", "y",
+  ]);
   const words = message
     .replace(/[¿?¡!.,;:()\[\]{}"“”]/g, " ")
     .trim()
     .split(/\s+/)
-    .filter(Boolean);
+    .filter((word) => word && !ignoredWords.has(word.toLocaleLowerCase("es")));
   const selected = words.slice(0, 7);
 
-  if (selected.length >= 3) return selected.join(" ");
+  if (selected.length >= 3) {
+    const title = selected.join(" ");
+    return title.charAt(0).toLocaleUpperCase("es") + title.slice(1);
+  }
   if (selected.length === 2) return `Conversación sobre ${selected.join(" ")}`;
   if (selected.length === 1) return `Conversación sobre ${selected[0]}`;
   return "Nueva conversación";

@@ -182,7 +182,7 @@ export type Database = {
           role: "user" | "assistant" | "system" | "tool";
           content: string;
           parts: Json | null;
-          status: "pending" | "streaming" | "completed" | "failed";
+          status: "pending" | "streaming" | "completed" | "stopped" | "failed";
           created_at: string;
           updated_at: string;
           parent_message_id: string | null;
@@ -197,7 +197,7 @@ export type Database = {
           role: "user" | "assistant" | "system" | "tool";
           content: string;
           parts?: Json | null;
-          status?: "pending" | "streaming" | "completed" | "failed";
+          status?: "pending" | "streaming" | "completed" | "stopped" | "failed";
           updated_at?: string;
           parent_message_id?: string | null;
           metadata?: Json;
@@ -206,9 +206,63 @@ export type Database = {
         Update: {
           content?: string;
           parts?: Json | null;
-          status?: "pending" | "streaming" | "completed" | "failed";
+          status?: "pending" | "streaming" | "completed" | "stopped" | "failed";
           updated_at?: string;
           parent_message_id?: string | null;
+          metadata?: Json;
+        };
+        Relationships: [];
+      };
+      chat_message_feedback: {
+        Row: {
+          id: string;
+          user_id: string;
+          message_id: string;
+          rating: "helpful" | "not_helpful";
+          reason: "not_answered" | "too_generic" | "incorrect" | "hard_to_understand" | "other" | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          message_id: string;
+          rating: "helpful" | "not_helpful";
+          reason?: "not_answered" | "too_generic" | "incorrect" | "hard_to_understand" | "other" | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          rating?: "helpful" | "not_helpful";
+          reason?: "not_answered" | "too_generic" | "incorrect" | "hard_to_understand" | "other" | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      chat_message_versions: {
+        Row: {
+          id: string;
+          message_id: string;
+          user_id: string;
+          version_number: number;
+          content: string;
+          parts: Json | null;
+          metadata: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          message_id: string;
+          user_id: string;
+          version_number: number;
+          content: string;
+          parts?: Json | null;
+          metadata?: Json;
+          created_at?: string;
+        };
+        Update: {
+          content?: string;
+          parts?: Json | null;
           metadata?: Json;
         };
         Relationships: [];

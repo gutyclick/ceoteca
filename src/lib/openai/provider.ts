@@ -191,6 +191,69 @@ ${formatSiteContext(input.books)}`,
         "No pude generar una respuesta Ãºtil en este momento.",
     };
   }
+
+  async *streamBookQuestion(input: BookChatInput, signal?: AbortSignal): AsyncIterable<string> {
+    const { model } = requireOpenAIConfig();
+    const stream = await this.getClient().responses.create({
+      model,
+      stream: true,
+      input: [
+        {
+          role: "developer",
+          content: `${baseInstructions()}
+
+Alcance específico:
+- Responde solo con base en el análisis editorial proporcionado.
+- Puedes explicar ideas clave, limitaciones, ejercicios y aplicación práctica.
+- Puedes convertir el contenido en un plan, checklist, reflexión, pregunta de quiz o siguiente paso.
+- Si el usuario pregunta algo no cubierto por este análisis, dilo con claridad y ofrece una forma de conectarlo con el contenido disponible.
+- Si el usuario pide un resumen largo o contenido que sustituya la obra, ofrece una orientación breve y recomienda leer el libro completo.
+
+Contexto autorizado:
+${formatBookContext(input.book)}`,
+        },
+        ...formatConversation(input.conversation),
+        { role: "user", content: input.message },
+      ],
+      max_output_tokens: 700,
+    }, { signal });
+
+    for await (const event of stream) {
+      if (event.type === "response.output_text.delta") yield event.delta;
+    }
+  }
+
+  async *streamSiteQuestion(input: SiteChatInput, signal?: AbortSignal): AsyncIterable<string> {
+    const { model } = requireOpenAIConfig();
+    const stream = await this.getClient().responses.create({
+      model,
+      stream: true,
+      input: [
+        {
+          role: "developer",
+          content: `${baseInstructions()}
+
+Alcance específico:
+- Puedes recomendar análisis del catálogo de Ceoteca.
+- Puedes sugerir rutas de lectura, hábitos de lectura, productividad general, mentalidad y desarrollo personal.
+- Puedes orientar sobre dónde comprar libros completos de forma legal.
+- No afirmes que un libro existe en Ceoteca si no aparece en el catálogo autorizado.
+- Si recomiendas un libro fuera de Ceoteca, aclara que no forma parte del catálogo actual y sugiere buscarlo en tiendas o bibliotecas legales.
+- Prioriza respuestas accionables: criterio de elección, ruta de lectura, ejercicio o siguiente paso.
+
+Catálogo autorizado:
+${formatSiteContext(input.books)}`,
+        },
+        ...formatConversation(input.conversation),
+        { role: "user", content: input.message },
+      ],
+      max_output_tokens: 700,
+    }, { signal });
+
+    for await (const event of stream) {
+      if (event.type === "response.output_text.delta") yield event.delta;
+    }
+  }
 }
 
 export function createAIProvider(): AIProvider {

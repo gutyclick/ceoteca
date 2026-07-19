@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { ZodError } from "zod";
+import { z } from "zod";
 
 import { plans } from "@/config/plans";
 import { jsonData, jsonError } from "@/lib/api/response";
@@ -7,9 +8,11 @@ import { demoUser } from "@/lib/auth/demo";
 import { createBookRepository } from "@/lib/books/repository";
 import {
   claimUserMessage,
+  cancelMessageTurn,
   completeMessageTurn,
   ensureConversation,
   failMessageTurn,
+  generateAndPersistConversationTitle,
   listConversationMessages,
 } from "@/lib/chat/conversation-service";
 import { moderateChatMessage } from "@/lib/chat/moderation";
@@ -39,6 +42,11 @@ function getBearerToken(request: NextRequest) {
     ? authorization.slice("Bearer ".length).trim()
     : null;
 }
+
+const cancelRequestSchema = z.object({
+  clientMessageId: z.string().uuid(),
+  partialContent: z.string().max(12_000).default(""),
+});
 
 async function getAuthenticatedUser(
   request: NextRequest,
@@ -210,15 +218,128 @@ export async function POST(request: NextRequest) {
       .map((message) => ({ role: message.role as "user" | "assistant", content: message.content }));
 
     const provider = createAIProvider();
+    const titlePromise = generateAndPersistConversationTitle({
+      userId: session.user.id,
+      conversation,
+      message: parsed.data.message,
+    }).catch(() => conversation.title);
+
+    if (parsed.data.stream) {
+      const encoder = new TextEncoder();
+      const providerAbort = new AbortController();
+      request.signal.addEventListener("abort", () => providerAbort.abort(), { once: true });
+      let streamClosed = false;
+
+      const responseStream = new ReadableStream<Uint8Array>({
+        async start(controller) {
+          const enqueue = (event: Record<string, unknown>) => {
+            if (streamClosed) return;
+            try {
+              controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
+            } catch {
+              streamClosed = true;
+            }
+          };
+
+          enqueue({
+            type: "conversation",
+            conversation,
+            userMessage: claim.userMessage,
+            remainingQuestions:
+              plan.chatMonthlyLimit === null
+                ? null
+                : Math.max(plan.chatMonthlyLimit - monthlyQuestionCount, 0),
+            usage: { questionCount: monthlyQuestionCount, limit: plan.chatMonthlyLimit },
+          });
+
+          let assistantContent = "";
+          try {
+            const providerStream = type === "general"
+              ? provider.streamSiteQuestion(
+                  { books, message: parsed.data.message, conversation: trustedConversation },
+                  providerAbort.signal,
+                )
+              : provider.streamBookQuestion(
+                  { book, message: parsed.data.message, conversation: trustedConversation },
+                  providerAbort.signal,
+                );
+
+            for await (const delta of providerStream) {
+              if (providerAbort.signal.aborted) throw new DOMException("Aborted", "AbortError");
+              if (!delta) continue;
+              assistantContent += delta;
+              enqueue({ type: "delta", delta });
+            }
+
+            if (!assistantContent.trim()) throw new Error("The provider returned an empty response");
+            const title = await titlePromise;
+            await chatRepository.incrementUsage(session.user.id, book.id, legacyContext);
+            const completed = await completeMessageTurn({
+              userId: session.user.id,
+              conversation: { ...conversation, title },
+              userMessageId: claim.userMessage.id,
+              userContent: parsed.data.message,
+              assistantContent,
+            });
+            const nextCount = monthlyQuestionCount + 1;
+            enqueue({ type: "title", title });
+            enqueue({
+              type: "completed",
+              conversation: { ...conversation, title, lastMessageAt: completed.lastMessageAt },
+              userMessage: { ...claim.userMessage, status: "completed" },
+              assistantMessage: completed.assistantMessage,
+              remainingQuestions:
+                plan.chatMonthlyLimit === null
+                  ? null
+                  : Math.max(plan.chatMonthlyLimit - nextCount, 0),
+              usage: { questionCount: nextCount, limit: plan.chatMonthlyLimit },
+            });
+          } catch (streamError) {
+            const aborted = providerAbort.signal.aborted;
+            await failMessageTurn(
+              session.user.id,
+              claim.userMessage.id,
+              aborted ? "Generation stopped by user" : streamError instanceof Error ? streamError.message : "Streaming failed",
+            );
+            enqueue({
+              type: "failed",
+              code: aborted ? "GENERATION_STOPPED" : "CHAT_RESPONSE_FAILED",
+              message: aborted ? "La respuesta se detuvo." : "CEO no pudo completar la respuesta.",
+              conversation,
+              userMessage: { ...claim.userMessage, status: "failed" },
+            });
+          } finally {
+            if (!streamClosed) {
+              streamClosed = true;
+              controller.close();
+            }
+          }
+        },
+        cancel() {
+          streamClosed = true;
+          providerAbort.abort();
+        },
+      });
+
+      return new Response(responseStream, {
+        headers: {
+          "Cache-Control": "no-cache, no-transform",
+          "Content-Type": "application/x-ndjson; charset=utf-8",
+          "X-Accel-Buffering": "no",
+        },
+      });
+    }
+
     const result =
       type === "general"
         ? await provider.answerSiteQuestion({ books, message: parsed.data.message, conversation: trustedConversation })
         : await provider.answerBookQuestion({ book, message: parsed.data.message, conversation: trustedConversation });
 
+    const title = await titlePromise;
     await chatRepository.incrementUsage(session.user.id, book.id, legacyContext);
     const completed = await completeMessageTurn({
       userId: session.user.id,
-      conversation,
+      conversation: { ...conversation, title },
       userMessageId: claim.userMessage.id,
       userContent: parsed.data.message,
       assistantContent: result.message,
@@ -228,7 +349,7 @@ export async function POST(request: NextRequest) {
       message: result.message,
       conversation: {
         ...conversation,
-        title: completed.title,
+        title,
         lastMessageAt: completed.lastMessageAt,
       },
       userMessage: { ...claim.userMessage, status: "completed" },
@@ -256,4 +377,19 @@ export async function POST(request: NextRequest) {
       502,
     );
   }
+}
+
+export async function DELETE(request: NextRequest) {
+  const session = await getAuthenticatedUser(request);
+  if (!session) {
+    return jsonError({ code: "UNAUTHORIZED", message: "Inicia sesión para detener la respuesta." }, 401);
+  }
+
+  const parsed = cancelRequestSchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) {
+    return jsonError({ code: "INVALID_INPUT", message: "No pudimos identificar la respuesta activa." }, 400);
+  }
+
+  const cancelled = await cancelMessageTurn({ userId: session.user.id, ...parsed.data });
+  return jsonData(cancelled);
 }

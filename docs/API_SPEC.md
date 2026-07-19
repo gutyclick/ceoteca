@@ -48,7 +48,8 @@ existente. Admite contexto general de Ceoteca y contexto editorial de libro.
   "bookId": "uuid-or-slug",
   "message": "¿Cómo aplico esta idea?",
   "clientCreationKey": "uuid",
-  "clientMessageId": "uuid"
+  "clientMessageId": "uuid",
+  "stream": true
 }
 ```
 
@@ -60,6 +61,8 @@ existente. Admite contexto general de Ceoteca y contexto editorial de libro.
 - `message`: 1 a 2000 caracteres.
 - `clientCreationKey`: requerido al crear e idempotente por usuario.
 - `clientMessageId`: requerido e idempotente por usuario.
+- `stream`: opcional. Si es `true`, responde mediante eventos NDJSON; si es
+  `false`, conserva la respuesta JSON completa para clientes existentes.
 
 ### Verificaciones de servidor
 
@@ -120,6 +123,39 @@ Modo demo:
 - Retornar respuesta mock contextual.
 - No llamar a OpenAI.
 - Mantener la misma forma de respuesta.
+
+### Streaming
+
+Con `stream=true`, la respuesta usa `application/x-ndjson`. Los eventos
+posibles son `conversation`, `delta`, `title`, `completed` y `failed`.
+`conversation` confirma la creación persistida y permite navegar de inmediato
+a la URL estable. `delta` transporta texto incremental y `completed` contiene
+los mensajes finales persistidos.
+
+### Cancelación
+
+`DELETE /api/chat` recibe `{ "clientMessageId": "uuid", "partialContent": "..." }`.
+Solo puede cancelar un turno pendiente del usuario autenticado. Si ya existe
+contenido parcial, se persiste como respuesta `stopped`; la cancelación no
+consume la pregunta mensual.
+
+### Operaciones sobre mensajes
+
+- `PATCH /api/chat/messages/:messageId` permite registrar feedback o truncar la
+  conversación desde un mensaje propio antes de volver a enviarlo.
+- `POST /api/chat/messages/:messageId/regenerate` reemplaza una respuesta de CEO
+  mediante streaming NDJSON, conserva la versión anterior hasta recibir texto
+  nuevo y almacena la versión reemplazada para soporte futuro.
+- El feedback acepta `helpful` y `not_helpful`, con un motivo opcional validado.
+- Todas las operaciones comprueban sesión, propiedad de la conversación, plan,
+  cuota y rate limit en servidor.
+
+### Historial paginado
+
+`GET /api/chat/history` acepta `conversationId` y un cursor opcional `before`.
+Devuelve hasta 40 mensajes, `hasMore` y las valoraciones del usuario para los
+mensajes visibles. Los mensajes pueden estar en estado `pending`, `streaming`,
+`completed`, `stopped` o `failed`.
 
 ### Errores
 
