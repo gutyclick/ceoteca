@@ -15,16 +15,18 @@ export const chatRequestSchema = z
     conversationId: z.string().uuid("La conversación no es válida.").optional(),
     clientCreationKey: z.string().uuid("La clave de creación no es válida.").optional(),
     clientMessageId: z.string().uuid("El identificador del mensaje no es válido."),
+    uploadSessionId: z.string().uuid("La sesión de archivos no es válida.").optional(),
+    attachmentIds: z.array(z.string().uuid("El archivo no es válido.")).max(5).default([]),
     interactionType: z.enum(["message", "contextual_action"]).default("message"),
     stream: z.boolean().default(false),
     message: z
       .string()
       .trim()
-      .min(1, "Escribe una pregunta.")
       .max(
         chatComposerMaxLength,
         "Tu mensaje es demasiado largo. Reduce el contenido para continuar.",
-      ),
+      )
+      .default(""),
     conversation: z.array(chatMessageSchema).max(12).default([]),
   })
   .superRefine((value, context) => {
@@ -41,6 +43,20 @@ export const chatRequestSchema = z
         code: z.ZodIssueCode.custom,
         message: "La clave de creación es requerida para una conversación nueva.",
         path: ["clientCreationKey"],
+      });
+    }
+    if (!value.message && value.attachmentIds.length === 0) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Escribe una pregunta o adjunta un archivo.",
+        path: ["message"],
+      });
+    }
+    if (value.attachmentIds.length > 0 && !value.uploadSessionId) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "La sesión de archivos es requerida.",
+        path: ["uploadSessionId"],
       });
     }
   });

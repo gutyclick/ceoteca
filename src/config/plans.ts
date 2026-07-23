@@ -49,7 +49,7 @@ export const plans: Record<PlanKey, PlanConfig> = {
     annualPriceUsd: 79.99,
     chatMonthlyLimit: 50,
     bookLimit: null,
-    features: ["allBooks", "audio", "chat", "advancedActivities"],
+    features: ["allBooks", "audio", "chat", "chatAttachments", "chatVision", "advancedActivities"],
     highlights: [
       "Catálogo completo de análisis",
       "Audio incluido",
@@ -72,6 +72,8 @@ export const plans: Record<PlanKey, PlanConfig> = {
       "allBooks",
       "audio",
       "chat",
+      "chatAttachments",
+      "chatVision",
       "unlimitedChat",
       "earlyAccess",
       "advancedActivities",
@@ -95,7 +97,7 @@ export const plans: Record<PlanKey, PlanConfig> = {
     setupFeeUsd: 20,
     chatMonthlyLimit: 50,
     bookLimit: null,
-    features: ["allBooks", "audio", "chat", "advancedActivities"],
+    features: ["allBooks", "audio", "chat", "chatAttachments", "chatVision", "advancedActivities"],
     highlights: [
       "Cupo limitado a 100 fundadores",
       "Tarifa protegida de lanzamiento",

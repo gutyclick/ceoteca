@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 
 import { jsonData, jsonError } from "@/lib/api/response";
+import { deleteConversationAttachments } from "@/lib/chat/attachments/service";
 import { getUserConversation, listUserConversations } from "@/lib/chat/conversation-service";
 import { mapConversation, type ChatConversationRow } from "@/lib/chat/model";
 import { createServerSupabaseClient, createServiceSupabaseClient } from "@/lib/supabase/server";
@@ -124,6 +125,14 @@ export async function DELETE(request: NextRequest) {
     );
   }
 
+  try {
+    await deleteConversationAttachments(session.user.id, parsed.data.id);
+  } catch {
+    return jsonError(
+      { code: "CONVERSATION_DELETE_FAILED", message: "No pudimos eliminar los archivos de la conversación." },
+      503,
+    );
+  }
   const client = createServiceSupabaseClient();
   const { error } = await client
     .from("chat_conversations")

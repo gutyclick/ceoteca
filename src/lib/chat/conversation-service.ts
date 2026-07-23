@@ -9,6 +9,7 @@ import {
   type StoredChatMessage,
 } from "@/lib/chat/model";
 import { ChatOperationError } from "@/lib/chat/errors";
+import type { Json } from "@/lib/supabase/database.types";
 import { createServiceSupabaseClient } from "@/lib/supabase/server";
 
 const conversationFields =
@@ -133,6 +134,7 @@ type ClaimMessageInput = {
   conversation: ChatConversation;
   clientMessageId: string;
   content: string;
+  parts?: Json | null;
 };
 
 async function ensureAssistantPlaceholder(input: {
@@ -196,7 +198,7 @@ export async function claimUserMessage(input: ClaimMessageInput) {
     if (existingMessage.status === "failed") {
       const { error: retryError } = await client
         .from("chat_messages")
-        .update({ status: "pending", content: input.content, metadata: {} })
+        .update({ status: "pending", content: input.content, parts: input.parts ?? null, metadata: {} })
         .eq("id", existingMessage.id)
         .eq("user_id", input.userId);
       if (retryError) throw new Error(retryError.message);
@@ -216,7 +218,7 @@ export async function claimUserMessage(input: ClaimMessageInput) {
       }
       return {
         created: true as const,
-        userMessage: { ...existingMessage, content: input.content, status: "pending" as const, metadata: {} },
+        userMessage: { ...existingMessage, content: input.content, parts: input.parts ?? null, status: "pending" as const, metadata: {} },
         assistantMessage,
       };
     }
@@ -245,6 +247,7 @@ export async function claimUserMessage(input: ClaimMessageInput) {
       conversation_id: input.conversation.id,
       role: "user",
       content: input.content,
+      parts: input.parts ?? null,
       status: "pending",
       client_message_id: input.clientMessageId,
       metadata: {},

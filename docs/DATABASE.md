@@ -350,3 +350,28 @@ Pueden contener:
 - Descripciones editoriales demo.
 - Configuración visual.
 - Secciones placeholder originales.
+
+## 10. Adjuntos del chat
+
+`chat_attachments` conserva metadata segura, estado de procesamiento y
+la relación opcional con conversación y mensaje. `client_upload_id`
+aporta idempotencia y `upload_session_id` agrupa cargas previas al envío.
+
+`chat_attachment_extractions` mantiene el texto procesado fuera de
+`chat_messages`. Solo el servidor con service role puede escribir o leer
+extracciones. El usuario únicamente puede consultar metadata propia.
+
+Los objetos viven en el bucket privado `chat-attachments`, bajo una ruta
+generada por el servidor y aislada por usuario. La función
+`reserve_chat_attachment` bloquea atómicamente cada sesión de carga para
+aplicar cantidad y tamaño total incluso ante solicitudes concurrentes.
+
+Retención predeterminada:
+
+- Pro y Fundador: 30 días.
+- Ilimitado: 90 días.
+- Temporales sin mensaje: 24 horas.
+
+No hay antivirus integrado. La mitigación actual usa lista cerrada de
+formatos, firmas reales, bucket privado, ausencia de ejecución y
+normalización de imágenes sin EXIF.

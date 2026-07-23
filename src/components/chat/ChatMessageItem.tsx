@@ -4,6 +4,7 @@ import { memo, useState } from "react";
 import { Check, Copy, Pencil, RefreshCw, Send, Sparkles, ThumbsDown, ThumbsUp, Trash2 } from "lucide-react";
 
 import { MessageActionsMenu, type MessageMenuAction } from "@/components/chat/MessageActionsMenu";
+import { ChatMessageAttachments } from "@/components/chat/ChatMessageAttachments";
 import { SafeMarkdown } from "@/components/chat/SafeMarkdown";
 import type { StoredChatMessage } from "@/lib/chat/model";
 import { cn } from "@/lib/utils/cn";
@@ -60,6 +61,7 @@ function ChatMessageItemComponent({ message, rating = null, isGenerating = false
   if (isUser) {
     return (
       <article aria-label="Mensaje del usuario" className="group ml-auto flex w-full max-w-[86%] flex-col items-end sm:max-w-[72%]" tabIndex={0}>
+        <ChatMessageAttachments parts={message.parts} />
         <div className={cn("rounded-[16px] rounded-br-[5px] px-4 py-3 text-sm leading-6 sm:text-[15px]", isFailed ? "border border-rose-200 bg-rose-50 text-rose-900" : "bg-violet-600 text-white")}>{message.content}</div>
         {isFailed ? (
           <div className="mt-2 flex flex-wrap justify-end gap-2">

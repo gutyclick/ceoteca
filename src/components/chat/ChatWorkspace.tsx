@@ -30,6 +30,7 @@ import { ChatComposer } from "@/components/chat/ChatComposer";
 import { ChatConnectionStatus } from "@/components/chat/ChatConnectionStatus";
 import { ChatMessageItem, type MessageRating, type ResponseAction } from "@/components/chat/ChatMessageItem";
 import { useChatConnectivity } from "@/components/chat/useChatConnectivity";
+import { useChatAttachments } from "@/components/chat/useChatAttachments";
 import {
   chatComposerMaxLength,
   chatLowRemainingThreshold,
@@ -140,9 +141,9 @@ const responseInstructions: Record<ResponseAction, string> = {
   business: "Adapta tu respuesta anterior a mi negocio. Primero pregúntame el contexto mínimo que necesites.",
 };
 
-function optimisticStoredMessage(input: { id: string; conversationId: string; role: "user" | "assistant"; content: string; status: StoredChatMessage["status"]; parentMessageId?: string | null }): StoredChatMessage {
+function optimisticStoredMessage(input: { id: string; conversationId: string; role: "user" | "assistant"; content: string; status: StoredChatMessage["status"]; parentMessageId?: string | null; parts?: StoredChatMessage["parts"] }): StoredChatMessage {
   const now = new Date().toISOString();
-  return { id: input.id, conversationId: input.conversationId, role: input.role, content: input.content, parts: null, status: input.status, createdAt: now, updatedAt: now, parentMessageId: input.parentMessageId ?? null, metadata: {}, clientMessageId: input.role === "user" ? input.id : null };
+  return { id: input.id, conversationId: input.conversationId, role: input.role, content: input.content, parts: input.parts ?? null, status: input.status, createdAt: now, updatedAt: now, parentMessageId: input.parentMessageId ?? null, metadata: {}, clientMessageId: input.role === "user" ? input.id : null };
 }
 
 function messageDayLabel(value: string) {
@@ -271,6 +272,7 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
   const tabChannelRef = useRef<BroadcastChannel | null>(null);
   const activeBroadcastConversationRef = useRef<string | null>(null);
   const selected = conversations.find((item) => item.id === selectedId) ?? draftConversation;
+  const attachments = useChatAttachments({ plan, conversationId: selected.id });
   const canUseChat = plans[plan].features.includes("chat");
   const contextIsReady = selected.type === "general" || Boolean(selected.book);
   const hasQuota = remainingQuestions === null || remainingQuestions > 0;
@@ -709,7 +711,9 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
 
   async function sendMessage(retry = retryTurn, overrideMessage?: string, interactionType: "message" | "contextual_action" = "message") {
     const message = (overrideMessage ?? retry?.originalMessage ?? input).trim();
-    if (!message || isSending || regeneratingId || !canSendMessages || sendLockRef.current) return;
+    const attachmentIds = attachments.readyAttachmentIds;
+    const visibleMessage = message || (attachmentIds.length ? "Analiza los archivos adjuntos." : "");
+    if (!visibleMessage || attachments.hasBlockingUploads || isSending || regeneratingId || !canSendMessages || sendLockRef.current) return;
     if (message.length > chatComposerMaxLength) {
       setError("Tu mensaje es demasiado largo. Reduce el contenido para continuar.");
       return;
@@ -740,7 +744,18 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
     stopRequestedRef.current = false;
     isNearBottomRef.current = true;
 
-    const optimisticMessage = optimisticStoredMessage({ id: clientMessageId, conversationId: requestConversationId ?? optimisticConversationId, role: "user", content: message, status: "pending" });
+    const optimisticAttachmentParts = attachments.items
+      .filter((item) => item.remote && item.state === "ready")
+      .map((item) => ({
+        type: "attachment",
+        attachmentId: item.remote!.id,
+        filename: item.remote!.originalName,
+        mimeType: item.remote!.mimeType,
+        sizeBytes: item.remote!.sizeBytes,
+        category: item.remote!.category,
+        extractionStatus: item.remote!.extractionStatus,
+      }));
+    const optimisticMessage = optimisticStoredMessage({ id: clientMessageId, conversationId: requestConversationId ?? optimisticConversationId, role: "user", content: visibleMessage, parts: optimisticAttachmentParts, status: "pending" });
     const pendingAssistant = optimisticStoredMessage({ id: streamMessageId, conversationId: requestConversationId ?? optimisticConversationId, role: "assistant", content: "", status: "pending", parentMessageId: clientMessageId });
     setMessages((current) => {
       const base = retry
@@ -843,6 +858,8 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
             clientMessageId,
             interactionType,
             message,
+            attachmentIds,
+            uploadSessionId: attachmentIds.length ? attachments.uploadSessionId : undefined,
             stream: true,
           }),
           signal: requestController.signal,
@@ -865,6 +882,7 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
         ]);
         setRemainingQuestions(payload.data.remainingQuestions);
         setUsage(payload.data.usage);
+        if (attachmentIds.length) attachments.clearAfterSend();
         receivedCompletedEvent = true;
         return;
       }
@@ -899,6 +917,7 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
           }
           setRemainingQuestions(event.remainingQuestions);
           setUsage(event.usage);
+          if (attachmentIds.length) attachments.clearAfterSend();
           if (isNewConversation) {
             recordChatEvent("conversation_created", {
               conversation_type: event.conversation.type,
@@ -1033,7 +1052,7 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
       const failure: SendFailure = {
         kind,
         message: failureMessage,
-        originalMessage: message,
+        originalMessage: visibleMessage,
         clientMessageId,
         displayMessageId: persistedUserMessageId,
         conversationId,
@@ -1386,6 +1405,9 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
                     </div> : null}
                   </div>
                   <ChatComposer
+                    attachmentError={attachments.error}
+                    attachmentItems={attachments.items}
+                    attachmentPolicy={attachments.policy}
                     className="mt-5 text-left"
                     disabled={Boolean(composerDisabledReason)}
                     disabledReason={composerDisabledReason}
@@ -1393,7 +1415,11 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
                     isSubmitting={isSending && !streamHasStarted}
                     locked={Boolean(composerLockedReason)}
                     lockedReason={composerLockedReason}
+                    hasBlockingAttachments={attachments.hasBlockingUploads}
+                    onAddAttachments={attachments.addFiles}
                     onChange={setInput}
+                    onRemoveAttachment={(localId) => void attachments.remove(localId)}
+                    onRetryAttachment={attachments.retry}
                     onStop={stopResponse}
                     onSubmit={() => void sendMessage()}
                     placeholder={selected.type === "book" ? "Pregunta sobre este análisis…" : undefined}
@@ -1448,6 +1474,9 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
                 </p>
               ) : null}
               <ChatComposer
+                attachmentError={attachments.error}
+                attachmentItems={attachments.items}
+                attachmentPolicy={attachments.policy}
                 className="mx-auto max-w-3xl"
                 disabled={Boolean(composerDisabledReason)}
                 disabledReason={composerDisabledReason}
@@ -1455,7 +1484,11 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
                 isSubmitting={isSending && !streamHasStarted}
                 locked={Boolean(composerLockedReason)}
                 lockedReason={composerLockedReason}
+                hasBlockingAttachments={attachments.hasBlockingUploads}
+                onAddAttachments={attachments.addFiles}
                 onChange={setInput}
+                onRemoveAttachment={(localId) => void attachments.remove(localId)}
+                onRetryAttachment={attachments.retry}
                 onStop={stopResponse}
                 onSubmit={() => void sendMessage()}
                 placeholder={selected.type === "book" ? "Pregunta sobre este análisis…" : "Cuéntale a CEO qué quieres resolver…"}

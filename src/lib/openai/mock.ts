@@ -7,6 +7,11 @@ import type {
 
 export class MockAIProvider implements AIProvider {
   async answerBookQuestion(input: BookChatInput): Promise<BookChatResult> {
+    if (input.attachments?.length) {
+      return {
+        message: `Recibí ${input.attachments.length} ${input.attachments.length === 1 ? "adjunto" : "adjuntos"} en modo demo. La previsualización funciona, pero el contenido no se procesa ni se envía a un modelo real en este modo.`,
+      };
+    }
     const firstPoint = input.book.keyPoints[0];
     const relatedText = [
       input.book.title,
@@ -37,6 +42,11 @@ export class MockAIProvider implements AIProvider {
   }
 
   async answerSiteQuestion(input: SiteChatInput): Promise<BookChatResult> {
+    if (input.attachments?.length) {
+      return {
+        message: `Recibí ${input.attachments.length} ${input.attachments.length === 1 ? "adjunto" : "adjuntos"} en modo demo. Puedes probar el flujo de selección y envío, pero el contenido no fue analizado.`,
+      };
+    }
     const normalizedMessage = input.message.toLowerCase();
     const books = input.books.slice(0, 4);
     const matchingBook =

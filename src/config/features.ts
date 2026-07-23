@@ -2,6 +2,8 @@ export const featureKeys = [
   "allBooks",
   "audio",
   "chat",
+  "chatAttachments",
+  "chatVision",
   "unlimitedChat",
   "earlyAccess",
   "advancedActivities",

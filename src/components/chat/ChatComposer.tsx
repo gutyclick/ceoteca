@@ -1,8 +1,13 @@
 "use client";
 
-import { useId, useLayoutEffect, useRef, useState, type RefObject } from "react";
-import { Loader2, Send, Square } from "lucide-react";
+import { useId, useLayoutEffect, useRef, useState, type ClipboardEvent, type DragEvent, type RefObject } from "react";
+import Link from "next/link";
+import { Loader2, Paperclip, Send, Square } from "lucide-react";
 
+import { ChatAttachmentPreview } from "@/components/chat/ChatAttachmentPreview";
+import { ChatAttachmentTray } from "@/components/chat/ChatAttachmentTray";
+import type { LocalChatAttachment } from "@/components/chat/useChatAttachments";
+import { chatAttachmentAccept, type ChatAttachmentPolicy } from "@/config/chat-attachments";
 import { chatComposerMaxLength } from "@/config/chat";
 import { cn } from "@/lib/utils/cn";
 
@@ -24,6 +29,13 @@ type ChatComposerProps = {
   maxHeight?: number;
   tone?: "light" | "dark";
   className?: string;
+  attachmentItems?: LocalChatAttachment[];
+  attachmentPolicy?: ChatAttachmentPolicy;
+  attachmentError?: string | null;
+  hasBlockingAttachments?: boolean;
+  onAddAttachments?: (files: File[]) => void;
+  onRemoveAttachment?: (localId: string) => void;
+  onRetryAttachment?: (localId: string) => void;
 };
 
 export function ChatComposer({
@@ -44,17 +56,28 @@ export function ChatComposer({
   maxHeight = 160,
   tone = "light",
   className,
+  attachmentItems = [],
+  attachmentPolicy,
+  attachmentError,
+  hasBlockingAttachments = false,
+  onAddAttachments,
+  onRemoveAttachment,
+  onRetryAttachment,
 }: ChatComposerProps) {
   const descriptionId = useId();
   const errorId = useId();
   const composingRef = useRef(false);
   const submitLockRef = useRef(false);
   const [isFocused, setIsFocused] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [previewItem, setPreviewItem] = useState<LocalChatAttachment | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const trimmed = value.trim();
   const overLimit = value.length > maxLength;
   const nearLimit = value.length >= maxLength * 0.8;
   const cannotWrite = disabled || locked || isSubmitting;
-  const canSubmit = Boolean(trimmed) && !overLimit && !cannotWrite && !isStreaming;
+  const hasReadyAttachment = attachmentItems.some((item) => item.state === "ready");
+  const canSubmit = (Boolean(trimmed) || hasReadyAttachment) && !overLimit && !cannotWrite && !isStreaming && !hasBlockingAttachments;
   const statusMessage = locked
     ? lockedReason
     : disabled
@@ -81,12 +104,65 @@ export function ChatComposer({
     });
   }
 
+  function handleFiles(files: FileList | File[]) {
+    const selected = Array.from(files);
+    if (selected.length) onAddAttachments?.(selected);
+  }
+
+  function handleDrag(event: DragEvent<HTMLDivElement>) {
+    if (!event.dataTransfer.types.includes("Files")) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.type === "dragenter" || event.type === "dragover") {
+      event.dataTransfer.dropEffect = "copy";
+      setIsDragging(true);
+    } else if (event.type === "dragleave") {
+      if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setIsDragging(false);
+    } else if (event.type === "drop") {
+      setIsDragging(false);
+      handleFiles(event.dataTransfer.files);
+    }
+  }
+
+  function handlePaste(event: ClipboardEvent<HTMLTextAreaElement>) {
+    const images = Array.from(event.clipboardData.items)
+      .filter((item) => item.kind === "file" && item.type.startsWith("image/"))
+      .map((item, index) => {
+        const file = item.getAsFile();
+        if (!file) return null;
+        if (file.name) return file;
+        const extension = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
+        return new File([file], `imagen-pegada-${Date.now()}-${index + 1}.${extension}`, { type: file.type });
+      })
+      .filter((file): file is File => file !== null);
+    if (images.length) handleFiles(images);
+  }
+
   return (
-    <div className={cn("relative", className)} data-focused={isFocused || undefined}>
+    <div
+      className={cn("relative", className)}
+      data-focused={isFocused || undefined}
+      onDragEnter={handleDrag}
+      onDragLeave={handleDrag}
+      onDragOver={handleDrag}
+      onDrop={handleDrag}
+    >
+      {isDragging ? (
+        <div className="pointer-events-none absolute inset-0 z-20 grid place-items-center rounded-[16px] border-2 border-dashed border-violet-500 bg-violet-50/95 p-4 text-center text-sm font-black text-violet-800">
+          Suelta los archivos para adjuntarlos
+        </div>
+      ) : null}
+      <ChatAttachmentTray
+        items={attachmentItems}
+        onPreview={setPreviewItem}
+        onRemove={(localId) => onRemoveAttachment?.(localId)}
+        onRetry={(localId) => onRetryAttachment?.(localId)}
+      />
       <form
         aria-label="Escribir a CEO"
         className={cn(
-          "grid grid-cols-[minmax(0,1fr)_46px] items-end gap-2 rounded-[16px] border p-2 transition-colors motion-reduce:transition-none",
+          "grid items-end gap-1 rounded-[16px] border p-2 transition-colors motion-reduce:transition-none",
+          attachmentPolicy ? "grid-cols-[44px_minmax(0,1fr)_46px]" : "grid-cols-[minmax(0,1fr)_46px]",
           tone === "dark" ? "border-white/10 bg-white/[0.055]" : "bg-white",
           overLimit
             ? "border-rose-400 ring-4 ring-rose-50"
@@ -98,6 +174,27 @@ export function ChatComposer({
           submit();
         }}
       >
+        {attachmentPolicy ? <input
+          accept={chatAttachmentAccept}
+          className="sr-only"
+          multiple={attachmentPolicy?.allowMultiple}
+          onChange={(event) => {
+            if (event.target.files) handleFiles(event.target.files);
+            event.target.value = "";
+          }}
+          ref={fileInputRef}
+          type="file"
+        /> : null}
+        {attachmentPolicy ? <button
+          aria-label="Adjuntar archivo"
+          className="grid h-11 w-11 place-items-center rounded-[11px] text-slate-500 hover:bg-slate-100 hover:text-violet-700 disabled:cursor-not-allowed disabled:opacity-40"
+          disabled={cannotWrite || !attachmentPolicy?.enabled}
+          onClick={() => fileInputRef.current?.click()}
+          title={!attachmentPolicy?.enabled ? "Los archivos están disponibles desde el plan Pro." : "Adjuntar archivo"}
+          type="button"
+        >
+          <Paperclip size={19} />
+        </button> : null}
         <textarea
           aria-describedby={cn(statusMessage && descriptionId, overLimit && errorId) || undefined}
           aria-invalid={overLimit || undefined}
@@ -131,6 +228,7 @@ export function ChatComposer({
               submit();
             }
           }}
+          onPaste={handlePaste}
           placeholder={placeholder}
           ref={textareaRef}
           rows={1}
@@ -153,6 +251,10 @@ export function ChatComposer({
             <p aria-live="assertive" className="text-rose-700" id={errorId} role="alert">
               Tu mensaje es demasiado largo. Reduce el contenido para continuar.
             </p>
+          ) : attachmentError ? (
+            <p aria-live="assertive" className="text-rose-700" role="alert">{attachmentError}</p>
+          ) : hasBlockingAttachments ? (
+            <p aria-live="polite" className="text-slate-500">Espera a que los archivos estén listos o elimina los que fallaron.</p>
           ) : statusMessage ? (
             <p className={locked ? "text-amber-600" : tone === "dark" ? "text-slate-400" : "text-slate-500"} id={descriptionId}>
               {statusMessage}
@@ -165,6 +267,12 @@ export function ChatComposer({
           </p>
         ) : null}
       </div>
+      {attachmentItems.length > 0 ? (
+        <p className="px-1 text-[11px] text-slate-400">
+          Los archivos se procesarán para responder a tu consulta. <Link className="font-bold text-violet-700" href="/privacidad">Privacidad</Link>
+        </p>
+      ) : null}
+      <ChatAttachmentPreview item={previewItem} onClose={() => setPreviewItem(null)} />
     </div>
   );
 }

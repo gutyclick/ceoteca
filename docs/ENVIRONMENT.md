@@ -179,3 +179,10 @@ Las plantillas usan `{{ .ConfirmationURL }}` para que Supabase genere el enlace 
 - Reenvío de confirmación: usa `/auth/callback?next=/planes`.
 - Recuperación de contraseña: envía al usuario a `/nueva-password`.
 - Google OAuth: vuelve por `/auth/callback` y la app decide si va a `/planes` o `/home`.
+
+## 10. Limpieza de adjuntos
+
+Definir `CRON_SECRET` en Vercel para autorizar la limpieza de cargas
+temporales. `vercel.json` invoca diariamente
+`/api/cron/chat-attachments`; el endpoint utiliza el mismo secreto que
+el cron de recordatorios.

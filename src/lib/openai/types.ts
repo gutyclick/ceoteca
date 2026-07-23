@@ -1,16 +1,19 @@
 import type { Book } from "@/types";
+import type { ChatAttachmentContext } from "@/lib/chat/attachments/model";
 import type { ChatConversationMessage } from "@/lib/validation/chat";
 
 export type BookChatInput = {
   book: Book;
   message: string;
   conversation: ChatConversationMessage[];
+  attachments?: ChatAttachmentContext[];
 };
 
 export type SiteChatInput = {
   books: Book[];
   message: string;
   conversation: ChatConversationMessage[];
+  attachments?: ChatAttachmentContext[];
 };
 
 export type BookChatResult = {

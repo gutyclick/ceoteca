@@ -14,12 +14,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { RichChatMessage } from "@/components/chat/RichChatMessage";
 import { ChatComposer } from "@/components/chat/ChatComposer";
+import { ChatMessageAttachments } from "@/components/chat/ChatMessageAttachments";
+import { useChatAttachments } from "@/components/chat/useChatAttachments";
 import { Card } from "@/components/ui/Card";
 import { plans, type PlanKey } from "@/config/plans";
 import { prepareChatConversation } from "@/lib/chat/conversation";
 import { clearChatDraft, readChatDraft, writeChatDraft, type ChatDraftScope } from "@/lib/chat/drafts";
 import { canAccessFeature } from "@/lib/permissions";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
+import type { Json } from "@/lib/supabase/database.types";
 import type { ChatConversationMessage } from "@/lib/validation/chat";
 import { cn } from "@/lib/utils/cn";
 import type { Book } from "@/types";
@@ -49,7 +52,7 @@ type ChatResponse = {
 type ChatHistoryResponse = {
   data?: {
     conversation: { id: string } | null;
-    messages: ChatConversationMessage[];
+    messages: FloatingChatMessage[];
     remainingQuestions: number | null;
     usage: {
       used: number;
@@ -60,6 +63,10 @@ type ChatHistoryResponse = {
     code: string;
     message: string;
   };
+};
+
+type FloatingChatMessage = ChatConversationMessage & {
+  parts?: Json | null;
 };
 
 const bookSuggestions = [
@@ -88,7 +95,7 @@ export function FloatingBookChat({
   variant = "floating",
 }: FloatingBookChatProps) {
   const isPanel = variant === "panel";
-  const introMessage = useMemo<ChatConversationMessage>(
+  const introMessage = useMemo<FloatingChatMessage>(
     () => ({
       role: "assistant",
       content: `Hola. Soy CEO y estoy usando el contexto de **${book.title}** para ayudarte a convertir este análisis en decisiones, ejercicios y próximos pasos concretos.`,
@@ -97,7 +104,7 @@ export function FloatingBookChat({
   );
   const [isOpen, setIsOpen] = useState(isPanel);
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<ChatConversationMessage[]>([
+  const [messages, setMessages] = useState<FloatingChatMessage[]>([
     introMessage,
   ]);
   const [isLoading, setIsLoading] = useState(false);
@@ -105,6 +112,8 @@ export function FloatingBookChat({
   const [error, setError] = useState<string | null>(null);
   const [remainingQuestions, setRemainingQuestions] = useState<number | null>(null);
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const attachments = useChatAttachments({ plan, conversationId });
+  const clearAttachments = attachments.clearAfterSend;
   const [userId, setUserId] = useState<string | null>(null);
   const [suggestionStartIndex, setSuggestionStartIndex] = useState(0);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
@@ -129,12 +138,13 @@ export function FloatingBookChat({
   const isVisible = isPanel || isOpen;
 
   useEffect(() => {
+    clearAttachments();
     setMessages([introMessage]);
     setRemainingQuestions(null);
     setConversationId(null);
     creationKeyRef.current = crypto.randomUUID();
     setError(null);
-  }, [book.slug, introMessage]);
+  }, [book.slug, clearAttachments, introMessage]);
 
   useEffect(() => {
     if (!draftScope) return;
@@ -243,15 +253,40 @@ export function FloatingBookChat({
 
   async function sendMessage(message: string) {
     const trimmed = message.trim();
+    const attachmentIds = attachments.readyAttachmentIds;
+    const visibleMessage = trimmed || (attachmentIds.length ? "Analiza los archivos adjuntos." : "");
 
-    if (!trimmed || isLoading || !hasChatAccess) {
+    if (
+      !visibleMessage ||
+      attachments.hasBlockingUploads ||
+      isLoading ||
+      !hasChatAccess
+    ) {
       return;
     }
 
     setError(null);
     setInput("");
     if (draftScope) clearChatDraft(draftScope);
-    setMessages((current) => [...current, { role: "user", content: trimmed }]);
+    const attachmentParts = attachments.items
+      .filter((item) => item.remote && item.state === "ready")
+      .map((item) => ({
+        type: "attachment",
+        attachmentId: item.remote!.id,
+        filename: item.remote!.originalName,
+        mimeType: item.remote!.mimeType,
+        sizeBytes: item.remote!.sizeBytes,
+        category: item.remote!.category,
+        extractionStatus: item.remote!.extractionStatus,
+      }));
+    setMessages((current) => [
+      ...current,
+      {
+        role: "user",
+        content: visibleMessage,
+        parts: attachmentParts.length ? attachmentParts as unknown as Json : null,
+      },
+    ]);
     setIsLoading(true);
 
     try {
@@ -276,6 +311,10 @@ export function FloatingBookChat({
           clientCreationKey: conversationId ? undefined : creationKeyRef.current,
           clientMessageId: crypto.randomUUID(),
           message: trimmed,
+          attachmentIds,
+          uploadSessionId: attachmentIds.length
+            ? attachments.uploadSessionId
+            : undefined,
           conversation,
         }),
       });
@@ -293,6 +332,7 @@ export function FloatingBookChat({
         ]);
         setRemainingQuestions(payload.data.remainingQuestions);
         setConversationId(payload.data.conversation?.id ?? conversationId);
+        if (attachmentIds.length) attachments.clearAfterSend();
       }
     } catch (caughtError) {
       setInput(trimmed);
@@ -453,9 +493,12 @@ export function FloatingBookChat({
                             tone={isPanel ? "light" : "dark"}
                           />
                         ) : (
-                          <p className="whitespace-pre-wrap text-[15px] font-medium leading-7">
-                            {message.content}
-                          </p>
+                          <>
+                            <ChatMessageAttachments parts={message.parts ?? null} />
+                            <p className="whitespace-pre-wrap text-[15px] font-medium leading-7">
+                              {message.content}
+                            </p>
+                          </>
                         )}
                       </div>
                     </div>
@@ -536,13 +579,20 @@ export function FloatingBookChat({
                   </div>
                 ) : null}
                 <ChatComposer
+                  attachmentError={attachments.error}
+                  attachmentItems={attachments.items}
+                  attachmentPolicy={attachments.policy}
                   disabled={isHistoryLoading}
                   disabledReason={isHistoryLoading ? "Estamos preparando el contexto de este análisis." : undefined}
+                  hasBlockingAttachments={attachments.hasBlockingUploads}
                   isSubmitting={isLoading}
                   locked={!hasChatAccess || displayedRemainingQuestions === 0}
                   lockedReason={!hasChatAccess ? "Chat con CEO no está incluido en tu plan actual." : displayedRemainingQuestions === 0 ? "Has alcanzado el límite de consultas de tu plan." : undefined}
                   maxHeight={112}
                   onChange={setInput}
+                  onAddAttachments={attachments.addFiles}
+                  onRemoveAttachment={(localId) => void attachments.remove(localId)}
+                  onRetryAttachment={attachments.retry}
                   onSubmit={() => void sendMessage(input)}
                   placeholder="Pregunta sobre este análisis…"
                   textareaRef={inputRef}

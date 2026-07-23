@@ -4,6 +4,12 @@ import { z } from "zod";
 
 import { jsonChatError, jsonData, jsonError } from "@/lib/api/response";
 import { demoUser } from "@/lib/auth/demo";
+import { AttachmentError } from "@/lib/chat/attachments/errors";
+import type { ChatAttachmentContext, ChatAttachmentPart } from "@/lib/chat/attachments/model";
+import {
+  getReadyAttachmentContexts,
+  linkAttachmentsToMessage,
+} from "@/lib/chat/attachments/service";
 import { canAccessBookChat } from "@/lib/books/access";
 import { createBookRepository } from "@/lib/books/repository";
 import {
@@ -39,6 +45,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getEffectiveSubscriptionForUser, type EffectiveSubscription } from "@/lib/subscriptions/service";
 import { chatRequestSchema } from "@/lib/validation/chat";
 import type { AppUser } from "@/types";
+import type { Json } from "@/lib/supabase/database.types";
 
 function getFieldErrors(error: ZodError) {
   const flattened = error.flatten().fieldErrors;
@@ -201,7 +208,34 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const moderation = moderateChatMessage(parsed.data.message, legacyContext);
+  const userMessage = parsed.data.message || "Analiza los archivos adjuntos.";
+  let attachmentContexts: ChatAttachmentContext[] = [];
+  try {
+    attachmentContexts = await getReadyAttachmentContexts({
+      userId: session.user.id,
+      plan: session.user.plan,
+      attachmentIds: parsed.data.attachmentIds,
+      uploadSessionId: parsed.data.uploadSessionId ?? crypto.randomUUID(),
+      conversationId: parsed.data.conversationId,
+    });
+  } catch (error) {
+    const known = error instanceof AttachmentError
+      ? error
+      : new AttachmentError("STORAGE_UNAVAILABLE", 503);
+    return jsonError({ code: known.code, message: known.message }, known.status);
+  }
+  const attachmentParts: ChatAttachmentPart[] = attachmentContexts.map((attachment) => ({
+    type: "attachment",
+    attachmentId: attachment.attachmentId,
+    filename: attachment.filename,
+    mimeType: attachment.mimeType,
+    sizeBytes: attachment.sizeBytes,
+    category: attachment.category,
+    extractionStatus: attachment.extractionStatus,
+    ...(attachment.truncated ? { truncated: true } : {}),
+  }));
+
+  const moderation = moderateChatMessage(userMessage, legacyContext);
   if (!moderation.allowed) {
     await chatRepository.logEvent({
       userId: session.user.id,
@@ -210,7 +244,7 @@ export async function POST(request: NextRequest) {
       eventType: "moderation_block",
       code: moderation.code,
       message: moderation.reason,
-      metadata: { messageLength: parsed.data.message.length },
+      metadata: { messageLength: userMessage.length },
     });
     return jsonError({ code: "MESSAGE_BLOCKED", message: moderation.reason }, 400);
   }
@@ -288,9 +322,27 @@ export async function POST(request: NextRequest) {
       userId: session.user.id,
       conversation,
       clientMessageId: parsed.data.clientMessageId,
-      content: parsed.data.message,
+      content: userMessage,
+      parts: attachmentParts.length ? attachmentParts as unknown as Json : null,
     });
     claimedMessageId = claim.userMessage.id;
+    if (claim.created && attachmentParts.length && parsed.data.uploadSessionId) {
+      await linkAttachmentsToMessage({
+        userId: session.user.id,
+        conversationId: conversation.id,
+        messageId: claim.userMessage.id,
+        uploadSessionId: parsed.data.uploadSessionId,
+        attachmentIds: parsed.data.attachmentIds,
+      });
+      void chatRepository.logEvent({
+        userId: session.user.id,
+        bookId: book.id,
+        context: legacyContext,
+        eventType: "message_sent_with_attachment",
+        code: "MESSAGE_SENT_WITH_ATTACHMENT",
+        metadata: { count: attachmentParts.length, plan: session.user.plan },
+      });
+    }
     await attachChatUsage(usageId, session.user.id, conversation.id, claim.userMessage.id);
 
     if (!claim.created) {
@@ -329,7 +381,7 @@ export async function POST(request: NextRequest) {
       () => generateAndPersistConversationTitle({
         userId: session.user.id,
         conversation,
-        message: parsed.data.message,
+        message: userMessage,
       }),
       chatTimeouts.titleGenerationMs,
     ).catch(() => conversation.title);
@@ -392,11 +444,11 @@ export async function POST(request: NextRequest) {
           try {
             const providerStream = type === "general"
               ? provider.streamSiteQuestion(
-                  { books, message: parsed.data.message, conversation: trustedConversation },
+                  { books, message: userMessage, conversation: trustedConversation, attachments: attachmentContexts },
                   providerAbort.signal,
                 )
               : provider.streamBookQuestion(
-                  { book, message: parsed.data.message, conversation: trustedConversation },
+                  { book, message: userMessage, conversation: trustedConversation, attachments: attachmentContexts },
                   providerAbort.signal,
                 );
 
@@ -430,7 +482,7 @@ export async function POST(request: NextRequest) {
               userId: session.user.id,
               conversation: { ...conversation, title },
               userMessageId: claim.userMessage.id,
-              userContent: parsed.data.message,
+              userContent: userMessage,
               assistantContent,
             });
             enqueue({ type: "title", title });
@@ -509,8 +561,8 @@ export async function POST(request: NextRequest) {
 
     const result = await withTimeout(
       () => type === "general"
-        ? provider.answerSiteQuestion({ books, message: parsed.data.message, conversation: trustedConversation })
-        : provider.answerBookQuestion({ book, message: parsed.data.message, conversation: trustedConversation }),
+        ? provider.answerSiteQuestion({ books, message: userMessage, conversation: trustedConversation, attachments: attachmentContexts })
+        : provider.answerBookQuestion({ book, message: userMessage, conversation: trustedConversation, attachments: attachmentContexts }),
       chatTimeouts.streamIdleMs,
     );
     if (!result.message.trim()) throw new Error("The provider returned an empty response");
@@ -523,7 +575,7 @@ export async function POST(request: NextRequest) {
       userId: session.user.id,
       conversation: { ...conversation, title },
       userMessageId: claim.userMessage.id,
-      userContent: parsed.data.message,
+      userContent: userMessage,
       assistantContent: result.message,
     });
     return jsonData({

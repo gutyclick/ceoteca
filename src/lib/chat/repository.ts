@@ -24,7 +24,15 @@ export type ChatEventType =
   | "usage_limit_reached"
   | "usage_regeneration"
   | "usage_contextual_action"
-  | "usage_rate_limited";
+  | "usage_rate_limited"
+  | "attachment_selected"
+  | "attachment_upload_started"
+  | "attachment_upload_completed"
+  | "attachment_upload_failed"
+  | "attachment_removed"
+  | "attachment_processing_completed"
+  | "attachment_processing_failed"
+  | "message_sent_with_attachment";
 
 export type LogChatEventInput = {
   userId: string;

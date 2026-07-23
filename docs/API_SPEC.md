@@ -346,3 +346,31 @@ No registrar:
 - Tokens.
 - Claves.
 - Conversaciones completas salvo política explícita.
+
+## 12. Adjuntos del Chat con CEO
+
+### `POST /api/chat/attachments`
+
+Recibe `multipart/form-data` con `file`, `uploadSessionId`,
+`clientUploadId` y `conversationId` opcional. La sesión y el plan se
+resuelven en servidor. El endpoint valida firma, MIME, extensión,
+tamaño, propiedad y límites antes de almacenar el archivo.
+
+Formatos iniciales: PDF, TXT, Markdown, DOCX, CSV, PNG, JPG, JPEG y WEBP.
+
+### `GET /api/chat/attachments/[attachmentId]`
+
+Devuelve una URL firmada de cinco minutos tras verificar propiedad. Los
+documentos se sirven como descarga; las imágenes pueden previsualizarse.
+
+### `DELETE /api/chat/attachments/[attachmentId]`
+
+Elimina un adjunto temporal que todavía no esté vinculado a un mensaje.
+
+### `GET /api/cron/chat-attachments`
+
+Elimina cargas temporales vencidas. Requiere `Authorization: Bearer
+<CRON_SECRET>` y se ejecuta diariamente desde Vercel.
+
+El contenido extraído y las rutas de Storage nunca forman parte de la
+respuesta pública ni de los `parts` del historial.

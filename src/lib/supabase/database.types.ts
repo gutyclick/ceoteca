@@ -274,6 +274,87 @@ export type Database = {
         };
         Relationships: [];
       };
+      chat_attachments: {
+        Row: {
+          id: string;
+          user_id: string;
+          conversation_id: string | null;
+          message_id: string | null;
+          upload_session_id: string;
+          client_upload_id: string;
+          original_name: string;
+          storage_path: string;
+          mime_type: string;
+          size_bytes: number;
+          category: "document" | "data" | "image";
+          status: "pending" | "uploaded" | "processing" | "ready" | "failed" | "deleted";
+          extraction_status: "pending" | "processing" | "ready" | "failed" | "not_applicable";
+          metadata: Json;
+          expires_at: string | null;
+          deleted_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          conversation_id?: string | null;
+          message_id?: string | null;
+          upload_session_id: string;
+          client_upload_id: string;
+          original_name: string;
+          storage_path: string;
+          mime_type: string;
+          size_bytes: number;
+          category: "document" | "data" | "image";
+          status?: "pending" | "uploaded" | "processing" | "ready" | "failed" | "deleted";
+          extraction_status?: "pending" | "processing" | "ready" | "failed" | "not_applicable";
+          metadata?: Json;
+          expires_at?: string | null;
+          deleted_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          conversation_id?: string | null;
+          message_id?: string | null;
+          mime_type?: string;
+          status?: "pending" | "uploaded" | "processing" | "ready" | "failed" | "deleted";
+          extraction_status?: "pending" | "processing" | "ready" | "failed" | "not_applicable";
+          metadata?: Json;
+          expires_at?: string | null;
+          deleted_at?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      chat_attachment_extractions: {
+        Row: {
+          attachment_id: string;
+          user_id: string;
+          content: string;
+          truncated: boolean;
+          metadata: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          attachment_id: string;
+          user_id: string;
+          content?: string;
+          truncated?: boolean;
+          metadata?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          content?: string;
+          truncated?: boolean;
+          metadata?: Json;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       chat_message_feedback: {
         Row: {
           id: string;
@@ -410,7 +491,15 @@ export type Database = {
             | "usage_limit_reached"
             | "usage_regeneration"
             | "usage_contextual_action"
-            | "usage_rate_limited";
+            | "usage_rate_limited"
+            | "attachment_selected"
+            | "attachment_upload_started"
+            | "attachment_upload_completed"
+            | "attachment_upload_failed"
+            | "attachment_removed"
+            | "attachment_processing_completed"
+            | "attachment_processing_failed"
+            | "message_sent_with_attachment";
           code: string;
           message: string | null;
           metadata: Json;
@@ -431,7 +520,15 @@ export type Database = {
             | "usage_limit_reached"
             | "usage_regeneration"
             | "usage_contextual_action"
-            | "usage_rate_limited";
+            | "usage_rate_limited"
+            | "attachment_selected"
+            | "attachment_upload_started"
+            | "attachment_upload_completed"
+            | "attachment_upload_failed"
+            | "attachment_removed"
+            | "attachment_processing_completed"
+            | "attachment_processing_failed"
+            | "message_sent_with_attachment";
           code: string;
           message?: string | null;
           metadata?: Json;
@@ -716,6 +813,31 @@ export type Database = {
           target_period_end: string;
         };
         Returns: Json;
+      };
+      reserve_chat_attachment: {
+        Args: {
+          p_user_id: string;
+          p_conversation_id: string | null;
+          p_upload_session_id: string;
+          p_client_upload_id: string;
+          p_attachment_id: string;
+          p_original_name: string;
+          p_storage_path: string;
+          p_mime_type: string;
+          p_size_bytes: number;
+          p_category: string;
+          p_extraction_status: string;
+          p_expires_at: string;
+          p_metadata: Json;
+          p_max_files: number;
+          p_max_total_bytes: number;
+        };
+        Returns: Array<{
+          attachment_id: string;
+          attachment_status: string;
+          reserved_storage_path: string;
+          was_created: boolean;
+        }>;
       };
       evaluate_user_achievements: {
         Args: { target_user_id: string };
