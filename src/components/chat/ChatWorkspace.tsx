@@ -27,7 +27,9 @@ import { DashboardAccountMenu } from "@/components/app/DashboardAccountMenu";
 import { DashboardSidebar } from "@/components/app/DashboardSidebar";
 import { NotificationBell } from "@/components/app/NotificationBell";
 import { ChatComposer } from "@/components/chat/ChatComposer";
+import { ChatConnectionStatus } from "@/components/chat/ChatConnectionStatus";
 import { ChatMessageItem, type MessageRating, type ResponseAction } from "@/components/chat/ChatMessageItem";
+import { useChatConnectivity } from "@/components/chat/useChatConnectivity";
 import {
   chatComposerMaxLength,
   chatLowRemainingThreshold,
@@ -43,6 +45,14 @@ import {
   type ChatDraftScope,
 } from "@/lib/chat/drafts";
 import type { ChatConversation, StoredChatMessage } from "@/lib/chat/model";
+import {
+  createChatPublicError,
+  isChatPublicError,
+  normalizeClientChatError,
+  type ChatPublicError,
+} from "@/lib/chat/errors";
+import { chatTimeouts, retryIdempotent, withTimeout } from "@/lib/chat/retry";
+import { createChatTabChannel, type ChatTabEvent } from "@/lib/chat/tab-sync";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
 import type { Book } from "@/types";
@@ -59,14 +69,15 @@ type SendFailure = {
   displayMessageId: string;
   conversationId: string | null;
   creationKey: string;
+  error: ChatPublicError;
 };
 
 type StreamEvent =
-  | { type: "conversation"; conversation: ChatConversation; userMessage: StoredChatMessage; remainingQuestions: number | null }
+  | { type: "conversation"; conversation: ChatConversation; userMessage: StoredChatMessage; assistantMessage: StoredChatMessage | null; remainingQuestions: number | null; requestId?: string }
   | { type: "delta"; delta: string }
   | { type: "title"; title: string }
   | { type: "completed"; conversation: ChatConversation; userMessage: StoredChatMessage; assistantMessage: StoredChatMessage; remainingQuestions: number | null }
-  | { type: "failed"; code: string; message: string; conversation: ChatConversation; userMessage: StoredChatMessage };
+  | { type: "failed"; code: string; message: string; userMessage: StoredChatMessage; assistantMessage: StoredChatMessage | null; conversation: ChatConversation; retryable?: boolean; action?: string | null; requestId?: string };
 
 type HistoryResponse = {
   data?: {
@@ -77,7 +88,7 @@ type HistoryResponse = {
     hasMore: boolean;
     feedback: Array<{ message_id: string; rating: Exclude<MessageRating, null>; reason: string | null }>;
   };
-  error?: { message: string };
+  error?: ChatPublicError & { message?: string };
 };
 
 type ChatResponse = {
@@ -89,7 +100,7 @@ type ChatResponse = {
     userMessage: StoredChatMessage;
     assistantMessage: StoredChatMessage;
   };
-  error?: { code?: string; message: string };
+  error?: ChatPublicError & { message?: string };
 };
 
 type ConversationsResponse = {
@@ -177,12 +188,14 @@ function SendFailurePanel({
 }) {
   return (
     <section aria-live="polite" className="rounded-[14px] border border-rose-200 bg-rose-50 px-4 py-3 text-left">
-      <p className="text-sm font-black text-rose-800">{failure.message}</p>
+      <p className="text-sm font-black text-rose-800">{failure.error.userMessage}</p>
       <div className="mt-3 flex flex-wrap gap-2">
-        {failure.kind === "limit" ? (
+        {failure.error.action === "upgrade" ? (
           <Link className="rounded-[10px] bg-violet-700 px-3 py-2 text-xs font-black text-white" href="/planes">Ver planes</Link>
+        ) : failure.error.action === "sign_in" ? (
+          <Link className="rounded-[10px] bg-violet-700 px-3 py-2 text-xs font-black text-white" href={`/login?next=${encodeURIComponent(typeof window === "undefined" ? "/chat" : window.location.pathname)}`}>Iniciar sesión</Link>
         ) : (
-          <button className="rounded-[10px] bg-rose-700 px-3 py-2 text-xs font-black text-white" onClick={onRetry} type="button">
+          <button className="rounded-[10px] bg-rose-700 px-3 py-2 text-xs font-black text-white" disabled={!failure.error.retryable} onClick={onRetry} type="button">
             {failure.kind === "connection" ? "Reconectar" : failure.kind === "create" ? "Intentar de nuevo" : "Reintentar respuesta"}
           </button>
         )}
@@ -199,6 +212,7 @@ function SendFailurePanel({
 
 export function ChatWorkspace({ books, initialConversationId = null }: { books: Book[]; initialConversationId?: string | null }) {
   const router = useRouter();
+  const connectivity = useChatConnectivity();
   const bookById = useMemo(() => new Map(books.map((book) => [book.id, book])), [books]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(initialConversationId);
@@ -233,6 +247,9 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
   const [showJumpToEnd, setShowJumpToEnd] = useState(false);
   const [hasOlderMessages, setHasOlderMessages] = useState(false);
   const [isLoadingOlder, setIsLoadingOlder] = useState(false);
+  const [sessionExpired, setSessionExpired] = useState(false);
+  const [otherTabGenerating, setOtherTabGenerating] = useState(false);
+  const [syncVersion, setSyncVersion] = useState(0);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const creationKeyRef = useRef(crypto.randomUUID());
@@ -247,11 +264,15 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
   const inputValueRef = useRef("");
   const draftScopeRef = useRef<ChatDraftScope | null>(null);
   const sendLockRef = useRef(false);
+  const tabIdRef = useRef(crypto.randomUUID());
+  const tabChannelRef = useRef<BroadcastChannel | null>(null);
+  const activeBroadcastConversationRef = useRef<string | null>(null);
   const selected = conversations.find((item) => item.id === selectedId) ?? draftConversation;
   const canUseChat = plans[plan].features.includes("chat");
   const contextIsReady = selected.type === "general" || Boolean(selected.book);
   const hasQuota = remainingQuestions === null || remainingQuestions > 0;
-  const canSendMessages = canUseChat && hasQuota && selected.status === "active" && contextIsReady;
+  const canSendMessages = canUseChat && hasQuota && selected.status === "active" && contextIsReady
+    && connectivity.canReachServer && !sessionExpired && !otherTabGenerating;
   const composerLockedReason = !canUseChat
     ? "Chat con CEO no está incluido en tu plan actual."
     : !hasQuota
@@ -261,7 +282,13 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
     ? "Restaura esta conversación para continuar."
     : !contextIsReady
       ? "Estamos preparando el contexto de este análisis."
-      : undefined;
+      : sessionExpired
+        ? "Tu sesión ha expirado. Inicia sesión para continuar."
+        : !connectivity.canReachServer
+          ? "Sin conexión. Puedes seguir escribiendo y enviar cuando vuelva."
+          : otherTabGenerating
+            ? "Esta conversación está activa en otra pestaña."
+            : undefined;
   const suggestions = getChatStarterPrompts(selected.type);
   const draftScope = useMemo<ChatDraftScope | null>(() => userId ? ({
     userId,
@@ -288,6 +315,33 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
   useEffect(() => () => activeRequestRef.current?.abort(), []);
 
   useEffect(() => {
+    const channel = createChatTabChannel();
+    tabChannelRef.current = channel;
+    if (!channel) return;
+    channel.onmessage = (event: MessageEvent<ChatTabEvent>) => {
+      const message = event.data;
+      if (!message || message.tabId === tabIdRef.current || message.conversationId !== selectedId) return;
+      if (message.type === "generation_started") setOtherTabGenerating(true);
+      if (message.type === "generation_finished") {
+        setOtherTabGenerating(false);
+        setSyncVersion((current) => current + 1);
+      }
+      if (message.type === "messages_changed" && !isSending) {
+        setSyncVersion((current) => current + 1);
+      }
+    };
+    return () => {
+      channel.close();
+      if (tabChannelRef.current === channel) tabChannelRef.current = null;
+    };
+  }, [isSending, selectedId]);
+
+  useEffect(() => {
+    if (connectivity.state !== "restored") return;
+    setSyncVersion((current) => current + 1);
+  }, [connectivity.state]);
+
+  useEffect(() => {
     messagesRef.current = messages;
   }, [messages]);
 
@@ -310,6 +364,7 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
 
   useEffect(() => {
     let isMounted = true;
+    const controller = new AbortController();
 
     async function loadAccount() {
       const supabase = createBrowserSupabaseClient();
@@ -317,16 +372,41 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
         supabase.auth.getUser(),
         supabase.auth.getSession(),
       ]);
-      if (!userData.user || !isMounted) return;
+      if (!userData.user || !isMounted) {
+        if (isMounted) {
+          setSessionExpired(true);
+          setIsLoadingConversations(false);
+          setIsLoadingHistory(false);
+        }
+        return;
+      }
       setUserId(userData.user.id);
       cleanupOldChatDrafts();
       const token = sessionData.session?.access_token;
       if (token) {
-        const [conversationsResponse, subscriptionResponse, quotaResponse] = await Promise.all([
-          fetch("/api/chat/conversations", { headers: { Authorization: `Bearer ${token}` } }),
-          fetch("/api/subscription", { headers: { Authorization: `Bearer ${token}` } }),
-          fetch("/api/chat/history?context=general", { headers: { Authorization: `Bearer ${token}` } }),
-        ]);
+        const safeRead = (path: string) => retryIdempotent(async (signal) => {
+          const response = await withTimeout(
+            (timeoutSignal) => fetch(path, { headers: { Authorization: `Bearer ${token}` }, signal: timeoutSignal }),
+            chatTimeouts.historyLoadMs,
+            signal,
+          );
+          if (response.status >= 500) throw new Error("Temporary read failure");
+          return response;
+        }, { attempts: 3, signal: controller.signal });
+        let conversationsResponse: Response;
+        let subscriptionResponse: Response;
+        let quotaResponse: Response;
+        try {
+          [conversationsResponse, subscriptionResponse, quotaResponse] = await Promise.all([
+            safeRead("/api/chat/conversations"),
+            safeRead("/api/subscription"),
+            safeRead("/api/chat/history?context=general"),
+          ]);
+        } catch (loadError) {
+          if (isMounted && !controller.signal.aborted) setError(normalizeClientChatError(loadError).userMessage);
+          if (isMounted) setIsLoadingConversations(false);
+          return;
+        }
         const [conversationsPayload, subscriptionPayload, quotaPayload] = await Promise.all([
           conversationsResponse.json() as Promise<ConversationsResponse>,
           subscriptionResponse.json() as Promise<{ data?: { plan: PlanKey } }>,
@@ -350,11 +430,12 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
     }
 
     void loadAccount();
-    return () => { isMounted = false; };
+    return () => { isMounted = false; controller.abort(); };
   }, [bookById, initialConversationId]);
 
   useEffect(() => {
     let isMounted = true;
+    const controller = new AbortController();
 
     async function loadHistory() {
       setIsLoadingHistory(true);
@@ -371,13 +452,42 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
       const supabase = createBrowserSupabaseClient();
       const { data } = await supabase.auth.getSession();
       const token = data.session?.access_token;
-      if (!token) return;
-      const response = await fetch(`/api/chat/history?conversationId=${encodeURIComponent(selectedId)}`, { headers: { Authorization: `Bearer ${token}` } });
+      if (!token) {
+        setSessionExpired(true);
+        setIsLoadingHistory(false);
+        return;
+      }
+      let response: Response;
+      try {
+        response = await retryIdempotent(
+          async (signal) => {
+            const result = await withTimeout(
+              (timeoutSignal) => fetch(`/api/chat/history?conversationId=${encodeURIComponent(selectedId)}`, {
+                headers: { Authorization: `Bearer ${token}` },
+                signal: timeoutSignal,
+              }),
+              chatTimeouts.historyLoadMs,
+              signal,
+            );
+            if (result.status >= 500) throw new Error("History temporarily unavailable");
+            return result;
+          },
+          { attempts: 3, signal: controller.signal },
+        );
+      } catch (loadError) {
+        if (!isMounted || controller.signal.aborted) return;
+        const visibleError = normalizeClientChatError(loadError, "UNKNOWN_ERROR");
+        setMessages([]);
+        setError(visibleError.userMessage);
+        setIsLoadingHistory(false);
+        return;
+      }
       const payload = (await response.json()) as HistoryResponse;
       if (!isMounted) return;
       if (!response.ok || !payload.data) {
         setMessages([]);
-        setError(payload.error?.message ?? "No pudimos cargar esta conversación.");
+        if (response.status === 401) setSessionExpired(true);
+        setError(payload.error?.userMessage ?? payload.error?.message ?? "No pudimos cargar esta conversación.");
       } else {
         setMessages(payload.data.messages.filter((message) => message.role === "user" || message.role === "assistant"));
         setRemainingQuestions(payload.data.remainingQuestions);
@@ -393,8 +503,8 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
     }
 
     void loadHistory();
-    return () => { isMounted = false; };
-  }, [selectedId]);
+    return () => { isMounted = false; controller.abort(); };
+  }, [selectedId, syncVersion]);
 
   useEffect(() => {
     const restored = draftScope ? readChatDraft(draftScope) : "";
@@ -673,6 +783,15 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
       };
       requestState.conversation = persisted;
       streamingConversationIdRef.current = persisted.id;
+      if (activeBroadcastConversationRef.current !== persisted.id) {
+        activeBroadcastConversationRef.current = persisted.id;
+        tabChannelRef.current?.postMessage({
+          type: "generation_started",
+          conversationId: persisted.id,
+          tabId: tabIdRef.current,
+          at: Date.now(),
+        } satisfies ChatTabEvent);
+      }
       setConversations((current) => [
         persisted,
         ...current.filter((item) => item.id !== optimisticConversationId && item.id !== persisted.id),
@@ -693,28 +812,38 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
       const supabase = createBrowserSupabaseClient();
       const { data } = await supabase.auth.getSession();
       const token = data.session?.access_token;
-      if (!token) throw new Error("Tu sesión expiró. Inicia sesión nuevamente.");
+      if (!token) {
+        setSessionExpired(true);
+        throw createChatPublicError("SESSION_EXPIRED");
+      }
 
+      const streamStartTimer = window.setTimeout(
+        () => requestController.abort(new DOMException("Stream start timed out", "TimeoutError")),
+        chatTimeouts.streamStartMs,
+      );
       const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: selected.type,
-          bookId: selected.book?.slug,
-          conversationId: requestConversationId ?? undefined,
-          clientCreationKey: requestConversationId ? undefined : creationKey,
-          clientMessageId,
-          message,
-          stream: true,
-        }),
-        signal: requestController.signal,
-      });
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            "X-Request-Id": crypto.randomUUID(),
+          },
+          body: JSON.stringify({
+            type: selected.type,
+            bookId: selected.book?.slug,
+            conversationId: requestConversationId ?? undefined,
+            clientCreationKey: requestConversationId ? undefined : creationKey,
+            clientMessageId,
+            message,
+            stream: true,
+          }),
+          signal: requestController.signal,
+        }).finally(() => window.clearTimeout(streamStartTimer));
 
       if (!response.ok) {
         const payload = (await response.json()) as ChatResponse;
-        const failure = new Error(payload.error?.message ?? "No pudimos iniciar la conversación.") as Error & { code?: string };
-        failure.code = payload.error?.code;
-        throw failure;
+        if (payload.error && isChatPublicError(payload.error)) throw payload.error;
+        throw createChatPublicError("UNKNOWN_ERROR");
       }
 
       if (!response.headers.get("content-type")?.includes("application/x-ndjson")) {
@@ -756,6 +885,9 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
           upsertConversation(event.conversation);
           persistedUserMessageId = event.userMessage.id;
           setMessages((current) => current.map((item) => item.id === clientMessageId ? event.userMessage : item));
+          if (event.assistantMessage) {
+            setMessages((current) => current.map((item) => item.id === streamMessageId ? event.assistantMessage! : item));
+          }
           setRemainingQuestions(event.remainingQuestions);
           if (isNewConversation) {
             recordChatEvent("conversation_created", {
@@ -810,10 +942,20 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
         if (event.type === "failed") {
           upsertConversation(event.conversation);
           setMessages((current) => current
-            .map((item) => item.id === streamMessageId
-              ? { ...item, status: event.code === "GENERATION_STOPPED" ? "stopped" as const : "failed" as const }
+            .map((item) => item.id === streamMessageId || (item.role === "assistant" && item.parentMessageId === event.userMessage.id)
+              ? event.assistantMessage ?? { ...item, status: event.code === "STREAM_INTERRUPTED" ? "interrupted" as const : "failed" as const }
               : item.id === clientMessageId || item.id === event.userMessage.id ? event.userMessage : item));
-          throw new Error(event.message);
+          const publicError = createChatPublicError(
+            event.code === "TIMEOUT"
+              ? "TIMEOUT"
+              : event.code === "STREAM_INTERRUPTED"
+                ? "STREAM_INTERRUPTED"
+                : event.code === "RESPONSE_SAVE_FAILED"
+                  ? "RESPONSE_SAVE_FAILED"
+                  : "PROVIDER_UNAVAILABLE",
+            { requestId: event.requestId },
+          );
+          throw publicError;
         }
       };
 
@@ -830,9 +972,11 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
       if (buffer.trim()) processEvent(JSON.parse(buffer) as StreamEvent);
       if (!receivedCompletedEvent) throw new Error("Se perdió la conexión.");
     } catch (caughtError) {
-      const stopped = stopRequestedRef.current || (caughtError instanceof DOMException && caughtError.name === "AbortError");
-      const code = caughtError instanceof Error && "code" in caughtError ? String(caughtError.code) : "";
-      const limitReached = code === "MONTHLY_LIMIT_REACHED" || code === "CHAT_NOT_INCLUDED";
+      const stopped = stopRequestedRef.current;
+      const publicError = isChatPublicError(caughtError)
+        ? caughtError
+        : normalizeClientChatError(caughtError, requestState.conversation ? "STREAM_INTERRUPTED" : "MESSAGE_SAVE_FAILED");
+      const limitReached = publicError.code === "PLAN_LIMIT_REACHED";
       const conversationId = requestState.conversation?.id ?? requestConversationId ?? null;
       const kind: SendFailure["kind"] = limitReached
         ? "limit"
@@ -842,20 +986,18 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
             ? "connection"
             : "create";
       const failureMessage = limitReached
-        ? caughtError instanceof Error ? caughtError.message : "Alcanzaste el límite de tu plan."
+        ? publicError.userMessage
         : stopped
           ? "La respuesta se detuvo."
           : kind === "create"
             ? "No pudimos iniciar la conversación."
-            : caughtError instanceof TypeError
-              ? "Se perdió la conexión."
-              : caughtError instanceof Error ? caughtError.message : "CEO no pudo completar la respuesta.";
+            : publicError.userMessage;
 
       setMessages((current) => current
         .map((item) => item.id === streamMessageId && stopped
           ? { ...item, status: "stopped" as const }
           : item.id === streamMessageId
-            ? { ...item, status: "failed" as const }
+            ? { ...item, status: item.content.trim() ? "interrupted" as const : "failed" as const }
           : item.id === clientMessageId || item.id === persistedUserMessageId
             ? { ...item, status: requestState.conversation ? "completed" as const : "failed" as const }
             : item));
@@ -875,6 +1017,7 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
         displayMessageId: persistedUserMessageId,
         conversationId,
         creationKey,
+        error: stopped ? createChatPublicError("STREAM_INTERRUPTED") : publicError,
       };
       setSendFailure(failure);
       if (isNewConversation) {
@@ -894,6 +1037,16 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
       stopRequestedRef.current = false;
       setIsSending(false);
       setStreamHasStarted(false);
+      const broadcastConversationId = activeBroadcastConversationRef.current;
+      if (broadcastConversationId) {
+        tabChannelRef.current?.postMessage({
+          type: "generation_finished",
+          conversationId: broadcastConversationId,
+          tabId: tabIdRef.current,
+          at: Date.now(),
+        } satisfies ChatTabEvent);
+        activeBroadcastConversationRef.current = null;
+      }
     }
   }
 
@@ -927,8 +1080,21 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
   async function authenticatedFetch(path: string, init: RequestInit = {}) {
     const { data } = await createBrowserSupabaseClient().auth.getSession();
     const token = data.session?.access_token;
-    if (!token) throw new Error("Tu sesión expiró. Inicia sesión nuevamente.");
-    return fetch(path, { ...init, headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", ...init.headers } });
+    if (!token) {
+      setSessionExpired(true);
+      throw createChatPublicError("SESSION_EXPIRED");
+    }
+    const response = await fetch(path, {
+      ...init,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "X-Request-Id": crypto.randomUUID(),
+        ...init.headers,
+      },
+    });
+    if (response.status === 401) setSessionExpired(true);
+    return response;
   }
 
   function openEditMessage(message: StoredChatMessage) {
@@ -983,6 +1149,7 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
   async function regenerateResponse(message: StoredChatMessage) {
     if (isSending || regeneratingId) return;
     const previous = message;
+    let regeneratedPartial = "";
     setRegeneratingId(message.id);
     setError(null);
     try {
@@ -994,15 +1161,14 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
-      let generated = "";
       let started = false;
       const processEvent = (line: string) => {
         if (!line.trim()) return;
         const event = JSON.parse(line) as { type: string; delta?: string; assistantMessage?: StoredChatMessage; remainingQuestions?: number | null; message?: string };
         if (event.type === "delta" && event.delta) {
-          generated += event.delta;
+          regeneratedPartial += event.delta;
           started = true;
-          setMessages((current) => current.map((item) => item.id === message.id ? { ...item, content: generated, status: "streaming" } : item));
+          setMessages((current) => current.map((item) => item.id === message.id ? { ...item, content: regeneratedPartial, status: "streaming" } : item));
         }
         if (event.type === "completed" && event.assistantMessage) {
           setMessages((current) => current.map((item) => item.id === message.id ? event.assistantMessage! : item));
@@ -1022,7 +1188,11 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
       processEvent(buffer);
       if (!started) throw new Error("CEO no pudo regenerar esta respuesta.");
     } catch (caughtError) {
-      setMessages((current) => current.map((item) => item.id === previous.id ? previous : item));
+      setMessages((current) => current.map((item) => item.id === previous.id
+        ? regeneratedPartial.trim()
+          ? { ...previous, content: regeneratedPartial, status: "interrupted" }
+          : previous
+        : item));
       setError(caughtError instanceof Error ? caughtError.message : "CEO no pudo regenerar esta respuesta.");
     } finally { setRegeneratingId(null); }
   }
@@ -1122,6 +1292,18 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
               {selected.status === "archived" ? <span className="rounded-full bg-slate-100 px-3 py-2 text-xs font-bold text-slate-600">Archivado</span> : null}
               {remainingQuestions !== null && canUseChat ? <span className="hidden rounded-full bg-violet-50 px-3 py-2 text-xs font-bold text-violet-700 sm:block">{remainingQuestions} preguntas disponibles</span> : null}
             </header>
+            <ChatConnectionStatus onRetry={() => void connectivity.probe()} state={connectivity.state} />
+            {otherTabGenerating ? (
+              <div aria-live="polite" className="border-b border-violet-100 bg-violet-50 px-4 py-2 text-center text-xs font-bold text-violet-800">
+                Esta conversación está activa en otra pestaña.
+              </div>
+            ) : null}
+            {sessionExpired ? (
+              <div aria-live="assertive" className="flex flex-wrap items-center justify-center gap-3 border-b border-amber-200 bg-amber-50 px-4 py-2 text-xs font-bold text-amber-900">
+                <span>Tu sesión ha expirado. Tu borrador está guardado.</span>
+                <Link className="rounded-[8px] bg-violet-700 px-3 py-2 text-white" href={`/login?next=${encodeURIComponent(selectedId ? `/chat/${selectedId}` : "/chat")}`}>Iniciar sesión</Link>
+              </div>
+            ) : null}
 
             <div
               className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-6 sm:px-7"
@@ -1133,8 +1315,18 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
               ref={messagesContainerRef}
             >
               {isLoadingHistory ? <div className="grid h-full place-items-center text-slate-400"><Loader2 className="animate-spin" size={24} /></div> : null}
+              {!isLoadingHistory && error && selectedId && messages.length === 0 ? (
+                <div className="mx-auto grid h-full max-w-md content-center text-center">
+                  <h2 className="text-xl font-black">No pudimos abrir la conversación</h2>
+                  <p className="mt-2 text-sm leading-6 text-slate-500">{error}</p>
+                  <div className="mt-5 flex justify-center gap-3">
+                    <button className="min-h-11 rounded-[11px] bg-violet-700 px-4 text-sm font-black text-white" onClick={() => setSyncVersion((current) => current + 1)} type="button">Reintentar</button>
+                    <button className="min-h-11 rounded-[11px] border border-slate-200 px-4 text-sm font-black text-slate-700" onClick={resetToNewConversation} type="button">Volver al inicio</button>
+                  </div>
+                </div>
+              ) : null}
               {!isLoadingHistory && !canUseChat ? <div className="mx-auto grid h-full max-w-md content-center text-center"><span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-violet-50 text-violet-700"><Sparkles size={25} /></span><h2 className="mt-5 text-2xl font-black">CEO está disponible desde Pro</h2><p className="mt-3 text-sm leading-6 text-slate-500">Desbloquea conversaciones generales y una IA contextual para cada análisis.</p><Link className="mx-auto mt-6 inline-flex min-h-11 items-center rounded-[12px] bg-violet-700 px-5 text-sm font-black text-white" href="/planes">Ver planes</Link></div> : null}
-              {!isLoadingHistory && canUseChat && messages.length === 0 ? (
+              {!isLoadingHistory && !error && canUseChat && messages.length === 0 ? (
                 <div className="mx-auto grid h-full w-full max-w-3xl content-center py-6 text-center">
                   <div className="transition-all duration-200 motion-reduce:transition-none">
                     <Sparkles className="mx-auto text-violet-700" size={34} />

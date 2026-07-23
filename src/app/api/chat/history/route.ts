@@ -3,7 +3,7 @@ import { NextRequest } from "next/server";
 import { plans } from "@/config/plans";
 import { jsonData, jsonError } from "@/lib/api/response";
 import { createBookRepository } from "@/lib/books/repository";
-import { listConversationMessages, listUserConversations } from "@/lib/chat/conversation-service";
+import { listConversationMessages, listUserConversations, recoverAbandonedTurns } from "@/lib/chat/conversation-service";
 import { createChatRepository } from "@/lib/chat/repository";
 import { createServerSupabaseClient, createServiceSupabaseClient } from "@/lib/supabase/server";
 import { getEffectiveSubscriptionForUser } from "@/lib/subscriptions/service";
@@ -62,6 +62,8 @@ export async function GET(request: NextRequest) {
   if (!conversationId) {
     return jsonData({ conversation: null, messages: [], remainingQuestions, usage });
   }
+
+  await recoverAbandonedTurns(authData.user.id, conversationId);
 
   const history = await listConversationMessages(authData.user.id, conversationId, { before, limit: 40 });
   if (!history) {

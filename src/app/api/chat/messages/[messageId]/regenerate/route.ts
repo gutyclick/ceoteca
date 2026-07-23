@@ -1,11 +1,12 @@
 import { NextRequest } from "next/server";
 
 import { plans } from "@/config/plans";
-import { jsonError } from "@/lib/api/response";
+import { jsonChatError, jsonError } from "@/lib/api/response";
 import { createBookRepository } from "@/lib/books/repository";
 import { getUserConversation, listConversationMessages } from "@/lib/chat/conversation-service";
 import { mapStoredMessage, type ChatMessageRow } from "@/lib/chat/model";
 import { createChatRepository } from "@/lib/chat/repository";
+import { createChatPublicError } from "@/lib/chat/errors";
 import { createAIProvider } from "@/lib/openai/provider";
 import { canAccessFeature } from "@/lib/permissions";
 import { checkRateLimit } from "@/lib/rate-limit/memory";
@@ -36,6 +37,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ me
   if (!rateLimit.allowed) return jsonError({ code: "RATE_LIMITED", message: "Espera un momento antes de regenerar otra respuesta." }, 429);
 
   const { messageId } = await context.params;
+  const requestId = request.headers.get("x-request-id") ?? crypto.randomUUID();
   const client = createServiceSupabaseClient();
   const { data: source, error: sourceError } = await client.from("chat_messages").select("id,user_id,conversation_id,role,content,parts,status,created_at,updated_at,parent_message_id,metadata,client_message_id").eq("id", messageId).eq("user_id", authData.user.id).maybeSingle();
   if (sourceError || !source?.conversation_id || source.role !== "assistant" || !source.parent_message_id) return jsonError({ code: "MESSAGE_NOT_FOUND", message: "No encontramos esta respuesta." }, 404);
@@ -53,7 +55,16 @@ export async function POST(request: NextRequest, context: { params: Promise<{ me
   const encoder = new TextEncoder();
   const providerAbort = new AbortController();
   const regenerationKey = `${authData.user.id}:${source.id}`;
-  if (activeRegenerations.has(regenerationKey)) return jsonError({ code: "REGENERATION_IN_PROGRESS", message: "Esta respuesta ya se está regenerando." }, 409);
+  if (activeRegenerations.has(regenerationKey)) return jsonChatError(createChatPublicError("CONFLICT", { requestId }), 409);
+  const { data: claimed } = await client
+    .from("chat_messages")
+    .update({ status: "streaming", metadata: { regenerationStartedAt: new Date().toISOString() } })
+    .eq("id", source.id)
+    .eq("user_id", authData.user.id)
+    .neq("status", "streaming")
+    .select("id")
+    .maybeSingle();
+  if (!claimed) return jsonChatError(createChatPublicError("CONFLICT", { requestId }), 409);
   activeRegenerations.add(regenerationKey);
   request.signal.addEventListener("abort", () => providerAbort.abort(), { once: true });
 
@@ -61,11 +72,19 @@ export async function POST(request: NextRequest, context: { params: Promise<{ me
     async start(controller) {
       const send = (event: Record<string, unknown>) => controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
       let content = "";
+      let lastSync = 0;
       try {
         const response = conversation.type === "book"
           ? provider.streamBookQuestion({ book, message: parent.content, conversation: trustedConversation }, providerAbort.signal)
           : provider.streamSiteQuestion({ books, message: parent.content, conversation: trustedConversation }, providerAbort.signal);
-        for await (const delta of response) { content += delta; send({ type: "delta", delta }); }
+        for await (const delta of response) {
+          content += delta;
+          send({ type: "delta", delta });
+          if (content.length - lastSync >= 240) {
+            await client.from("chat_messages").update({ content, status: "streaming", metadata: { regenerationStartedAt: new Date().toISOString() } }).eq("id", source.id).eq("user_id", authData.user.id);
+            lastSync = content.length;
+          }
+        }
         if (!content.trim()) throw new Error("Empty regeneration");
 
         const { count } = await client.from("chat_message_versions").select("id", { count: "exact", head: true }).eq("message_id", source.id);
@@ -75,7 +94,9 @@ export async function POST(request: NextRequest, context: { params: Promise<{ me
         await repository.incrementUsage(authData.user.id, book.id, conversation.type === "book" ? "book" : "site");
         send({ type: "completed", assistantMessage: mapStoredMessage(updated as ChatMessageRow), remainingQuestions: plan.chatMonthlyLimit === null ? null : Math.max(plan.chatMonthlyLimit - currentUsage - 1, 0) });
       } catch {
-        send({ type: "failed", message: providerAbort.signal.aborted ? "La regeneración se detuvo." : "CEO no pudo regenerar esta respuesta." });
+        await client.from("chat_messages").update({ content: content.trim() || source.content, status: content.trim() ? "interrupted" : source.status, metadata: { regenerationInterruptedAt: new Date().toISOString() } }).eq("id", source.id).eq("user_id", authData.user.id);
+        const visible = createChatPublicError(content.trim() ? "STREAM_INTERRUPTED" : "PROVIDER_UNAVAILABLE", { requestId });
+        send({ type: "failed", ...visible, message: visible.userMessage });
       } finally {
         activeRegenerations.delete(regenerationKey);
         controller.close();
@@ -87,5 +108,5 @@ export async function POST(request: NextRequest, context: { params: Promise<{ me
     },
   });
 
-  return new Response(stream, { headers: { "Cache-Control": "no-cache, no-transform", "Content-Type": "application/x-ndjson; charset=utf-8", "X-Accel-Buffering": "no" } });
+  return new Response(stream, { headers: { "Cache-Control": "no-cache, no-transform", "Content-Type": "application/x-ndjson; charset=utf-8", "X-Accel-Buffering": "no", "X-Request-Id": requestId } });
 }

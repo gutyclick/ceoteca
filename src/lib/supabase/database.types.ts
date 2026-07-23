@@ -182,7 +182,7 @@ export type Database = {
           role: "user" | "assistant" | "system" | "tool";
           content: string;
           parts: Json | null;
-          status: "pending" | "streaming" | "completed" | "stopped" | "failed";
+          status: "pending" | "streaming" | "completed" | "stopped" | "interrupted" | "failed";
           created_at: string;
           updated_at: string;
           parent_message_id: string | null;
@@ -197,7 +197,7 @@ export type Database = {
           role: "user" | "assistant" | "system" | "tool";
           content: string;
           parts?: Json | null;
-          status?: "pending" | "streaming" | "completed" | "stopped" | "failed";
+          status?: "pending" | "streaming" | "completed" | "stopped" | "interrupted" | "failed";
           updated_at?: string;
           parent_message_id?: string | null;
           metadata?: Json;
@@ -206,7 +206,7 @@ export type Database = {
         Update: {
           content?: string;
           parts?: Json | null;
-          status?: "pending" | "streaming" | "completed" | "stopped" | "failed";
+          status?: "pending" | "streaming" | "completed" | "stopped" | "interrupted" | "failed";
           updated_at?: string;
           parent_message_id?: string | null;
           metadata?: Json;

@@ -69,4 +69,15 @@ describe("ChatMessageItem", () => {
     fireEvent.click(screen.getByRole("button", { name: "Reintentar" }));
     expect(actions.onRegenerate).toHaveBeenCalledWith(failedMessage);
   });
+
+  it("conserva el contenido parcial cuando el streaming se interrumpe", () => {
+    const actions = handlers();
+    const interrupted = message({ content: "Respuesta parcial conservada", status: "interrupted" });
+    render(<ChatMessageItem {...actions} message={interrupted} />);
+
+    expect(screen.getByText("Respuesta parcial conservada")).toBeInTheDocument();
+    expect(screen.getByText("La respuesta se interrumpió.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Volver a generar" }));
+    expect(actions.onRegenerate).toHaveBeenCalledWith(interrupted);
+  });
 });

@@ -35,6 +35,7 @@ function ChatMessageItemComponent({ message, rating = null, isGenerating = false
   const isStreaming = message.status === "streaming";
   const isPending = message.status === "pending";
   const isStopped = message.status === "stopped";
+  const isInterrupted = message.status === "interrupted";
   const isFailed = message.status === "failed";
 
   async function copyMessage() {
@@ -82,15 +83,16 @@ function ChatMessageItemComponent({ message, rating = null, isGenerating = false
     <article aria-label="Respuesta de CEO" className="group grid w-full grid-cols-[36px_minmax(0,1fr)] gap-3" tabIndex={0}>
       <span className="grid h-9 w-9 place-items-center rounded-[11px] bg-violet-50 text-violet-700"><Sparkles size={18} /></span>
       <div className="min-w-0">
-        <div className={cn("min-w-0", isFailed && "rounded-[14px] border border-rose-200 bg-rose-50 p-4")}>
+        <div className={cn("min-w-0", isFailed && "rounded-[14px] border border-rose-200 bg-rose-50 p-4", isInterrupted && "rounded-[14px] border border-amber-200 bg-amber-50 p-4")}>
           {isPending ? <div className="flex items-center gap-2 text-sm text-slate-500"><span className="h-2 w-2 animate-pulse rounded-full bg-violet-500 motion-reduce:animate-none" />{message.content || "Analizando tu solicitud…"}</div> : null}
           {!isPending && message.content ? <SafeMarkdown content={message.content} /> : null}
           {isStreaming ? <span aria-hidden="true" className="ml-1 inline-block h-4 w-0.5 animate-pulse bg-violet-600 motion-reduce:animate-none" /> : null}
           {isStopped ? <p className="mt-3 text-xs font-bold text-amber-700">Respuesta detenida</p> : null}
+          {isInterrupted ? <><p className="mt-3 text-sm font-bold text-amber-900">La respuesta se interrumpió.</p><button className="mt-3 min-h-11 rounded-[10px] bg-amber-700 px-3 text-xs font-black text-white" disabled={isGenerating} onClick={() => onRegenerate(message)} type="button">Volver a generar</button></> : null}
           {isFailed ? <><p className="text-sm font-bold text-rose-800">CEO no pudo completar esta respuesta.</p><div className="mt-3 flex flex-wrap gap-2"><button className="min-h-11 rounded-[10px] bg-rose-700 px-3 text-xs font-black text-white" onClick={() => onRegenerate(message)} type="button">Reintentar</button><button className="min-h-11 rounded-[10px] border border-rose-200 bg-white px-3 text-xs font-black text-rose-800" onClick={() => onEditPrevious(message)} type="button">Editar mensaje anterior</button></div></> : null}
         </div>
 
-        {!isPending && !isStreaming && !isFailed ? (
+        {!isPending && !isStreaming && !isFailed && !isInterrupted ? (
           <div className="mt-2 flex min-h-11 flex-wrap items-center gap-1 opacity-100 transition-opacity sm:opacity-0 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100">
             <span className="mr-1 text-[11px] text-slate-400">{formatMessageTime(message.createdAt)}</span>
             <button aria-label="Copiar respuesta" className="hidden h-11 w-11 place-items-center rounded-[10px] text-slate-500 hover:bg-slate-100 sm:grid" onClick={() => void copyMessage()} type="button">{copied ? <Check size={16} /> : <Copy size={16} />}</button>

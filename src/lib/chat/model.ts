@@ -3,7 +3,7 @@ import type { Json } from "@/lib/supabase/database.types";
 export const conversationTypes = ["general", "book"] as const;
 export const conversationStatuses = ["active", "archived"] as const;
 export const messageRoles = ["user", "assistant", "system", "tool"] as const;
-export const messageStatuses = ["pending", "streaming", "completed", "stopped", "failed"] as const;
+export const messageStatuses = ["pending", "streaming", "completed", "stopped", "interrupted", "failed"] as const;
 
 export type ConversationType = (typeof conversationTypes)[number];
 export type ConversationStatus = (typeof conversationStatuses)[number];

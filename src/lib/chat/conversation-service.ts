@@ -8,6 +8,7 @@ import {
   type ConversationType,
   type StoredChatMessage,
 } from "@/lib/chat/model";
+import { ChatOperationError } from "@/lib/chat/errors";
 import { createServiceSupabaseClient } from "@/lib/supabase/server";
 
 const conversationFields =
@@ -134,6 +135,51 @@ type ClaimMessageInput = {
   content: string;
 };
 
+async function ensureAssistantPlaceholder(input: {
+  userId: string;
+  conversation: ChatConversation;
+  userMessageId: string;
+}) {
+  const client = createServiceSupabaseClient();
+  const { data: existing, error: existingError } = await client
+    .from("chat_messages")
+    .select(messageFields)
+    .eq("parent_message_id", input.userMessageId)
+    .eq("role", "assistant")
+    .maybeSingle();
+  if (existingError) throw new Error(existingError.message);
+  if (existing) return mapStoredMessage(existing as ChatMessageRow);
+
+  const { data, error } = await client
+    .from("chat_messages")
+    .insert({
+      user_id: input.userId,
+      book_id: input.conversation.bookId,
+      context: input.conversation.type === "book" ? "book" : "site",
+      conversation_id: input.conversation.id,
+      role: "assistant",
+      content: "",
+      status: "pending",
+      parent_message_id: input.userMessageId,
+      metadata: { generationStartedAt: new Date().toISOString() },
+    })
+    .select(messageFields)
+    .single();
+  if (!error && data) return mapStoredMessage(data as ChatMessageRow);
+
+  const { data: duplicate, error: duplicateError } = await client
+    .from("chat_messages")
+    .select(messageFields)
+    .eq("parent_message_id", input.userMessageId)
+    .eq("role", "assistant")
+    .maybeSingle();
+  if (duplicateError || !duplicate) {
+    if (error?.code === "23505") throw new ChatOperationError("CONFLICT", { cause: error });
+    throw new Error(error?.message ?? duplicateError?.message ?? "Assistant placeholder creation failed");
+  }
+  return mapStoredMessage(duplicate as ChatMessageRow);
+}
+
 export async function claimUserMessage(input: ClaimMessageInput) {
   const client = createServiceSupabaseClient();
   const { data: existing, error: existingError } = await client
@@ -154,10 +200,24 @@ export async function claimUserMessage(input: ClaimMessageInput) {
         .eq("id", existingMessage.id)
         .eq("user_id", input.userId);
       if (retryError) throw new Error(retryError.message);
+      let assistantMessage: StoredChatMessage | null;
+      try {
+        assistantMessage = await ensureAssistantPlaceholder({
+          userId: input.userId,
+          conversation: input.conversation,
+          userMessageId: existingMessage.id,
+        });
+      } catch (error) {
+        await client.from("chat_messages").update({ status: "failed", metadata: { failureCategory: "generation_conflict" } }).eq("id", existingMessage.id).eq("user_id", input.userId);
+        throw error;
+      }
+      if (assistantMessage) {
+        await client.from("chat_messages").update({ content: "", status: "pending", metadata: { generationStartedAt: new Date().toISOString() } }).eq("id", assistantMessage.id).eq("user_id", input.userId);
+      }
       return {
         created: true as const,
         userMessage: { ...existingMessage, content: input.content, status: "pending" as const, metadata: {} },
-        assistantMessage: null,
+        assistantMessage,
       };
     }
     const { data: assistant, error: assistantError } = await client
@@ -208,7 +268,19 @@ export async function claimUserMessage(input: ClaimMessageInput) {
   }
   const userMessage = mapStoredMessage(data as ChatMessageRow);
   if (!userMessage) throw new Error("Invalid created message");
-  return { created: true as const, userMessage, assistantMessage: null };
+  let assistantMessage: StoredChatMessage | null;
+  try {
+    assistantMessage = await ensureAssistantPlaceholder({
+      userId: input.userId,
+      conversation: input.conversation,
+      userMessageId: userMessage.id,
+    });
+  } catch (error) {
+    await client.from("chat_messages").update({ status: "failed", metadata: { failureCategory: "generation_conflict" } }).eq("id", userMessage.id).eq("user_id", input.userId);
+    throw error;
+  }
+  if (!assistantMessage) throw new Error("Invalid assistant placeholder");
+  return { created: true as const, userMessage, assistantMessage };
 }
 
 export async function generateAndPersistConversationTitle(input: {
@@ -262,20 +334,17 @@ export async function completeMessageTurn(input: {
     throw new Error(userUpdateError?.message ?? "Message is no longer active");
   }
 
-  const [assistantInsert, conversationUpdate] = await Promise.all([
+  const [assistantUpdate, conversationUpdate] = await Promise.all([
     client
       .from("chat_messages")
-      .insert({
-        user_id: input.userId,
-        book_id: input.conversation.bookId,
-        context: input.conversation.type === "book" ? "book" : "site",
-        conversation_id: input.conversation.id,
-        role: "assistant",
+      .update({
         content: input.assistantContent,
         status: "completed",
-        parent_message_id: input.userMessageId,
-        metadata: {},
+        metadata: { generationCompletedAt: now },
       })
+      .eq("parent_message_id", input.userMessageId)
+      .eq("user_id", input.userId)
+      .eq("role", "assistant")
       .select(messageFields)
       .single(),
     client
@@ -289,17 +358,97 @@ export async function completeMessageTurn(input: {
       .eq("user_id", input.userId),
   ]);
 
-  if (assistantInsert.error || conversationUpdate.error) {
+  if (assistantUpdate.error || conversationUpdate.error) {
     throw new Error(
-      assistantInsert.error?.message ??
+      assistantUpdate.error?.message ??
         conversationUpdate.error?.message ??
         "Message completion failed",
     );
   }
 
-  const assistantMessage = mapStoredMessage(assistantInsert.data as ChatMessageRow);
+  const assistantMessage = mapStoredMessage(assistantUpdate.data as ChatMessageRow);
   if (!assistantMessage) throw new Error("Invalid assistant message");
   return { assistantMessage, title, lastMessageAt: now };
+}
+
+export async function persistPartialAssistant(input: {
+  userId: string;
+  userMessageId: string;
+  content: string;
+}) {
+  const client = createServiceSupabaseClient();
+  const { data, error } = await client
+    .from("chat_messages")
+    .update({
+      content: input.content,
+      status: "streaming",
+      metadata: { lastPartialSyncAt: new Date().toISOString() },
+    })
+    .eq("parent_message_id", input.userMessageId)
+    .eq("user_id", input.userId)
+    .eq("role", "assistant")
+    .in("status", ["pending", "streaming"])
+    .select(messageFields)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data ? mapStoredMessage(data as ChatMessageRow) : null;
+}
+
+export async function interruptMessageTurn(input: {
+  userId: string;
+  userMessageId: string;
+  partialContent: string;
+  reason: "network" | "timeout" | "provider" | "persistence";
+}) {
+  const client = createServiceSupabaseClient();
+  const now = new Date().toISOString();
+  await client
+    .from("chat_messages")
+    .update({ status: "completed" })
+    .eq("id", input.userMessageId)
+    .eq("user_id", input.userId)
+    .in("status", ["pending", "streaming"]);
+  const { data, error } = await client
+    .from("chat_messages")
+    .update({
+      content: input.partialContent,
+      status: input.partialContent.trim() ? "interrupted" : "failed",
+      metadata: { interruptedAt: now, interruptionReason: input.reason },
+    })
+    .eq("parent_message_id", input.userMessageId)
+    .eq("user_id", input.userId)
+    .eq("role", "assistant")
+    .select(messageFields)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data ? mapStoredMessage(data as ChatMessageRow) : null;
+}
+
+export async function recoverAbandonedTurns(userId: string, conversationId: string) {
+  const client = createServiceSupabaseClient();
+  const staleBefore = new Date(Date.now() - 45_000).toISOString();
+  const { data: stale, error } = await client
+    .from("chat_messages")
+    .select("id,parent_message_id,content,status")
+    .eq("user_id", userId)
+    .eq("conversation_id", conversationId)
+    .eq("role", "assistant")
+    .in("status", ["pending", "streaming"])
+    .lt("updated_at", staleBefore);
+  if (error) throw new Error(error.message);
+  for (const message of stale ?? []) {
+    await client
+      .from("chat_messages")
+      .update({
+        status: message.content?.trim() ? "interrupted" : "failed",
+        metadata: { recoveredAt: new Date().toISOString(), interruptionReason: "abandoned" },
+      })
+      .eq("id", message.id)
+      .eq("user_id", userId);
+    if (message.parent_message_id) {
+      await client.from("chat_messages").update({ status: "completed" }).eq("id", message.parent_message_id).eq("user_id", userId);
+    }
+  }
 }
 
 export async function cancelMessageTurn(input: {
@@ -310,14 +459,13 @@ export async function cancelMessageTurn(input: {
   const client = createServiceSupabaseClient();
   const { data: userMessage, error } = await client
     .from("chat_messages")
-    .update({ status: input.partialContent.trim() ? "completed" : "failed", metadata: { stopped: true } })
+    .update({ status: "completed", metadata: { stopped: true } })
     .eq("user_id", input.userId)
     .eq("client_message_id", input.clientMessageId)
-    .in("status", ["pending", "streaming"])
     .select(messageFields)
     .maybeSingle();
   if (error) throw new Error(error.message);
-  if (!userMessage || !input.partialContent.trim()) return { cancelled: Boolean(userMessage), assistantMessage: null };
+  if (!userMessage) return { cancelled: false, assistantMessage: null };
 
   const mappedUser = mapStoredMessage(userMessage as ChatMessageRow);
   if (!mappedUser) return { cancelled: false, assistantMessage: null };
@@ -325,17 +473,14 @@ export async function cancelMessageTurn(input: {
   if (!conversation) return { cancelled: false, assistantMessage: null };
   const { data: assistant, error: assistantError } = await client
     .from("chat_messages")
-    .insert({
-      user_id: input.userId,
-      book_id: conversation.bookId,
-      context: conversation.type === "book" ? "book" : "site",
-      conversation_id: mappedUser.conversationId,
-      role: "assistant",
+    .update({
       content: input.partialContent.trim(),
       status: "stopped",
-      parent_message_id: mappedUser.id,
       metadata: { stoppedAt: new Date().toISOString() },
     })
+    .eq("parent_message_id", mappedUser.id)
+    .eq("user_id", input.userId)
+    .eq("role", "assistant")
     .select(messageFields)
     .single();
   if (assistantError) throw new Error(assistantError.message);
@@ -346,8 +491,15 @@ export async function failMessageTurn(userId: string, messageId: string, reason:
   const client = createServiceSupabaseClient();
   await client
     .from("chat_messages")
-    .update({ status: "failed", metadata: { failureReason: reason.slice(0, 300) } })
+    .update({ status: "completed" })
     .eq("id", messageId)
     .eq("user_id", userId)
+    .in("status", ["pending", "streaming"]);
+  await client
+    .from("chat_messages")
+    .update({ status: "failed", metadata: { failureCategory: reason.slice(0, 80) } })
+    .eq("parent_message_id", messageId)
+    .eq("user_id", userId)
+    .eq("role", "assistant")
     .in("status", ["pending", "streaming"]);
 }

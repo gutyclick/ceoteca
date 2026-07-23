@@ -156,7 +156,7 @@ role text not null check (role in ('user', 'assistant', 'system', 'tool'))
 content text not null
 parts jsonb
 status text not null default 'completed'
-  check (status in ('pending', 'streaming', 'completed', 'failed'))
+  check (status in ('pending', 'streaming', 'completed', 'stopped', 'interrupted', 'failed'))
 parent_message_id uuid references chat_messages(id) on delete set null
 metadata jsonb not null default '{}'::jsonb
 client_message_id uuid
@@ -167,6 +167,12 @@ updated_at timestamptz not null default now()
 La combinación `(user_id, client_message_id)` es única cuando existe el ID de
 cliente. Esto evita persistir dos veces un mensaje enviado por reintentos o doble
 clic. Todas las lecturas y mutaciones deben validar `user_id` en el servidor.
+
+Cada turno admite una sola respuesta de asistente vinculada mediante
+`parent_message_id`, y cada conversación admite una sola respuesta activa en
+estado `pending` o `streaming`. El contenido parcial se conserva como
+`interrupted`; `stopped` se reserva para una detención voluntaria. Al cargar el
+historial, las generaciones abandonadas se recuperan sin crear mensajes nuevos.
 
 ### `subscriptions`
 

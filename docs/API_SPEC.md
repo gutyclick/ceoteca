@@ -32,6 +32,25 @@ Respuesta de error:
 
 Nunca incluir detalles sensibles.
 
+Las rutas de chat amplían este contrato con un error público uniforme:
+
+```json
+{
+  "error": {
+    "code": "STREAM_INTERRUPTED",
+    "message": "La respuesta se interrumpió.",
+    "userMessage": "La respuesta se interrumpió.",
+    "retryable": true,
+    "action": "retry",
+    "requestId": "uuid"
+  }
+}
+```
+
+`requestId` también se devuelve en `X-Request-Id`. Los detalles internos del
+proveedor, prompts, contenido de mensajes, credenciales y trazas nunca forman
+parte de la respuesta pública.
+
 ## 2. `POST /api/chat`
 
 ### Objetivo
@@ -130,7 +149,13 @@ Con `stream=true`, la respuesta usa `application/x-ndjson`. Los eventos
 posibles son `conversation`, `delta`, `title`, `completed` y `failed`.
 `conversation` confirma la creación persistida y permite navegar de inmediato
 a la URL estable. `delta` transporta texto incremental y `completed` contiene
-los mensajes finales persistidos.
+los mensajes finales persistidos. `failed` incluye el error público y la última
+versión persistida de la respuesta. El servidor guarda texto parcial durante la
+generación y solo marca `completed` después de confirmar el cierre y guardado.
+
+La creación del mensaje y la respuesta se reclama mediante
+`clientMessageId`. Repetir la misma solicitud no crea otro turno ni consume dos
+veces la cuota. Solo puede existir una generación activa por conversación.
 
 ### Cancelación
 
@@ -155,17 +180,34 @@ consume la pregunta mensual.
 `GET /api/chat/history` acepta `conversationId` y un cursor opcional `before`.
 Devuelve hasta 40 mensajes, `hasMore` y las valoraciones del usuario para los
 mensajes visibles. Los mensajes pueden estar en estado `pending`, `streaming`,
-`completed`, `stopped` o `failed`.
+`completed`, `stopped`, `interrupted` o `failed`. Antes de devolver el historial,
+las generaciones abandonadas se reconcilian como `interrupted` si contienen
+texto parcial o `failed` si todavía están vacías.
+
+Las cargas de historial pueden reintentarse con backoff porque son lecturas
+idempotentes. Crear mensajes, regenerar, consumir cuota y eliminar nunca se
+reintentan automáticamente.
 
 ### Errores
 
-- `UNAUTHORIZED`
-- `BOOK_NOT_FOUND`
-- `CHAT_NOT_INCLUDED`
-- `MONTHLY_LIMIT_REACHED`
-- `RATE_LIMITED`
 - `INVALID_INPUT`
-- `AI_PROVIDER_ERROR`
+- `UNAUTHORIZED`
+- `SESSION_EXPIRED`
+- `CONVERSATION_NOT_FOUND`
+- `CONVERSATION_FORBIDDEN`
+- `CONVERSATION_ARCHIVED`
+- `PLAN_LIMIT_REACHED`
+- `NETWORK_ERROR`
+- `TIMEOUT`
+- `PROVIDER_UNAVAILABLE`
+- `MESSAGE_SAVE_FAILED`
+- `RESPONSE_SAVE_FAILED`
+- `STREAM_INTERRUPTED`
+- `CONFLICT`
+- `UNKNOWN_ERROR`
+
+Los timeouts de creación, guardado, inicio de streaming, inactividad y título
+están separados. Un fallo al generar el título no interrumpe la conversación.
 
 ## 3. `GET /api/books`
 

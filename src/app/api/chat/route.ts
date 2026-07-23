@@ -3,7 +3,7 @@ import { ZodError } from "zod";
 import { z } from "zod";
 
 import { plans } from "@/config/plans";
-import { jsonData, jsonError } from "@/lib/api/response";
+import { jsonChatError, jsonData, jsonError } from "@/lib/api/response";
 import { demoUser } from "@/lib/auth/demo";
 import { createBookRepository } from "@/lib/books/repository";
 import {
@@ -13,13 +13,17 @@ import {
   ensureConversation,
   failMessageTurn,
   generateAndPersistConversationTitle,
+  interruptMessageTurn,
   listConversationMessages,
+  persistPartialAssistant,
 } from "@/lib/chat/conversation-service";
+import { ChatOperationError, createChatPublicError, logChatError, type ChatErrorCode } from "@/lib/chat/errors";
 import { moderateChatMessage } from "@/lib/chat/moderation";
 import { createChatRepository } from "@/lib/chat/repository";
 import type { ConversationType } from "@/lib/chat/model";
 import { clientEnv } from "@/lib/env";
 import { createAIProvider } from "@/lib/openai/provider";
+import { chatTimeouts, withTimeout } from "@/lib/chat/retry";
 import { canAccessFeature } from "@/lib/permissions";
 import { checkRateLimit } from "@/lib/rate-limit/memory";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -77,24 +81,38 @@ async function getAuthenticatedUser(
 }
 
 export async function POST(request: NextRequest) {
+  const requestId = request.headers.get("x-request-id") ?? crypto.randomUUID();
+  const requestStartedAt = Date.now();
+  const demoFailure = clientEnv.NEXT_PUBLIC_DEMO_MODE
+    ? request.headers.get("x-demo-chat-error")
+    : null;
+  if (demoFailure === "session_expired") {
+    return jsonChatError(createChatPublicError("SESSION_EXPIRED", { requestId }), 401);
+  }
+  if (demoFailure === "limit") {
+    return jsonChatError(createChatPublicError("PLAN_LIMIT_REACHED", { requestId }), 429);
+  }
+  if (demoFailure === "timeout") {
+    return jsonChatError(createChatPublicError("TIMEOUT", { requestId }), 504);
+  }
+  if (demoFailure === "provider") {
+    return jsonChatError(createChatPublicError("PROVIDER_UNAVAILABLE", { requestId }), 503);
+  }
   const session = await getAuthenticatedUser(request);
   if (!session) {
-    return jsonError({ code: "UNAUTHORIZED", message: "Inicia sesión para usar el chat." }, 401);
+    return jsonChatError(createChatPublicError("SESSION_EXPIRED", { requestId }), 401);
   }
 
   const rateLimit = checkRateLimit(`chat:${session.user.id}`, 20, 60_000);
   if (!rateLimit.allowed) {
-    return jsonError(
-      { code: "RATE_LIMITED", message: "Demasiadas preguntas seguidas. Inténtalo de nuevo en un momento." },
-      429,
-    );
+    return jsonChatError(createChatPublicError("PLAN_LIMIT_REACHED", { requestId }), 429);
   }
 
   let payload: unknown;
   try {
     payload = await request.json();
   } catch {
-    return jsonError({ code: "INVALID_INPUT", message: "El cuerpo de la solicitud no es JSON válido." }, 400);
+    return jsonChatError(createChatPublicError("INVALID_INPUT", { requestId }), 400);
   }
 
   const parsed = chatRequestSchema.safeParse(payload);
@@ -102,8 +120,8 @@ export async function POST(request: NextRequest) {
     const fieldErrors = getFieldErrors(parsed.error);
     return jsonError(
       {
-        code: "INVALID_INPUT",
-        message: Object.values(fieldErrors).flat()[0] ?? "Revisa los campos enviados.",
+        ...createChatPublicError("INVALID_INPUT", { requestId }),
+        message: createChatPublicError("INVALID_INPUT").userMessage,
         fieldErrors,
       },
       400,
@@ -134,14 +152,14 @@ export async function POST(request: NextRequest) {
   }
 
   if (!canAccessFeature(session.user.plan, "chat")) {
-    return jsonError({ code: "CHAT_NOT_INCLUDED", message: "Tu plan actual no incluye Chat con CEO." }, 403);
+    return jsonChatError(createChatPublicError("PLAN_LIMIT_REACHED", { requestId }), 403);
   }
 
   const plan = plans[session.user.plan];
   const chatRepository = createChatRepository(session.accessToken);
   const monthlyQuestionCount = await chatRepository.getMonthlyUsage(session.user.id);
   if (plan.chatMonthlyLimit !== null && monthlyQuestionCount >= plan.chatMonthlyLimit) {
-    return jsonError({ code: "MONTHLY_LIMIT_REACHED", message: "Alcanzaste el límite mensual de preguntas." }, 403);
+    return jsonChatError(createChatPublicError("PLAN_LIMIT_REACHED", { requestId }), 429);
   }
 
   const moderation = moderateChatMessage(parsed.data.message, legacyContext);
@@ -169,13 +187,10 @@ export async function POST(request: NextRequest) {
       bookTitle: type === "book" ? book.title : undefined,
     });
     if (!conversation) {
-      return jsonError(
-        { code: "CONVERSATION_NOT_FOUND", message: "No encontramos esta conversación o no tienes acceso." },
-        404,
-      );
+      return jsonChatError(createChatPublicError("CONVERSATION_NOT_FOUND", { requestId }), 404);
     }
     if (conversation.status === "archived") {
-      return jsonError({ code: "CONVERSATION_ARCHIVED", message: "Restaura esta conversación para continuar." }, 409);
+      return jsonChatError(createChatPublicError("CONVERSATION_ARCHIVED", { requestId }), 409);
     }
 
     const claim = await claimUserMessage({
@@ -201,7 +216,7 @@ export async function POST(request: NextRequest) {
         });
       }
       return jsonError(
-        { code: "MESSAGE_IN_PROGRESS", message: "Este mensaje ya se está procesando." },
+        { ...createChatPublicError("CONFLICT", { requestId }), message: createChatPublicError("CONFLICT").userMessage },
         409,
       );
     }
@@ -218,16 +233,19 @@ export async function POST(request: NextRequest) {
       .map((message) => ({ role: message.role as "user" | "assistant", content: message.content }));
 
     const provider = createAIProvider();
-    const titlePromise = generateAndPersistConversationTitle({
-      userId: session.user.id,
-      conversation,
-      message: parsed.data.message,
-    }).catch(() => conversation.title);
+    const titlePromise = withTimeout(
+      () => generateAndPersistConversationTitle({
+        userId: session.user.id,
+        conversation,
+        message: parsed.data.message,
+      }),
+      chatTimeouts.titleGenerationMs,
+    ).catch(() => conversation.title);
 
     if (parsed.data.stream) {
       const encoder = new TextEncoder();
       const providerAbort = new AbortController();
-      request.signal.addEventListener("abort", () => providerAbort.abort(), { once: true });
+      request.signal.addEventListener("abort", () => providerAbort.abort(new DOMException("Client disconnected", "AbortError")), { once: true });
       let streamClosed = false;
 
       const responseStream = new ReadableStream<Uint8Array>({
@@ -245,6 +263,8 @@ export async function POST(request: NextRequest) {
             type: "conversation",
             conversation,
             userMessage: claim.userMessage,
+            assistantMessage: claim.assistantMessage,
+            requestId,
             remainingQuestions:
               plan.chatMonthlyLimit === null
                 ? null
@@ -252,7 +272,33 @@ export async function POST(request: NextRequest) {
             usage: { questionCount: monthlyQuestionCount, limit: plan.chatMonthlyLimit },
           });
 
+          if (demoFailure === "interrupted") {
+            const partial = "Estoy preparando una respuesta de prueba";
+            await persistPartialAssistant({ userId: session.user.id, userMessageId: claim.userMessage.id, content: partial });
+            const assistantMessage = await interruptMessageTurn({ userId: session.user.id, userMessageId: claim.userMessage.id, partialContent: partial, reason: "network" });
+            enqueue({ type: "delta", delta: partial });
+            const visible = createChatPublicError("STREAM_INTERRUPTED", { requestId });
+            enqueue({ type: "failed", ...visible, message: visible.userMessage, conversation, userMessage: { ...claim.userMessage, status: "completed" }, assistantMessage });
+            streamClosed = true;
+            controller.close();
+            return;
+          }
+
           let assistantContent = "";
+          let providerFinished = false;
+          let partialSyncedLength = 0;
+          let lastPartialSyncAt = Date.now();
+          let streamTimer = setTimeout(
+            () => providerAbort.abort(new DOMException("Stream start timed out", "TimeoutError")),
+            chatTimeouts.streamStartMs,
+          );
+          const resetStreamTimer = () => {
+            clearTimeout(streamTimer);
+            streamTimer = setTimeout(
+              () => providerAbort.abort(new DOMException("Stream became idle", "TimeoutError")),
+              chatTimeouts.streamIdleMs,
+            );
+          };
           try {
             const providerStream = type === "general"
               ? provider.streamSiteQuestion(
@@ -267,11 +313,25 @@ export async function POST(request: NextRequest) {
             for await (const delta of providerStream) {
               if (providerAbort.signal.aborted) throw new DOMException("Aborted", "AbortError");
               if (!delta) continue;
+              resetStreamTimer();
               assistantContent += delta;
               enqueue({ type: "delta", delta });
+              if (
+                assistantContent.length - partialSyncedLength >= 240
+                || Date.now() - lastPartialSyncAt >= 1_000
+              ) {
+                await persistPartialAssistant({
+                  userId: session.user.id,
+                  userMessageId: claim.userMessage.id,
+                  content: assistantContent,
+                });
+                partialSyncedLength = assistantContent.length;
+                lastPartialSyncAt = Date.now();
+              }
             }
 
             if (!assistantContent.trim()) throw new Error("The provider returned an empty response");
+            providerFinished = true;
             const title = await titlePromise;
             await chatRepository.incrementUsage(session.user.id, book.id, legacyContext);
             const completed = await completeMessageTurn({
@@ -295,20 +355,43 @@ export async function POST(request: NextRequest) {
               usage: { questionCount: nextCount, limit: plan.chatMonthlyLimit },
             });
           } catch (streamError) {
-            const aborted = providerAbort.signal.aborted;
-            await failMessageTurn(
-              session.user.id,
-              claim.userMessage.id,
-              aborted ? "Generation stopped by user" : streamError instanceof Error ? streamError.message : "Streaming failed",
-            );
+            const timedOut = providerAbort.signal.reason instanceof DOMException
+              && providerAbort.signal.reason.name === "TimeoutError";
+            const code: ChatErrorCode = providerFinished
+              ? "RESPONSE_SAVE_FAILED"
+              : timedOut
+              ? "TIMEOUT"
+              : assistantContent.trim()
+                ? "STREAM_INTERRUPTED"
+                : "PROVIDER_UNAVAILABLE";
+            const assistantMessage = await interruptMessageTurn({
+              userId: session.user.id,
+              userMessageId: claim.userMessage.id,
+              partialContent: assistantContent,
+              reason: providerFinished ? "persistence" : timedOut ? "timeout" : request.signal.aborted ? "network" : "provider",
+            }).catch(() => null);
+            const publicError = createChatPublicError(code, { requestId });
+            logChatError({
+              error: streamError,
+              code,
+              endpoint: "/api/chat",
+              requestId,
+              startedAt: requestStartedAt,
+              status: code === "TIMEOUT" ? 504 : 503,
+              phase: assistantContent ? "streaming" : "provider_start",
+              conversationType: type,
+              plan: session.user.plan,
+            });
             enqueue({
               type: "failed",
-              code: aborted ? "GENERATION_STOPPED" : "CHAT_RESPONSE_FAILED",
-              message: aborted ? "La respuesta se detuvo." : "CEO no pudo completar la respuesta.",
+              ...publicError,
+              message: publicError.userMessage,
               conversation,
-              userMessage: { ...claim.userMessage, status: "failed" },
+              userMessage: { ...claim.userMessage, status: "completed" },
+              assistantMessage,
             });
           } finally {
+            clearTimeout(streamTimer);
             if (!streamClosed) {
               streamClosed = true;
               controller.close();
@@ -326,14 +409,17 @@ export async function POST(request: NextRequest) {
           "Cache-Control": "no-cache, no-transform",
           "Content-Type": "application/x-ndjson; charset=utf-8",
           "X-Accel-Buffering": "no",
+          "X-Request-Id": requestId,
         },
       });
     }
 
-    const result =
-      type === "general"
-        ? await provider.answerSiteQuestion({ books, message: parsed.data.message, conversation: trustedConversation })
-        : await provider.answerBookQuestion({ book, message: parsed.data.message, conversation: trustedConversation });
+    const result = await withTimeout(
+      () => type === "general"
+        ? provider.answerSiteQuestion({ books, message: parsed.data.message, conversation: trustedConversation })
+        : provider.answerBookQuestion({ book, message: parsed.data.message, conversation: trustedConversation }),
+      chatTimeouts.streamIdleMs,
+    );
 
     const title = await titlePromise;
     await chatRepository.incrementUsage(session.user.id, book.id, legacyContext);
@@ -360,21 +446,35 @@ export async function POST(request: NextRequest) {
       replayed: false,
     });
   } catch (caughtError) {
-    const reason = caughtError instanceof Error ? caughtError.message : "Unknown provider error";
-    if (claimedMessageId) await failMessageTurn(session.user.id, claimedMessageId, reason);
-    console.error("Chat request failed", caughtError);
+    if (claimedMessageId) await failMessageTurn(session.user.id, claimedMessageId, "provider_or_persistence");
+    const code: ChatErrorCode = caughtError instanceof ChatOperationError
+      ? caughtError.code
+      : caughtError instanceof DOMException && caughtError.name === "TimeoutError"
+        ? "TIMEOUT"
+        : claimedMessageId ? "PROVIDER_UNAVAILABLE" : "MESSAGE_SAVE_FAILED";
+    logChatError({
+      error: caughtError,
+      code,
+      endpoint: "/api/chat",
+      requestId,
+      startedAt: requestStartedAt,
+      status: code === "TIMEOUT" ? 504 : code === "CONFLICT" ? 409 : 503,
+      phase: claimedMessageId ? "generation" : "message_save",
+      conversationType: type,
+      plan: session.user.plan,
+    });
     await chatRepository.logEvent({
       userId: session.user.id,
       bookId: book.id,
       context: legacyContext,
       eventType: "provider_error",
       code: "CHAT_RESPONSE_FAILED",
-      message: reason.slice(0, 500),
+      message: code,
       metadata: { type },
     });
-    return jsonError(
-      { code: "CHAT_RESPONSE_FAILED", message: "No pudimos generar una respuesta en este momento." },
-      502,
+    return jsonChatError(
+      createChatPublicError(code, { requestId }),
+      code === "TIMEOUT" ? 504 : code === "CONFLICT" ? 409 : code === "MESSAGE_SAVE_FAILED" ? 500 : 503,
     );
   }
 }
