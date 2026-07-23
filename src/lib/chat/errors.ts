@@ -6,6 +6,11 @@ export const chatErrorCodes = [
   "CONVERSATION_FORBIDDEN",
   "CONVERSATION_ARCHIVED",
   "PLAN_LIMIT_REACHED",
+  "USAGE_LIMIT_REACHED",
+  "RATE_LIMITED",
+  "FEATURE_LOCKED",
+  "BOOK_ACCESS_DENIED",
+  "USAGE_RESERVATION_FAILED",
   "NETWORK_ERROR",
   "TIMEOUT",
   "PROVIDER_UNAVAILABLE",
@@ -36,6 +41,11 @@ const definitions: Record<ChatErrorCode, Omit<ChatPublicError, "code" | "request
   CONVERSATION_FORBIDDEN: { userMessage: "No tienes acceso a esta conversación.", retryable: false, action: "go_home" },
   CONVERSATION_ARCHIVED: { userMessage: "Restaura esta conversación para continuar.", retryable: false, action: "restore" },
   PLAN_LIMIT_REACHED: { userMessage: "Has alcanzado el límite de consultas de tu plan.", retryable: false, action: "upgrade" },
+  USAGE_LIMIT_REACHED: { userMessage: "Has alcanzado el límite de consultas de tu plan.", retryable: false, action: "upgrade" },
+  RATE_LIMITED: { userMessage: "Estás enviando mensajes demasiado rápido. Espera un momento e inténtalo de nuevo.", retryable: true, action: "retry" },
+  FEATURE_LOCKED: { userMessage: "Tu plan no incluye Chat con CEO.", retryable: false, action: "upgrade" },
+  BOOK_ACCESS_DENIED: { userMessage: "Tu plan no incluye este análisis.", retryable: false, action: "upgrade" },
+  USAGE_RESERVATION_FAILED: { userMessage: "No pudimos reservar esta consulta. Inténtalo nuevamente.", retryable: true, action: "retry" },
   NETWORK_ERROR: { userMessage: "No tienes conexión a internet.", retryable: true, action: "retry" },
   TIMEOUT: { userMessage: "CEO tardó demasiado en responder.", retryable: true, action: "retry" },
   PROVIDER_UNAVAILABLE: { userMessage: "CEO no está disponible temporalmente.", retryable: true, action: "retry" },
@@ -74,12 +84,12 @@ export function createChatPublicError(
 export function statusForChatError(code: ChatErrorCode) {
   if (code === "INVALID_INPUT") return 400;
   if (code === "UNAUTHORIZED" || code === "SESSION_EXPIRED") return 401;
-  if (code === "CONVERSATION_FORBIDDEN") return 403;
+  if (code === "CONVERSATION_FORBIDDEN" || code === "FEATURE_LOCKED" || code === "BOOK_ACCESS_DENIED") return 403;
   if (code === "CONVERSATION_NOT_FOUND") return 404;
   if (code === "CONVERSATION_ARCHIVED" || code === "CONFLICT") return 409;
-  if (code === "PLAN_LIMIT_REACHED") return 429;
+  if (code === "PLAN_LIMIT_REACHED" || code === "USAGE_LIMIT_REACHED" || code === "RATE_LIMITED") return 429;
   if (code === "TIMEOUT") return 504;
-  if (code === "PROVIDER_UNAVAILABLE") return 503;
+  if (code === "PROVIDER_UNAVAILABLE" || code === "USAGE_RESERVATION_FAILED") return 503;
   return 500;
 }
 

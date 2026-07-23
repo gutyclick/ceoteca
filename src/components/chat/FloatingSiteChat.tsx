@@ -32,7 +32,7 @@ type ChatResponse = {
     conversation: { id: string };
     remainingQuestions: number | null;
     usage: {
-      questionCount: number;
+      used: number;
       limit: number | null;
     };
   };
@@ -48,7 +48,7 @@ type ChatHistoryResponse = {
     messages: ChatConversationMessage[];
     remainingQuestions: number | null;
     usage: {
-      questionCount: number;
+      used: number;
       limit: number | null;
     };
   };

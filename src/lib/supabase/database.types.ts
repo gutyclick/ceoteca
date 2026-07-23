@@ -172,6 +172,67 @@ export type Database = {
         };
         Relationships: [];
       };
+      chat_usage_events: {
+        Row: {
+          id: string;
+          user_id: string;
+          conversation_id: string | null;
+          message_id: string | null;
+          book_id: string | null;
+          feature: string;
+          plan: "free" | "pro" | "unlimited" | "founder";
+          usage_type: "message" | "regeneration" | "contextual_action" | "book_chat" | "general_chat" | "promotional" | "adjustment";
+          amount: number;
+          status: "pending" | "consumed" | "released" | "refunded" | "failed";
+          idempotency_key: string;
+          period_kind: "calendar_month" | "billing_cycle" | "day" | "promotional" | "total" | "unlimited";
+          period_start: string;
+          period_end: string;
+          metadata: Json;
+          reserved_at: string;
+          consumed_at: string | null;
+          released_at: string | null;
+          refunded_at: string | null;
+          expires_at: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          conversation_id?: string | null;
+          message_id?: string | null;
+          book_id?: string | null;
+          feature?: string;
+          plan: "free" | "pro" | "unlimited" | "founder";
+          usage_type: "message" | "regeneration" | "contextual_action" | "book_chat" | "general_chat" | "promotional" | "adjustment";
+          amount?: number;
+          status?: "pending" | "consumed" | "released" | "refunded" | "failed";
+          idempotency_key: string;
+          period_kind?: "calendar_month" | "billing_cycle" | "day" | "promotional" | "total" | "unlimited";
+          period_start: string;
+          period_end: string;
+          metadata?: Json;
+          reserved_at?: string;
+          consumed_at?: string | null;
+          released_at?: string | null;
+          refunded_at?: string | null;
+          expires_at?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          conversation_id?: string | null;
+          message_id?: string | null;
+          status?: "pending" | "consumed" | "released" | "refunded" | "failed";
+          metadata?: Json;
+          consumed_at?: string | null;
+          released_at?: string | null;
+          refunded_at?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       chat_messages: {
         Row: {
           id: string;
@@ -342,7 +403,14 @@ export type Database = {
             | "moderation_block"
             | "limit_reached"
             | "provider_error"
-            | "validation_error";
+            | "validation_error"
+            | "usage_reserved"
+            | "usage_consumed"
+            | "usage_released"
+            | "usage_limit_reached"
+            | "usage_regeneration"
+            | "usage_contextual_action"
+            | "usage_rate_limited";
           code: string;
           message: string | null;
           metadata: Json;
@@ -356,7 +424,14 @@ export type Database = {
             | "moderation_block"
             | "limit_reached"
             | "provider_error"
-            | "validation_error";
+            | "validation_error"
+            | "usage_reserved"
+            | "usage_consumed"
+            | "usage_released"
+            | "usage_limit_reached"
+            | "usage_regeneration"
+            | "usage_contextual_action"
+            | "usage_rate_limited";
           code: string;
           message?: string | null;
           metadata?: Json;
@@ -608,6 +683,39 @@ export type Database = {
           target_context?: "book" | "site";
         };
         Returns: number;
+      };
+      reserve_chat_usage: {
+        Args: {
+          target_user_id: string;
+          target_plan: string;
+          target_limit: number | null;
+          target_period_start: string;
+          target_period_end: string;
+          target_period_kind: string;
+          target_idempotency_key: string;
+          target_usage_type: string;
+          target_book_id?: string | null;
+          target_metadata?: Json;
+        };
+        Returns: Json;
+      };
+      confirm_chat_usage: {
+        Args: { target_usage_id: string; target_user_id: string };
+        Returns: Json;
+      };
+      release_chat_usage: {
+        Args: { target_usage_id: string; target_user_id: string; target_reason?: string };
+        Returns: Json;
+      };
+      get_chat_usage_snapshot: {
+        Args: {
+          target_user_id: string;
+          target_plan: string;
+          target_limit: number | null;
+          target_period_start: string;
+          target_period_end: string;
+        };
+        Returns: Json;
       };
       evaluate_user_achievements: {
         Args: { target_user_id: string };

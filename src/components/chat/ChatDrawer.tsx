@@ -21,7 +21,7 @@ type ChatResponse = {
     conversation: { id: string };
     remainingQuestions: number | null;
     usage: {
-      questionCount: number;
+      used: number;
       limit: number | null;
     };
   };
@@ -108,7 +108,7 @@ export function ChatDrawer({ bookSlug, bookTitle }: ChatDrawerProps) {
         ]);
         setUsage(
           data.usage.limit === null
-            ? `${data.usage.questionCount} preguntas este mes`
+            ? ""
             : `${data.remainingQuestions} preguntas restantes este mes`,
         );
       }
@@ -147,7 +147,7 @@ export function ChatDrawer({ bookSlug, bookTitle }: ChatDrawerProps) {
                 </span>
                 <div>
                   <h2 className="font-semibold">Habla con este libro</h2>
-                  <p className="text-sm text-text-secondary">{usage}</p>
+                  {usage ? <p className="text-sm text-text-secondary">{usage}</p> : null}
                 </div>
               </div>
               <Button

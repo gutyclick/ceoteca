@@ -45,6 +45,7 @@ import {
   type ChatDraftScope,
 } from "@/lib/chat/drafts";
 import type { ChatConversation, StoredChatMessage } from "@/lib/chat/model";
+import type { ChatUsageSnapshot } from "@/lib/chat/usage";
 import {
   createChatPublicError,
   isChatPublicError,
@@ -73,18 +74,18 @@ type SendFailure = {
 };
 
 type StreamEvent =
-  | { type: "conversation"; conversation: ChatConversation; userMessage: StoredChatMessage; assistantMessage: StoredChatMessage | null; remainingQuestions: number | null; requestId?: string }
+  | { type: "conversation"; conversation: ChatConversation; userMessage: StoredChatMessage; assistantMessage: StoredChatMessage | null; remainingQuestions: number | null; usage: ChatUsageSnapshot; requestId?: string }
   | { type: "delta"; delta: string }
   | { type: "title"; title: string }
-  | { type: "completed"; conversation: ChatConversation; userMessage: StoredChatMessage; assistantMessage: StoredChatMessage; remainingQuestions: number | null }
-  | { type: "failed"; code: string; message: string; userMessage: StoredChatMessage; assistantMessage: StoredChatMessage | null; conversation: ChatConversation; retryable?: boolean; action?: string | null; requestId?: string };
+  | { type: "completed"; conversation: ChatConversation; userMessage: StoredChatMessage; assistantMessage: StoredChatMessage; remainingQuestions: number | null; usage: ChatUsageSnapshot }
+  | { type: "failed"; code: string; message: string; userMessage: StoredChatMessage; assistantMessage: StoredChatMessage | null; conversation: ChatConversation; usage?: ChatUsageSnapshot; remainingQuestions?: number | null; retryable?: boolean; action?: string | null; requestId?: string };
 
 type HistoryResponse = {
   data?: {
     conversation: ChatConversation | null;
     messages: StoredChatMessage[];
     remainingQuestions: number | null;
-    usage: { questionCount: number; limit: number | null };
+    usage: ChatUsageSnapshot;
     hasMore: boolean;
     feedback: Array<{ message_id: string; rating: Exclude<MessageRating, null>; reason: string | null }>;
   };
@@ -95,7 +96,7 @@ type ChatResponse = {
   data?: {
     message: string;
     remainingQuestions: number | null;
-    usage: { questionCount: number; limit: number | null };
+    usage: ChatUsageSnapshot;
     conversation: ChatConversation;
     userMessage: StoredChatMessage;
     assistantMessage: StoredChatMessage;
@@ -222,7 +223,8 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
   const [input, setInput] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
   const [plan, setPlan] = useState<PlanKey>("free");
-  const [remainingQuestions, setRemainingQuestions] = useState<number | null>(0);
+  const [remainingQuestions, setRemainingQuestions] = useState<number | null>(null);
+  const [usage, setUsage] = useState<ChatUsageSnapshot | null>(null);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [isConversationPanelOpen, setIsConversationPanelOpen] = useState(false);
@@ -244,6 +246,7 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
   const [editValue, setEditValue] = useState("");
   const [showEditConfirmation, setShowEditConfirmation] = useState(false);
   const [regeneratingId, setRegeneratingId] = useState<string | null>(null);
+  const [regenerationTarget, setRegenerationTarget] = useState<StoredChatMessage | null>(null);
   const [showJumpToEnd, setShowJumpToEnd] = useState(false);
   const [hasOlderMessages, setHasOlderMessages] = useState(false);
   const [isLoadingOlder, setIsLoadingOlder] = useState(false);
@@ -414,7 +417,10 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
         ]);
         if (!isMounted) return;
         if (subscriptionResponse.ok && subscriptionPayload.data) setPlan(subscriptionPayload.data.plan);
-        if (quotaResponse.ok && quotaPayload.data) setRemainingQuestions(quotaPayload.data.remainingQuestions);
+        if (quotaResponse.ok && quotaPayload.data) {
+          setRemainingQuestions(quotaPayload.data.remainingQuestions);
+          setUsage(quotaPayload.data.usage);
+        }
         if (conversationsResponse.ok && conversationsPayload.data) {
           const loaded = conversationsPayload.data.conversations.map((conversation) => ({
             ...conversation,
@@ -491,6 +497,7 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
       } else {
         setMessages(payload.data.messages.filter((message) => message.role === "user" || message.role === "assistant"));
         setRemainingQuestions(payload.data.remainingQuestions);
+        setUsage(payload.data.usage);
         setHasOlderMessages(payload.data.hasMore);
         setFeedbackByMessage(Object.fromEntries(payload.data.feedback.map((item) => [item.message_id, item.rating])));
         isNearBottomRef.current = true;
@@ -700,7 +707,7 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
     }
   }
 
-  async function sendMessage(retry = retryTurn, overrideMessage?: string) {
+  async function sendMessage(retry = retryTurn, overrideMessage?: string, interactionType: "message" | "contextual_action" = "message") {
     const message = (overrideMessage ?? retry?.originalMessage ?? input).trim();
     if (!message || isSending || regeneratingId || !canSendMessages || sendLockRef.current) return;
     if (message.length > chatComposerMaxLength) {
@@ -834,6 +841,7 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
             conversationId: requestConversationId ?? undefined,
             clientCreationKey: requestConversationId ? undefined : creationKey,
             clientMessageId,
+            interactionType,
             message,
             stream: true,
           }),
@@ -856,6 +864,7 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
           payload.data!.assistantMessage,
         ]);
         setRemainingQuestions(payload.data.remainingQuestions);
+        setUsage(payload.data.usage);
         receivedCompletedEvent = true;
         return;
       }
@@ -889,6 +898,7 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
             setMessages((current) => current.map((item) => item.id === streamMessageId ? event.assistantMessage! : item));
           }
           setRemainingQuestions(event.remainingQuestions);
+          setUsage(event.usage);
           if (isNewConversation) {
             recordChatEvent("conversation_created", {
               conversation_type: event.conversation.type,
@@ -930,6 +940,7 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
             event.assistantMessage,
           ]);
           setRemainingQuestions(event.remainingQuestions);
+          setUsage(event.usage);
           if (isNewConversation) {
             recordChatEvent("first_response_completed", {
               conversation_type: event.conversation.type,
@@ -940,6 +951,8 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
           return;
         }
         if (event.type === "failed") {
+          if (event.usage) setUsage(event.usage);
+          if (event.remainingQuestions !== undefined) setRemainingQuestions(event.remainingQuestions);
           upsertConversation(event.conversation);
           setMessages((current) => current
             .map((item) => item.id === streamMessageId || (item.role === "assistant" && item.parentMessageId === event.userMessage.id)
@@ -976,7 +989,7 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
       const publicError = isChatPublicError(caughtError)
         ? caughtError
         : normalizeClientChatError(caughtError, requestState.conversation ? "STREAM_INTERRUPTED" : "MESSAGE_SAVE_FAILED");
-      const limitReached = publicError.code === "PLAN_LIMIT_REACHED";
+      const limitReached = publicError.code === "PLAN_LIMIT_REACHED" || publicError.code === "USAGE_LIMIT_REACHED";
       const conversationId = requestState.conversation?.id ?? requestConversationId ?? null;
       const kind: SendFailure["kind"] = limitReached
         ? "limit"
@@ -993,7 +1006,9 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
             ? "No pudimos iniciar la conversación."
             : publicError.userMessage;
 
-      setMessages((current) => current
+      setMessages((current) => limitReached
+        ? current.filter((item) => item.id !== streamMessageId && item.id !== clientMessageId && item.id !== persistedUserMessageId)
+        : current
         .map((item) => item.id === streamMessageId && stopped
           ? { ...item, status: "stopped" as const }
           : item.id === streamMessageId
@@ -1001,6 +1016,12 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
           : item.id === clientMessageId || item.id === persistedUserMessageId
             ? { ...item, status: requestState.conversation ? "completed" as const : "failed" as const }
             : item));
+      if (limitReached) {
+        setRemainingQuestions(0);
+        inputValueRef.current = message;
+        setInput(message);
+        if (originalDraftScope) writeChatDraft(originalDraftScope, message);
+      }
       if (!requestState.conversation && isNewConversation) {
         setConversations((current) => current.filter((item) => item.id !== optimisticConversationId));
         setMessages((current) => current.filter((item) => item.id !== streamMessageId));
@@ -1138,7 +1159,7 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
 
   function responseAction(message: StoredChatMessage, action: ResponseAction) {
     const reference = message.content.replace(/\s+/g, " ").slice(0, 180);
-    void sendMessage(null, `${responseInstructions[action]} Toma como referencia la respuesta que comienza así: “${reference}”.`);
+    void sendMessage(null, `${responseInstructions[action]} Toma como referencia la respuesta que comienza así: “${reference}”.`, "contextual_action");
   }
 
   function editPreviousMessage(message: StoredChatMessage) {
@@ -1153,7 +1174,10 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
     setRegeneratingId(message.id);
     setError(null);
     try {
-      const response = await authenticatedFetch(`/api/chat/messages/${message.id}/regenerate`, { method: "POST" });
+      const response = await authenticatedFetch(`/api/chat/messages/${message.id}/regenerate`, {
+        method: "POST",
+        headers: { "X-Idempotency-Key": crypto.randomUUID() },
+      });
       if (!response.ok || !response.body) {
         const payload = await response.json() as { error?: { message: string } };
         throw new Error(payload.error?.message ?? "CEO no pudo regenerar esta respuesta.");
@@ -1164,7 +1188,7 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
       let started = false;
       const processEvent = (line: string) => {
         if (!line.trim()) return;
-        const event = JSON.parse(line) as { type: string; delta?: string; assistantMessage?: StoredChatMessage; remainingQuestions?: number | null; message?: string };
+        const event = JSON.parse(line) as { type: string; delta?: string; assistantMessage?: StoredChatMessage; remainingQuestions?: number | null; usage?: ChatUsageSnapshot; message?: string };
         if (event.type === "delta" && event.delta) {
           regeneratedPartial += event.delta;
           started = true;
@@ -1173,6 +1197,7 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
         if (event.type === "completed" && event.assistantMessage) {
           setMessages((current) => current.map((item) => item.id === message.id ? event.assistantMessage! : item));
           if (event.remainingQuestions !== undefined) setRemainingQuestions(event.remainingQuestions);
+          if (event.usage) setUsage(event.usage);
           setResponseAnnouncement("CEO terminó de regenerar la respuesta.");
         }
         if (event.type === "failed") throw new Error(event.message ?? "CEO no pudo regenerar esta respuesta.");
@@ -1195,6 +1220,14 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
         : item));
       setError(caughtError instanceof Error ? caughtError.message : "CEO no pudo regenerar esta respuesta.");
     } finally { setRegeneratingId(null); }
+  }
+
+  function requestRegeneration(message: StoredChatMessage) {
+    if (remainingQuestions === null) {
+      void regenerateResponse(message);
+      return;
+    }
+    setRegenerationTarget(message);
   }
 
   async function loadOlderMessages() {
@@ -1290,7 +1323,7 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
               {selected.book ? <BookAvatar book={selected.book} /> : <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[13px] bg-violet-100 text-violet-700"><Bot size={21} /></span>}
               <div className="min-w-0 flex-1"><h2 className="truncate text-sm font-black sm:text-base">{selected.title}</h2><p className="truncate text-xs text-slate-500">{selected.book ? `Contexto exclusivo de ${selected.book.title}` : "Negocios, productividad, lectura y desarrollo personal"}</p></div>
               {selected.status === "archived" ? <span className="rounded-full bg-slate-100 px-3 py-2 text-xs font-bold text-slate-600">Archivado</span> : null}
-              {remainingQuestions !== null && canUseChat ? <span className="hidden rounded-full bg-violet-50 px-3 py-2 text-xs font-bold text-violet-700 sm:block">{remainingQuestions} preguntas disponibles</span> : null}
+              {remainingQuestions !== null && canUseChat ? <span aria-label={`${remainingQuestions} consultas disponibles`} className="hidden rounded-full bg-violet-50 px-3 py-2 text-xs font-bold text-violet-700 sm:block">{remainingQuestions} consultas disponibles</span> : null}
             </header>
             <ChatConnectionStatus onRetry={() => void connectivity.probe()} state={connectivity.state} />
             {otherTabGenerating ? (
@@ -1376,7 +1409,7 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
                   {messages.map((message, index) => {
                     const showDay = index === 0 || new Date(messages[index - 1].createdAt).toDateString() !== new Date(message.createdAt).toDateString();
                     const transientFailure = message.status === "failed" && message.id.startsWith("stream:") ? sendFailure : null;
-                    return <Fragment key={message.id}>{showDay ? <div className="flex items-center gap-3 py-2 text-[11px] font-bold text-slate-400"><span className="h-px flex-1 bg-slate-200" /><span>{messageDayLabel(message.createdAt)}</span><span className="h-px flex-1 bg-slate-200" /></div> : null}<ChatMessageItem isGenerating={isSending || regeneratingId !== null} message={message} onContinue={() => void sendMessage(null, "Continúa la respuesta anterior desde donde se detuvo, sin repetir lo ya explicado.")} onDeleteUser={deleteFailedUserMessage} onEditPrevious={transientFailure ? () => editFailedMessage(transientFailure) : editPreviousMessage} onEditUser={openEditMessage} onRate={(item, rating) => void rateMessage(item, rating)} onRegenerate={transientFailure ? () => void sendMessage(transientFailure) : (item) => void regenerateResponse(item)} onResendUser={retryUserMessage} onResponseAction={responseAction} rating={feedbackByMessage[message.id]} /></Fragment>;
+                    return <Fragment key={message.id}>{showDay ? <div className="flex items-center gap-3 py-2 text-[11px] font-bold text-slate-400"><span className="h-px flex-1 bg-slate-200" /><span>{messageDayLabel(message.createdAt)}</span><span className="h-px flex-1 bg-slate-200" /></div> : null}<ChatMessageItem isGenerating={isSending || regeneratingId !== null} message={message} onContinue={() => void sendMessage(null, "Continúa la respuesta anterior desde donde se detuvo, sin repetir lo ya explicado.")} onDeleteUser={deleteFailedUserMessage} onEditPrevious={transientFailure ? () => editFailedMessage(transientFailure) : editPreviousMessage} onEditUser={openEditMessage} onRate={(item, rating) => void rateMessage(item, rating)} onRegenerate={transientFailure ? () => void sendMessage(transientFailure) : requestRegeneration} onResendUser={retryUserMessage} onResponseAction={responseAction} rating={feedbackByMessage[message.id]} /></Fragment>;
                   })}
                 </div>
               ) : null}
@@ -1409,6 +1442,11 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
                   Te quedan {remainingQuestions} {remainingQuestions === 1 ? "consulta" : "consultas"} este mes.
                 </p>
               ) : null}
+              {remainingQuestions === 0 && usage?.periodEnd ? (
+                <p aria-live="polite" className="mx-auto mb-2 max-w-3xl text-xs font-semibold text-slate-600">
+                  Podrás volver a usar CEO el {new Intl.DateTimeFormat("es", { day: "numeric", month: "long" }).format(new Date(usage.periodEnd))}, o puedes <Link className="font-black text-violet-700" href="/planes">ver los planes</Link>.
+                </p>
+              ) : null}
               <ChatComposer
                 className="mx-auto max-w-3xl"
                 disabled={Boolean(composerDisabledReason)}
@@ -1437,6 +1475,18 @@ export function ChatWorkspace({ books, initialConversationId = null }: { books: 
             <div className="mt-5 flex justify-end gap-3">
               <button className="min-h-11 rounded-[11px] border border-slate-200 px-4 text-sm font-black text-slate-700" onClick={() => { if (showEditConfirmation) setShowEditConfirmation(false); else setEditTarget(null); }} type="button">Cancelar</button>
               <button className="min-h-11 rounded-[11px] bg-violet-700 px-4 text-sm font-black text-white disabled:opacity-50" disabled={!editValue.trim() || isSending} onClick={() => void confirmEditMessage()} type="button">{showEditConfirmation ? "Editar y continuar" : "Guardar y volver a enviar"}</button>
+            </div>
+          </section>
+        </div>
+      ) : null}
+      {regenerationTarget ? (
+        <div className="fixed inset-0 z-[150] grid place-items-center bg-slate-950/30 p-4" onMouseDown={(event) => { if (event.currentTarget === event.target) setRegenerationTarget(null); }} role="presentation">
+          <section aria-labelledby="regeneration-title" aria-modal="true" className="w-full max-w-md rounded-[18px] border border-slate-200 bg-white p-5" role="dialog">
+            <h2 className="text-lg font-black" id="regeneration-title">Regenerar respuesta</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">Regenerar utilizará una consulta y conservará el mensaje original como versión anterior.</p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button className="min-h-11 rounded-[10px] px-4 text-sm font-black text-slate-600 hover:bg-slate-50" onClick={() => setRegenerationTarget(null)} type="button">Cancelar</button>
+              <button className="min-h-11 rounded-[10px] bg-violet-700 px-4 text-sm font-black text-white" onClick={() => { const target = regenerationTarget; setRegenerationTarget(null); void regenerateResponse(target); }} type="button">Usar una consulta</button>
             </div>
           </section>
         </div>

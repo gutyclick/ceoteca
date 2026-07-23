@@ -2,9 +2,9 @@ import { NextRequest } from "next/server";
 import { ZodError } from "zod";
 import { z } from "zod";
 
-import { plans } from "@/config/plans";
 import { jsonChatError, jsonData, jsonError } from "@/lib/api/response";
 import { demoUser } from "@/lib/auth/demo";
+import { canAccessBookChat } from "@/lib/books/access";
 import { createBookRepository } from "@/lib/books/repository";
 import {
   claimUserMessage,
@@ -20,6 +20,15 @@ import {
 import { ChatOperationError, createChatPublicError, logChatError, type ChatErrorCode } from "@/lib/chat/errors";
 import { moderateChatMessage } from "@/lib/chat/moderation";
 import { createChatRepository } from "@/lib/chat/repository";
+import {
+  attachChatUsage,
+  confirmChatUsage,
+  configureDemoChatUsage,
+  getChatUsageSnapshot,
+  releaseChatUsage,
+  reserveChatUsage,
+  type ChatUsageSnapshot,
+} from "@/lib/chat/usage";
 import type { ConversationType } from "@/lib/chat/model";
 import { clientEnv } from "@/lib/env";
 import { createAIProvider } from "@/lib/openai/provider";
@@ -27,7 +36,7 @@ import { chatTimeouts, withTimeout } from "@/lib/chat/retry";
 import { canAccessFeature } from "@/lib/permissions";
 import { checkRateLimit } from "@/lib/rate-limit/memory";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { getEffectiveSubscriptionForUser } from "@/lib/subscriptions/service";
+import { getEffectiveSubscriptionForUser, type EffectiveSubscription } from "@/lib/subscriptions/service";
 import { chatRequestSchema } from "@/lib/validation/chat";
 import type { AppUser } from "@/types";
 
@@ -54,8 +63,13 @@ const cancelRequestSchema = z.object({
 
 async function getAuthenticatedUser(
   request: NextRequest,
-): Promise<{ accessToken?: string; user: AppUser } | null> {
-  if (clientEnv.NEXT_PUBLIC_DEMO_MODE) return { user: demoUser };
+): Promise<{ accessToken?: string; user: AppUser; subscription: EffectiveSubscription } | null> {
+  if (clientEnv.NEXT_PUBLIC_DEMO_MODE) {
+    return {
+      user: demoUser,
+      subscription: { plan: demoUser.plan, source: "profile", subscription: null },
+    };
+  }
   const accessToken = getBearerToken(request);
   if (!accessToken) return null;
   const supabase = createServerSupabaseClient(accessToken);
@@ -77,6 +91,7 @@ async function getAuthenticatedUser(
       plan: effectiveSubscription.plan,
       isDemo: false,
     },
+    subscription: effectiveSubscription,
   };
 }
 
@@ -90,7 +105,7 @@ export async function POST(request: NextRequest) {
     return jsonChatError(createChatPublicError("SESSION_EXPIRED", { requestId }), 401);
   }
   if (demoFailure === "limit") {
-    return jsonChatError(createChatPublicError("PLAN_LIMIT_REACHED", { requestId }), 429);
+    return jsonChatError(createChatPublicError("USAGE_LIMIT_REACHED", { requestId }), 429);
   }
   if (demoFailure === "timeout") {
     return jsonChatError(createChatPublicError("TIMEOUT", { requestId }), 504);
@@ -102,10 +117,25 @@ export async function POST(request: NextRequest) {
   if (!session) {
     return jsonChatError(createChatPublicError("SESSION_EXPIRED", { requestId }), 401);
   }
+  if (clientEnv.NEXT_PUBLIC_DEMO_MODE) {
+    const scenario = request.headers.get("x-demo-chat-usage");
+    if (scenario === "reset" || scenario === "one_remaining" || scenario === "exhausted") {
+      configureDemoChatUsage(session.subscription, scenario);
+    }
+  }
 
+  const chatRepository = createChatRepository(session.accessToken);
   const rateLimit = checkRateLimit(`chat:${session.user.id}`, 20, 60_000);
   if (!rateLimit.allowed) {
-    return jsonChatError(createChatPublicError("PLAN_LIMIT_REACHED", { requestId }), 429);
+    void chatRepository.logEvent({
+      userId: session.user.id,
+      bookId: null,
+      context: "site",
+      eventType: "usage_rate_limited",
+      code: "RATE_LIMITED",
+      metadata: { endpoint: "/api/chat" },
+    }).catch(() => undefined);
+    return jsonChatError(createChatPublicError("RATE_LIMITED", { requestId }), 429);
   }
 
   let payload: unknown;
@@ -152,14 +182,23 @@ export async function POST(request: NextRequest) {
   }
 
   if (!canAccessFeature(session.user.plan, "chat")) {
-    return jsonChatError(createChatPublicError("PLAN_LIMIT_REACHED", { requestId }), 403);
+    return jsonChatError(createChatPublicError("FEATURE_LOCKED", { requestId }), 403);
   }
 
-  const plan = plans[session.user.plan];
-  const chatRepository = createChatRepository(session.accessToken);
-  const monthlyQuestionCount = await chatRepository.getMonthlyUsage(session.user.id);
-  if (plan.chatMonthlyLimit !== null && monthlyQuestionCount >= plan.chatMonthlyLimit) {
-    return jsonChatError(createChatPublicError("PLAN_LIMIT_REACHED", { requestId }), 429);
+  if (type === "book") {
+    try {
+      const hasBookAccess = await canAccessBookChat({
+        userId: session.user.id,
+        plan: session.user.plan,
+        bookId: book.id,
+      });
+      if (!hasBookAccess) {
+        return jsonChatError(createChatPublicError("BOOK_ACCESS_DENIED", { requestId }), 403);
+      }
+    } catch (error) {
+      logChatError({ error, code: "BOOK_ACCESS_DENIED", endpoint: "/api/chat", requestId, startedAt: requestStartedAt, status: 503, phase: "book_access", conversationType: type, plan: session.user.plan });
+      return jsonChatError(createChatPublicError("UNKNOWN_ERROR", { requestId }), 503);
+    }
   }
 
   const moderation = moderateChatMessage(parsed.data.message, legacyContext);
@@ -177,6 +216,56 @@ export async function POST(request: NextRequest) {
   }
 
   let claimedMessageId: string | null = null;
+  let usageSnapshot: ChatUsageSnapshot;
+  try {
+    usageSnapshot = await reserveChatUsage({
+      userId: session.user.id,
+      subscription: session.subscription,
+      idempotencyKey: parsed.data.clientMessageId,
+      usageType: parsed.data.interactionType === "contextual_action"
+        ? "contextual_action"
+        : type === "book" ? "book_chat" : "general_chat",
+      bookId: book.id,
+      metadata: { conversationType: type, limit: session.subscription.plan },
+    });
+  } catch (error) {
+    logChatError({ error, code: "USAGE_RESERVATION_FAILED", endpoint: "/api/chat", requestId, startedAt: requestStartedAt, status: 503, phase: "usage_reservation", conversationType: type, plan: session.user.plan });
+    return jsonChatError(createChatPublicError("USAGE_RESERVATION_FAILED", { requestId }), 503);
+  }
+  if (!usageSnapshot.allowed || !usageSnapshot.usageId) {
+    void chatRepository.logEvent({ userId: session.user.id, bookId: book.id, context: legacyContext, eventType: "usage_limit_reached", code: "USAGE_LIMIT_REACHED", metadata: { type } }).catch(() => undefined);
+    return jsonChatError(createChatPublicError("USAGE_LIMIT_REACHED", {
+      requestId,
+      metadata: {
+        plan: usageSnapshot.plan,
+        used: usageSnapshot.used,
+        limit: usageSnapshot.limit,
+        remaining: usageSnapshot.remaining,
+        unlimited: usageSnapshot.unlimited,
+        periodStart: usageSnapshot.periodStart,
+        periodEnd: usageSnapshot.periodEnd,
+      },
+    }), 429);
+  }
+  const usageId = usageSnapshot.usageId;
+  let usageConfirmed = usageSnapshot.usageStatus === "consumed";
+  void chatRepository.logEvent({ userId: session.user.id, bookId: book.id, context: legacyContext, eventType: "usage_reserved", code: "USAGE_RESERVED", metadata: { usageId, usageType: parsed.data.interactionType === "contextual_action" ? "contextual_action" : type } }).catch(() => undefined);
+  if (parsed.data.interactionType === "contextual_action") {
+    void chatRepository.logEvent({ userId: session.user.id, bookId: book.id, context: legacyContext, eventType: "usage_contextual_action", code: "USAGE_CONTEXTUAL_ACTION", metadata: { usageId } }).catch(() => undefined);
+  }
+  const confirmReservedUsage = async () => {
+    if (usageConfirmed) return usageSnapshot;
+    usageSnapshot = await confirmChatUsage(usageId, session.user.id, session.subscription);
+    usageConfirmed = true;
+    void chatRepository.logEvent({ userId: session.user.id, bookId: book.id, context: legacyContext, eventType: "usage_consumed", code: "USAGE_CONSUMED", metadata: { usageId } }).catch(() => undefined);
+    return usageSnapshot;
+  };
+  const releaseReservedUsage = async (reason = "generation_not_started") => {
+    if (usageConfirmed) return usageSnapshot;
+    usageSnapshot = await releaseChatUsage(usageId, session.user.id, session.subscription, reason);
+    void chatRepository.logEvent({ userId: session.user.id, bookId: book.id, context: legacyContext, eventType: "usage_released", code: reason, metadata: { usageId } }).catch(() => undefined);
+    return usageSnapshot;
+  };
   try {
     const conversation = await ensureConversation({
       userId: session.user.id,
@@ -187,9 +276,11 @@ export async function POST(request: NextRequest) {
       bookTitle: type === "book" ? book.title : undefined,
     });
     if (!conversation) {
+      await releaseReservedUsage();
       return jsonChatError(createChatPublicError("CONVERSATION_NOT_FOUND", { requestId }), 404);
     }
     if (conversation.status === "archived") {
+      await releaseReservedUsage();
       return jsonChatError(createChatPublicError("CONVERSATION_ARCHIVED", { requestId }), 409);
     }
 
@@ -200,18 +291,18 @@ export async function POST(request: NextRequest) {
       content: parsed.data.message,
     });
     claimedMessageId = claim.userMessage.id;
+    await attachChatUsage(usageId, session.user.id, conversation.id, claim.userMessage.id);
 
     if (!claim.created) {
       if (claim.assistantMessage?.status === "completed") {
-        const currentCount = await chatRepository.getMonthlyUsage(session.user.id);
+        const currentUsage = await getChatUsageSnapshot(session.user.id, session.subscription);
         return jsonData({
           message: claim.assistantMessage.content,
           conversation,
           userMessage: claim.userMessage,
           assistantMessage: claim.assistantMessage,
-          remainingQuestions:
-            plan.chatMonthlyLimit === null ? null : Math.max(plan.chatMonthlyLimit - currentCount, 0),
-          usage: { questionCount: currentCount, limit: plan.chatMonthlyLimit },
+          remainingQuestions: currentUsage.remaining,
+          usage: currentUsage,
           replayed: true,
         });
       }
@@ -225,6 +316,7 @@ export async function POST(request: NextRequest) {
       completedOnly: true,
     });
     if (!history) {
+      if (!usageConfirmed) await releaseReservedUsage();
       return jsonError({ code: "CONVERSATION_NOT_FOUND", message: "No encontramos esta conversación." }, 404);
     }
     const trustedConversation = history.messages
@@ -265,15 +357,13 @@ export async function POST(request: NextRequest) {
             userMessage: claim.userMessage,
             assistantMessage: claim.assistantMessage,
             requestId,
-            remainingQuestions:
-              plan.chatMonthlyLimit === null
-                ? null
-                : Math.max(plan.chatMonthlyLimit - monthlyQuestionCount, 0),
-            usage: { questionCount: monthlyQuestionCount, limit: plan.chatMonthlyLimit },
+            remainingQuestions: usageSnapshot.remaining,
+            usage: usageSnapshot,
           });
 
           if (demoFailure === "interrupted") {
             const partial = "Estoy preparando una respuesta de prueba";
+            usageSnapshot = await confirmReservedUsage();
             await persistPartialAssistant({ userId: session.user.id, userMessageId: claim.userMessage.id, content: partial });
             const assistantMessage = await interruptMessageTurn({ userId: session.user.id, userMessageId: claim.userMessage.id, partialContent: partial, reason: "network" });
             enqueue({ type: "delta", delta: partial });
@@ -314,6 +404,9 @@ export async function POST(request: NextRequest) {
               if (providerAbort.signal.aborted) throw new DOMException("Aborted", "AbortError");
               if (!delta) continue;
               resetStreamTimer();
+              if (!usageConfirmed) {
+                usageSnapshot = await confirmReservedUsage();
+              }
               assistantContent += delta;
               enqueue({ type: "delta", delta });
               if (
@@ -333,7 +426,6 @@ export async function POST(request: NextRequest) {
             if (!assistantContent.trim()) throw new Error("The provider returned an empty response");
             providerFinished = true;
             const title = await titlePromise;
-            await chatRepository.incrementUsage(session.user.id, book.id, legacyContext);
             const completed = await completeMessageTurn({
               userId: session.user.id,
               conversation: { ...conversation, title },
@@ -341,20 +433,19 @@ export async function POST(request: NextRequest) {
               userContent: parsed.data.message,
               assistantContent,
             });
-            const nextCount = monthlyQuestionCount + 1;
             enqueue({ type: "title", title });
             enqueue({
               type: "completed",
               conversation: { ...conversation, title, lastMessageAt: completed.lastMessageAt },
               userMessage: { ...claim.userMessage, status: "completed" },
               assistantMessage: completed.assistantMessage,
-              remainingQuestions:
-                plan.chatMonthlyLimit === null
-                  ? null
-                  : Math.max(plan.chatMonthlyLimit - nextCount, 0),
-              usage: { questionCount: nextCount, limit: plan.chatMonthlyLimit },
+              remainingQuestions: usageSnapshot.remaining,
+              usage: usageSnapshot,
             });
           } catch (streamError) {
+            if (!usageConfirmed) {
+              usageSnapshot = await releaseReservedUsage().catch(() => usageSnapshot);
+            }
             const timedOut = providerAbort.signal.reason instanceof DOMException
               && providerAbort.signal.reason.name === "TimeoutError";
             const code: ChatErrorCode = providerFinished
@@ -389,6 +480,8 @@ export async function POST(request: NextRequest) {
               conversation,
               userMessage: { ...claim.userMessage, status: "completed" },
               assistantMessage,
+              remainingQuestions: usageSnapshot.remaining,
+              usage: usageSnapshot,
             });
           } finally {
             clearTimeout(streamTimer);
@@ -420,9 +513,12 @@ export async function POST(request: NextRequest) {
         : provider.answerBookQuestion({ book, message: parsed.data.message, conversation: trustedConversation }),
       chatTimeouts.streamIdleMs,
     );
+    if (!result.message.trim()) throw new Error("The provider returned an empty response");
+    if (!usageConfirmed) {
+      usageSnapshot = await confirmReservedUsage();
+    }
 
     const title = await titlePromise;
-    await chatRepository.incrementUsage(session.user.id, book.id, legacyContext);
     const completed = await completeMessageTurn({
       userId: session.user.id,
       conversation: { ...conversation, title },
@@ -430,7 +526,6 @@ export async function POST(request: NextRequest) {
       userContent: parsed.data.message,
       assistantContent: result.message,
     });
-    const nextCount = monthlyQuestionCount + 1;
     return jsonData({
       message: result.message,
       conversation: {
@@ -440,12 +535,14 @@ export async function POST(request: NextRequest) {
       },
       userMessage: { ...claim.userMessage, status: "completed" },
       assistantMessage: completed.assistantMessage,
-      remainingQuestions:
-        plan.chatMonthlyLimit === null ? null : Math.max(plan.chatMonthlyLimit - nextCount, 0),
-      usage: { questionCount: nextCount, limit: plan.chatMonthlyLimit },
+      remainingQuestions: usageSnapshot.remaining,
+      usage: usageSnapshot,
       replayed: false,
     });
   } catch (caughtError) {
+    if (!usageConfirmed) {
+      usageSnapshot = await releaseReservedUsage().catch(() => usageSnapshot);
+    }
     if (claimedMessageId) await failMessageTurn(session.user.id, claimedMessageId, "provider_or_persistence");
     const code: ChatErrorCode = caughtError instanceof ChatOperationError
       ? caughtError.code

@@ -115,6 +115,19 @@ unique (user_id, book_id, month)
 
 Para un límite global mensual por usuario, considerar una tabla adicional `monthly_usage`.
 
+### `chat_usage_events`
+
+Ledger de reservas y consumos de Chat con CEO. Cada intento usa una clave de
+idempotencia única por usuario y pasa por `pending`, `consumed` o `released`.
+El servidor reserva mediante `reserve_chat_usage`, confirma al primer fragmento
+con `confirm_chat_usage` y libera fallos previos con `release_chat_usage`.
+
+- El bloqueo transaccional por usuario y periodo evita sobreconsumo concurrente.
+- El cliente autenticado solo puede leer sus registros mediante RLS.
+- Las mutaciones se ejecutan exclusivamente con funciones protegidas para
+  `service_role`.
+- `chat_usage` se conserva como agregado compatible con estadísticas existentes.
+
 ### `chat_conversations`
 
 Una conversación se crea al persistir su primer mensaje válido. Las conversaciones

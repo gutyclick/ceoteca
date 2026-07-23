@@ -17,7 +17,14 @@ export type ChatEventType =
   | "moderation_block"
   | "limit_reached"
   | "provider_error"
-  | "validation_error";
+  | "validation_error"
+  | "usage_reserved"
+  | "usage_consumed"
+  | "usage_released"
+  | "usage_limit_reached"
+  | "usage_regeneration"
+  | "usage_contextual_action"
+  | "usage_rate_limited";
 
 export type LogChatEventInput = {
   userId: string;

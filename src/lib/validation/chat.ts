@@ -15,6 +15,7 @@ export const chatRequestSchema = z
     conversationId: z.string().uuid("La conversación no es válida.").optional(),
     clientCreationKey: z.string().uuid("La clave de creación no es válida.").optional(),
     clientMessageId: z.string().uuid("El identificador del mensaje no es válido."),
+    interactionType: z.enum(["message", "contextual_action"]).default("message"),
     stream: z.boolean().default(false),
     message: z
       .string()

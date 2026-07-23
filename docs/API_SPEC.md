@@ -130,8 +130,16 @@ a la situación del usuario.
     "replayed": false,
     "remainingQuestions": 42,
     "usage": {
-      "questionCount": 8,
-      "limit": 50
+      "allowed": true,
+      "reason": null,
+      "plan": "pro",
+      "used": 8,
+      "limit": 50,
+      "remaining": 42,
+      "unlimited": false,
+      "periodStart": "2026-07-10T00:00:00.000Z",
+      "periodEnd": "2026-08-10T00:00:00.000Z",
+      "usageId": "uuid"
     }
   }
 }
@@ -157,12 +165,20 @@ La creación del mensaje y la respuesta se reclama mediante
 `clientMessageId`. Repetir la misma solicitud no crea otro turno ni consume dos
 veces la cuota. Solo puede existir una generación activa por conversación.
 
+La cuota se reserva atómicamente antes de guardar el turno y se confirma cuando
+CEO produce el primer fragmento válido. Si el proveedor no comienza a responder,
+la reserva se libera. Regeneraciones y acciones contextuales consumen una
+consulta; títulos, valoraciones y operaciones sobre conversaciones no consumen.
+Los límites comerciales (`USAGE_LIMIT_REACHED`) se distinguen del control técnico
+antiabuso (`RATE_LIMITED`) y del acceso a la función (`FEATURE_LOCKED`).
+
 ### Cancelación
 
 `DELETE /api/chat` recibe `{ "clientMessageId": "uuid", "partialContent": "..." }`.
 Solo puede cancelar un turno pendiente del usuario autenticado. Si ya existe
-contenido parcial, se persiste como respuesta `stopped`; la cancelación no
-consume la pregunta mensual.
+contenido parcial, se persiste como respuesta `stopped`. Detener antes del primer
+fragmento libera la reserva; detener después de iniciada la respuesta conserva el
+consumo.
 
 ### Operaciones sobre mensajes
 
